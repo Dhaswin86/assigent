@@ -2,13 +2,13 @@
    Look: a warm, light dashboard. Charcoal top bar, white cards on an off-white canvas, Claude orange as the accent.
    Orange fills carry dark text (white on #d97757 is under 4.5:1); orange text on light surfaces uses the darker --accent-strong. */
 :root {
-  --bg: #f7f1ea; --panel: #ffffff; --panel-2: #faf5ef; --line: #eee5db; --line-2: #dccfc1;
+  --bg: #fbeadb; --bg-2: #f6d9c2; --panel: #ffffff; --panel-2: #fdf4ec; --line: #f1dfd0; --line-2: #e2c8b3;
   --text: #2b2623; --muted: #665d56; --faint: #8a7f77;
-  --accent: #d97757; --accent-hover: #c96848; --accent-strong: #a9482a; --accent-soft: #fbece4; --accent-line: #efc3b0; --on-accent: #2a1509;
+  --accent: #d97757; --accent-hover: #c96848; --accent-strong: #a9482a; --accent-soft: #fbe3d6; --accent-line: #eeb69f; --on-accent: #2a1509;
   --topbar: #2a2725; --topbar-2: #3b3734; --topbar-text: #f6efe8; --topbar-muted: #b9aea5;
   --critter: #d97757; --eye: #111522;
   --ok: #2f7d4f; --ok-soft: #e6f3ea; --warn: #96650a; --warn-soft: #f8eed6; --err: #b93a2f; --err-soft: #f9e5e2;
-  --scene: #f5eee6; --scene-2: #fbf6f0; --road: #dfd2c4; --road-line: #fbf7f2; --card: rgba(255,255,255,.95); --card-line: #e6dace;
+  --scene: #fbeadb; --scene-2: #fdf3ea; --road: #e9cdb8; --road-line: #fdf5ee; --card: rgba(255,255,255,.95); --card-line: #ecd6c4;
   --shadow: 0 1px 2px rgba(60,40,25,.05), 0 8px 24px rgba(60,40,25,.07);
   --r-card: 18px; --r-ctl: 12px;
   --code: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -40,7 +40,7 @@
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 14.5px/1.55 var(--sans); padding-left: 68px; }
+body { margin: 0; background: var(--bg) linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%) fixed; color: var(--text); font: 14.5px/1.55 var(--sans); padding-left: 68px; }
 a { color: var(--accent-strong); text-decoration: none; }
 a:hover { text-decoration: underline; }
 button { font: inherit; color: inherit; }

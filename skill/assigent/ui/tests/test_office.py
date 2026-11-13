@@ -200,13 +200,13 @@ with sync_playwright() as p:
     m.goto(BASE + "/#/story"); m.wait_for_timeout(800)
     check("story page has no sideways scrolling on a phone", m.evaluate("document.documentElement.scrollWidth - window.innerWidth") <= 1)
 
-    # --- dark variant ---
+    # --- one theme: a dark system setting must not change the warm orange look ---
     d = browser.new_page(viewport={"width": 1440, "height": 900}, color_scheme="dark")
     d.on("pageerror", lambda e: errors.append(str(e)))
     d.goto(BASE + "/#/"); d.wait_for_load_state("networkidle"); d.wait_for_selector("#office3d canvas"); d.wait_for_timeout(1200)
     dark = d.evaluate("(() => { const c = getComputedStyle(document.body); return c.backgroundColor + '|' + c.color; })()")
     b_l, f_l = [lum(x) for x in dark.split("|")]
-    check("dark variant: charcoal surface with legible text", b_l < 0.05 and (f_l + 0.05) / (b_l + 0.05) >= 7, dark)
+    check("the warm light look stays when the system is in dark mode", b_l > 0.7 and (b_l + 0.05) / (f_l + 0.05) >= 7, dark)
     d.screenshot(path=os.path.join(SHOTS, "test-home-dark.png"))
 
     check("no JavaScript errors", not errors, "; ".join(errors[:3]))

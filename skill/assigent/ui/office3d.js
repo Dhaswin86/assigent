@@ -454,11 +454,13 @@
   }
 
   /* ---------- scene colours: a light warm office by default, charcoal when the page is in dark mode ---------- */
-  const DARK = !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  // the page pins one theme with <html data-theme>; only follow the system when it does not
+  const THEME = document.documentElement.dataset.theme;
+  const DARK = THEME ? THEME === 'dark' : !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
   const SCENE = DARK
     ? { bg: 0x1b1917, ground: 0x24211e, hub: 0x3d3733, hubEdge: 0x2e2a27, road: 0x35302c, dash: 0x5c544d, node: 0xe08a6d, nodeGlow: 0xd97757,
         line: 0xe08a6d, dot: 0xb98572, dotOn: 0xf3ab92, sky: 0xfff1e6, below: 0x2a2623, skyPower: 0.7, sun: 0.8 }
-    : { bg: 0xf5eee6, ground: 0xede3d8, hub: 0x4a433d, hubEdge: 0x3a3430, road: 0xdfd2c4, dash: 0xfbf7f2, node: 0xd97757, nodeGlow: 0xd97757,
+    : { bg: 0xfbeadb, ground: 0xf4dcc8, hub: 0x4a433d, hubEdge: 0x3a3430, road: 0xe9cdb8, dash: 0xfdf5ee, node: 0xd97757, nodeGlow: 0xd97757,
         line: 0xc4633f, dot: 0xc98f79, dotOn: 0xc4633f, sky: 0xfff6ee, below: 0xcbbdae, skyPower: 0.72, sun: 0.7 };
 
   /* ---------- shared viewer: renderer, lights, smooth 360° orbit, buttons, loop ---------- */
