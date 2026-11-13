@@ -36,8 +36,16 @@ async function tick() {
       const h = head(run, p), f = runId + '|' + (p.finished || '') ;
       if (lastFrame !== f) {      // (re)load the frame only when the run or the finished file changes
         $('#main').innerHTML = `<div id="head">${h}</div><div class="play-stage"><iframe id="play" sandbox="allow-scripts allow-popups" referrerpolicy="no-referrer"
-          title="Playground: ${esc(p.title || run.title || '')}" src="${API.play(runId)}"></iframe></div>`;
+          title="Playground: ${esc(p.title || run.title || '')}"></iframe></div>`;
         lastFrame = f; lastHead = h;
+        // Load the file as text into srcdoc, not by address: a sandboxed frame has no origin, so hosts that
+        // send "X-Frame-Options: SAMEORIGIN" (most static hosts) would refuse to show it. The meta tag keeps
+        // the playground offline, as the viewer's own server does with a header.
+        const frame = $('#play'), url = API.play(runId);
+        const CSP = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; media-src data:">`;
+        fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+          .then(t => { if ($('#play') === frame) frame.srcdoc = CSP + t; })
+          .catch(() => { if ($('#play') === frame) frame.src = url; });
       } else if (lastHead !== h) { $('#head').innerHTML = h; lastHead = h; }
     } else if (p.state === 'running') {
       show('running', head(run, p) + empty('The Tutor is making your playground', 'This page opens it by itself when it is ready.', true));
