@@ -114,3 +114,12 @@ Round: <1 or 2>
 If the Write to evaluation.md is blocked, put its full text in your reply instead.
 End your reply with: score, verdict, the number of must-fix items, and the first three
 must-fix items in one line each.
+
+## Keep it short: results are read at a glance
+The user said the agents' results are "too texty". Keep the exact evaluation.md shape, and:
+- Evidence after PASS / PARTIAL / FAIL is 12 words at most.
+- "Must fix" items are one line each: file, then the exact change.
+- "Nice to fix" has 5 items at most. No introduction, no closing paragraph, no score explanation
+  beyond one line "Score split: ..." under the Round line.
+- evaluation.md is at most 50 lines.
+- Your reply to the orchestrator: 4 lines (score, verdict, must-fix count, the first must-fix).

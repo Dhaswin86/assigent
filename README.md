@@ -24,7 +24,7 @@ Or from a copy of this folder: `./install.sh`, then `assigent run`.
 
 That is all. There is no setup and no list of questions to get through first.
 
-The installer copies four agents to `~/.claude/agents/`, the skill to
+The installer copies five agents to `~/.claude/agents/`, the skill to
 `~/.claude/skills/assigent/` and the command to `~/.local/bin/assigent`. It backs up
 any file of the same name first and never uses sudo.
 
@@ -65,6 +65,19 @@ The rules behind this:
 Answers for one assignment are saved in its folder (`choices.md`). The agents hold to
 them, and the Evaluator fails work that ignores a choice you made.
 
+## Learn it first: a playground made for your assignment
+
+Beside the four agents, a Tutor builds one small interactive page for each assignment.
+It teaches the idea behind the assignment by letting you try things. It never contains
+the answer, so it is made even when AI help is not allowed.
+
+| The assignment is about | The playground lets you |
+|---|---|
+| An SEO title and description | type them and watch a live search-result preview with length meters |
+| Classes and objects | build an object, call its methods and watch its state change |
+
+Open it with `assigent play`, or the Playground icon in the viewer.
+
 ## Two ways to use it
 
 ### In the terminal
@@ -73,6 +86,7 @@ them, and the Evaluator fails work that ignores a choice you made.
 assigent run                     start Claude Code on your next assignment
 assigent run --paste brief.txt   start from a brief you saved in a file
 assigent view                    open the viewer that shows the agents at work
+assigent play                    open the playground for your newest run
 assigent status                  list your runs, each agent's state and the score
 assigent doctor                  check that everything is installed
 ```
@@ -98,6 +112,7 @@ No browser? Paste the brief into Claude Code after typing `/assigent`.
    assignment needs.
 3. Assigent asks you those questions, once. If there are none, it says so and goes on.
 4. The Source finder gathers docs and tutorials into `sources.md`.
+   The Tutor then starts on your playground while the work goes on.
 5. The Builder does the work into `deliverables/` and writes `report.md`.
 6. The Evaluator marks it out of 100 and writes `evaluation.md`. If it says revise,
    the Builder gets one round to fix the list.
@@ -146,7 +161,8 @@ Details are in [skill/assigent/preferences.md](skill/assigent/preferences.md).
 |---|---|
 | `assigent run` | Start Claude Code with `/assigent` |
 | `assigent view` | Start the viewer and open it. `assigent view --stop` stops it |
-| `assigent status` | List runs with each agent's state and the score |
+| `assigent play` | Open a run's playground. `assigent play 2` or `assigent play "essay"` picks a run |
+| `assigent status` | List runs with each agent's state, the score and the playground |
 | `assigent doctor` | Check the install, one line per check with a fix |
 | `assigent preferences` | Optional: see or change what Assigent remembers |
 | `assigent config` | Print what Assigent remembers |

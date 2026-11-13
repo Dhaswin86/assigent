@@ -3,6 +3,7 @@
 
   status.py init  <folder> "<title>" <aiPolicy>
   status.py policy <folder> <aiPolicy>            (when the AI policy is settled later)
+  status.py playground start|done|skip|error <folder> "<text>"   (the Tutor's playground, kept beside the four agents)
   status.py start <folder> <agent> "<what it is doing>"
   status.py event <folder> <agent> "<message>"
   status.py done  <folder> <agent> "<summary>"
@@ -51,9 +52,34 @@ def save(folder, s):
     os.replace(tmp, os.path.join(folder, "status.json"))
 
 
+def playground(argv):
+    """status.py playground start|done|skip|error <folder> "<text>". Older status.json files have no such key."""
+    if len(argv) < 4 or argv[2] not in ("start", "done", "skip", "error"):
+        sys.exit(__doc__)
+    what, folder, msg = argv[2], os.path.expanduser(argv[3]), argv[4] if len(argv) > 4 else ""
+    s = load(folder)
+    p = s.get("playground") or {"state": "waiting", "started": None, "finished": None, "title": "", "summary": ""}
+    if what == "start":
+        p.update(state="running", started=now(), finished=None, summary=msg)
+    else:
+        p.update(state={"done": "done", "skip": "skipped", "error": "error"}[what], finished=now(), summary=msg)
+    try:  # the Tutor writes the title into playground/playground.json
+        with open(os.path.join(folder, "playground", "playground.json")) as f:
+            title = json.load(f).get("title")
+        if isinstance(title, str) and title.strip():
+            p["title"] = title.strip()
+    except (OSError, ValueError, AttributeError):
+        pass
+    s["playground"] = p
+    s.setdefault("events", []).append({"t": now(), "agent": "tutor", "kind": what, "msg": msg or f"Playground {p['state']}"})
+    save(folder, s)
+
+
 def main(argv):
     if len(argv) < 3:
         sys.exit(__doc__)
+    if argv[1] == "playground":
+        return playground(argv)
     cmd, folder = argv[1], os.path.expanduser(argv[2])
     if cmd == "init":
         title, policy = argv[3], argv[4]

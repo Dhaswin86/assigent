@@ -20,7 +20,7 @@
    "started": "2026-01-01T10:21:00",
    "finished": "2026-01-01T10:22:00",
    "summary": "2 deliverables, 6 checklist items, not blocking, small effort.",
-   "outputText": "# Brief: Build a Simple To-Do App\n\n## 1. Title and track\nBuild a Simple To-Do App \u00b7 Technology / JavaScript \u00b7 AI policy: **preferred**\n\n## 2. Goal in one sentence\nShow you can build a small web page that adds, ticks off and removes tasks, and remembers them.\n\n## 3. Deliverables\n1. A working web page (index.html, style.css, app.js)\n2. A short write-up explaining how it works\n\n## 4. Requirements checklist\n- [ ] A text box and an Add button create a new task\n- [ ] Clicking a task ticks it off (strike-through)\n- [ ] Each task has a delete button\n- [ ] Tasks are saved in localStorage and come back after a refresh\n- [ ] Empty tasks are not allowed\n- [ ] The page works on a phone screen\n\n## 7. Ambiguities / questions for the user\nBLOCKING: no\n- Should finished tasks move to the bottom? Default: keep them in place.\n",
+   "outputText": "# Brief: Build a Simple To-Do App\n\n## 1. Title and course\nBuild a Simple To-Do App \u00b7 Web basics / JavaScript \u00b7 AI policy: **preferred**\n\n## 2. Goal in one sentence\nShow you can build a small web page that adds, ticks off and removes tasks, and remembers them.\n\n## 3. Deliverables\n1. A working web page: index.html, style.css, app.js\n   Required file type: .html (stated)\n2. A short write-up explaining how it works\n   Required file type: .docx (chosen from the deliverable's name)\n\n## 4. Requirements checklist\n- [ ] A text box and an Add button create a new task\n- [ ] Clicking a task ticks it off (strike-through)\n- [ ] Each task has a delete button\n- [ ] Tasks are saved in localStorage and come back after a refresh\n- [ ] Empty tasks are not allowed\n- [ ] The page works on a phone screen\n\n## 7. Questions this assignment needs\n### Name on the write-up\n- Kind: name\n- Question: What name should go on the write-up?\n- Needed because: the write-up has a cover line with the author's name\n- Default: leave a marked placeholder\n\n## 8. Ambiguities / questions for the user\nBLOCKING: no\n- Should finished tasks move to the bottom? Default: keep them in place.\n",
    "logText": "# Analyst log\n\n- **step 1** Started: reading the homework text\n- **step 2** Read assignment-source.md: one web page, 2 deliverables, AI policy preferred\n- **step 3** Looking for related past work in the save folder\n- **step 4** Found an earlier Bill Splitter page that also uses buttons and lists\n- **step 5** Writing brief.md (1 ambiguity, BLOCKING: no)\n- **step 6** brief.md written: 2 deliverables, 6 checklist items. Done.\n"
   },
   {
@@ -131,7 +131,7 @@
   },
   {
    "path": "brief.md",
-   "size": 819,
+   "size": 1158,
    "mtime": 1767243120.0
   },
   {
@@ -170,5 +170,41 @@
    "mtime": 1767243570.0
   }
  ],
- "demoNow": "2026-01-01T10:30:00"
+ "demoNow": "2026-01-01T10:30:00",
+ "playground": {
+  "state": "done",
+  "title": "Events, the DOM and saved state",
+  "hasFile": true,
+  "concepts": [
+   "Events",
+   "The DOM",
+   "Saving state"
+  ],
+  "activities": [
+   {
+    "title": "Catch an event",
+    "kind": "toggles and a live log"
+   },
+   {
+    "title": "Change the page with code",
+    "kind": "controls driving a live preview"
+   },
+   {
+    "title": "Save, then refresh",
+    "kind": "small simulator"
+   },
+   {
+    "title": "Which event fits?",
+    "kind": "match"
+   },
+   {
+    "title": "Check yourself",
+    "kind": "quiz"
+   }
+  ],
+  "minutes": 10,
+  "summary": "5 activities, about 10 minutes.",
+  "started": "2026-01-01T10:25:00",
+  "finished": "2026-01-01T10:26:00"
+ }
 }

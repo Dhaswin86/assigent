@@ -46,9 +46,12 @@ OUT="$TMP/out.txt"
 echo "--- install.sh from the local clone"
 PATH="$TMP/fakebin:$BASE_PATH" bash "$REPO/install.sh" > "$OUT" 2>&1; rc=$?
 check "install exits 0" code_is $rc 0
-for a in analyst finder builder evaluator; do
+for a in analyst finder builder evaluator tutor; do
   check "agent assigent-$a.md installed" test -f "$HOME/.claude/agents/assigent-$a.md"
 done
+check "install says it installed five agents" has "$OUT" "Installed 5 agents"
+check "exactly five assigent agents are installed" sh -c "[ \$(ls '$HOME/.claude/agents' | grep -c '^assigent-') = 5 ]"
+check "the separate playground page is installed with the viewer" sh -c "[ -f '$HOME/.claude/skills/assigent/ui/playground.html' ] && [ -f '$HOME/.claude/skills/assigent/ui/playground.js' ]"
 check "skill SKILL.md installed" test -f "$HOME/.claude/skills/assigent/SKILL.md"
 check "skill preferences.md installed" test -f "$HOME/.claude/skills/assigent/preferences.md"
 check "old setup-questions.md is not shipped" test ! -e "$HOME/.claude/skills/assigent/setup-questions.md"
@@ -248,6 +251,35 @@ check "status exits 0" code_is $rc 0
 check "status lists the fake run" has "$OUT" "Fake Essay Run"
 check "status shows each agent's state" has "$OUT" "analyst: done   finder: done   builder: done   evaluator: running"
 check "status shows the evaluator's score" has "$OUT" "score: 86/100, PASS"
+check "status has a playground column, none so far" has "$OUT" "playground: none"
+assigent play --no-open > "$OUT" 2>&1; rc=$?
+check "play without a playground exits 1 and says why" sh -c "[ $rc = 1 ] && grep -q 'has not been made yet' '$OUT'"
+python3 "$STATUS" playground start "$RUN" "Building the playground"
+assigent status > "$OUT" 2>&1
+check "status shows a playground that is being made" has "$OUT" "playground: being made"
+assigent play --no-open > "$OUT" 2>&1; rc=$?
+check "play while it is being made exits 1" sh -c "[ $rc = 1 ] && grep -q 'still being made' '$OUT'"
+mkdir -p "$RUN/playground"
+printf '<!doctype html><title>Fake playground</title><button id="b">go</button>' > "$RUN/playground/index.html"
+printf '{"title": "Fake concept lab", "concepts": ["One", "Two"], "activities": [{"title": "Try it", "kind": "toggle"}], "minutes": 5}' > "$RUN/playground/playground.json"
+python3 "$STATUS" playground done "$RUN" "1 activity, about 5 minutes"
+check "status.py records the playground beside the four agents" python3 -c "import json; s=json.load(open('$RUN/status.json')); assert s['playground']['state']=='done' and s['playground']['title']=='Fake concept lab' and len(s['agents'])==4"
+assigent status > "$OUT" 2>&1
+check "status shows the playground as ready" has "$OUT" "playground: ready"
+assigent play --no-open > "$OUT" 2>&1; rc=$?
+check "play with no viewer running gives the playground file" sh -c "[ $rc = 0 ] && grep -qF '$RUN/playground/index.html' '$OUT'"
+assigent play 1 --no-open > "$OUT" 2>&1; rc=$?
+check "play takes a run number" code_is $rc 0
+assigent play essay --no-open > "$OUT" 2>&1; rc=$?
+check "play takes part of a run name" sh -c "[ $rc = 0 ] && grep -q 'Fake Essay Run' '$OUT'"
+assigent play 9 --no-open > "$OUT" 2>&1; rc=$?
+check "play with a run number that does not exist exits 2" code_is $rc 2
+assigent play nosuchrun --no-open > "$OUT" 2>&1; rc=$?
+check "play with an unknown name exits 2" code_is $rc 2
+OLD="$SAVE/Old Run"; mkdir -p "$OLD"
+python3 -c "import json; s=json.load(open('$RUN/status.json')); s.pop('playground'); s['title']='Old Run'; s['updated']='2020-01-01T00:00:00'; json.dump(s, open('$OLD/status.json','w'))"
+assigent status > "$OUT" 2>&1; rc=$?
+check "a status.json from before the Tutor still lists (playground: none)" sh -c "[ $rc = 0 ] && grep -A3 '^Old Run' '$OUT' | grep -q 'playground: none'"
 assigent status --json > "$OUT" 2>&1
 check "status --json has the score" python3 -c "import json; r=json.load(open('$OUT')); assert r[0]['score']==86 and r[0]['verdict']=='PASS'"
 
@@ -275,6 +307,35 @@ python3 -c "import json,urllib.request as u; r=json.load(u.urlopen('${URL}api/ru
 check "/api/runs lists the fake run" code_is $? 0
 python3 -c "import json,urllib.request as u; r=json.load(u.urlopen('${URL}api/run?id=0',timeout=3)); assert r['agents'][0]['name']=='assigent-analyst'" > /dev/null 2>&1
 check "/api/run returns the run's agents" code_is $? 0
+http_code() { python3 - "$1" "$2" <<'PY'
+import http.client, sys
+host, port = sys.argv[1].replace("http://", "").rstrip("/").split(":")
+c = http.client.HTTPConnection(host, int(port), timeout=3); c.request("GET", sys.argv[2]); r = c.getresponse()
+print(r.status, r.getheader("Content-Security-Policy") or "-", r.getheader("Content-Type") or "-")
+PY
+}
+check "viewer serves the separate playground page" sh -c "python3 -c \"import urllib.request as u; [u.urlopen('$URL'+p,timeout=3) for p in ('playground.html','playground.js')]\""
+python3 -c "import json,urllib.request as u; r=json.load(u.urlopen('${URL}api/run?id=0',timeout=3)); p=r['playground']; assert p['state']=='done' and p['hasFile'] and p['title']=='Fake concept lab' and p['concepts']==['One','Two'] and p['minutes']==5 and len(p['activities'])==1, p" > /dev/null 2>&1
+check "/api/run describes the playground" code_is $? 0
+python3 -c "import json,urllib.request as u; r=json.load(u.urlopen('${URL}api/runs',timeout=3)); assert r[0]['playground']['hasFile'] and r[1]['playground']['state']=='none', r" > /dev/null 2>&1
+check "/api/runs says which runs have a playground (older run: none)" code_is $? 0
+http_code "$URL" "/play/0/index.html" > "$OUT" 2>&1
+check "the playground file is served" sh -c "grep -q '^200 ' '$OUT' && grep -q 'text/html' '$OUT'"
+check "it is served sandboxed, with no network allowed" sh -c "grep -q 'sandbox allow-scripts' '$OUT' && grep -q \"default-src 'unsafe-inline'\" '$OUT' && ! grep -q 'allow-same-origin' '$OUT'"
+for bad in "/play/0/../status.json" "/play/0/%2e%2e/status.json" "/play/0/..%2fstatus.json" "/play/0/../../../etc/passwd" "/play/0//etc/passwd" "/play/0/" "/play/9/index.html" "/play/x/index.html" "/play/1/index.html"; do
+  http_code "$URL" "$bad" > "$OUT" 2>&1
+  check "refused: $bad" sh -c "grep -q '^404 ' '$OUT'"
+done
+ln -s "$RUN/status.json" "$RUN/playground/leak.json"
+http_code "$URL" "/play/0/leak.json" > "$OUT" 2>&1
+check "refused: a link inside the playground that points outside it" sh -c "grep -q '^404 ' '$OUT'"
+rm -f "$RUN/playground/leak.json"
+echo "secret" > "$RUN/playground/notes.exe"
+http_code "$URL" "/play/0/notes.exe" > "$OUT" 2>&1
+check "refused: a file type the playground has no use for" sh -c "grep -q '^404 ' '$OUT'"
+rm -f "$RUN/playground/notes.exe"
+assigent play --no-open > "$OUT" 2>&1; rc=$?
+check "play opens the separate page when the viewer is running" sh -c "[ $rc = 0 ] && grep -q '^${URL}playground.html?run=0$' '$OUT'"
 assigent view --no-open > "$OUT" 2>&1
 check "a second view reuses the running viewer" has "$OUT" "already running"
 assigent view --stop > "$OUT" 2>&1; rc=$?

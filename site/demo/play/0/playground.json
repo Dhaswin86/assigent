@@ -1,0 +1,12 @@
+{
+  "title": "Events, the DOM and saved state",
+  "concepts": ["Events", "The DOM", "Saving state"],
+  "activities": [
+    {"title": "Catch an event", "kind": "toggles and a live log"},
+    {"title": "Change the page with code", "kind": "controls driving a live preview"},
+    {"title": "Save, then refresh", "kind": "small simulator"},
+    {"title": "Which event fits?", "kind": "match"},
+    {"title": "Check yourself", "kind": "quiz"}
+  ],
+  "minutes": 10
+}

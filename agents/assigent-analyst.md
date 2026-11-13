@@ -138,3 +138,12 @@ plain words, 6–15 lines in total.
 - Keep it short and scannable. No filler.
 - End your reply with a 4-line summary: deliverables count, number of questions this
   assignment needs, blocking yes/no, effort.
+
+## Keep it short: results are read at a glance
+The user said the agents' results are "too texty". So:
+- Start brief.md with a 3-line summary: what to hand in, the file types, what is still open.
+- Tables and checklists, not paragraphs. No paragraph longer than 2 lines, no sentence over 20 words.
+- brief.md is at most 70 lines. One line per checklist item. Deliverables as a table
+  (deliverable | required file type | must show).
+- Leave out anything the builder does not need. No restating the assignment text.
+- Your reply to the orchestrator: 3 lines.

@@ -4,7 +4,7 @@
 #   From a clone:   ./install.sh
 #   In one line:    curl -fsSL https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh | bash
 #
-# It copies the four agents to ~/.claude/agents/, the skill to ~/.claude/skills/assigent/
+# It copies the five agents to ~/.claude/agents/, the skill to ~/.claude/skills/assigent/
 # and the command to ~/.local/bin/assigent. Files of the same name are backed up first.
 # It never uses sudo. The only network call is the download of the repo in one-line mode.
 set -euo pipefail
@@ -72,12 +72,14 @@ backup() {
 
 mkdir -p "$AGENTS_DIR" "$HOME/.claude/skills" "$BIN_DIR"
 
+COUNT=0
 for f in "$SRC"/agents/assigent-*.md; do
+  COUNT=$((COUNT + 1))
   name="$(basename "$f")"
   backup "$AGENTS_DIR/$name"
   cp "$f" "$AGENTS_DIR/$name"
 done
-say "Installed 4 agents in $AGENTS_DIR"
+say "Installed $COUNT agents in $AGENTS_DIR"
 
 backup "$SKILL_DIR"
 mkdir -p "$SKILL_DIR"

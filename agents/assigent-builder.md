@@ -100,3 +100,12 @@ Write `report.md` in the assignment folder containing:
 If the Write to report.md is blocked, put its full text in your reply instead.
 End your reply with: deliverables done X/Y, unmet requirements, and the user's
 remaining manual steps.
+
+## Keep it short: results are read at a glance
+The user said the agents' results are "too texty". This is about report.md and your reply, never
+about the deliverables themselves (those are as long as the assignment needs).
+- Start report.md with a 3-line summary: what was made, checks passed X of Y, what is left for the user.
+- Deliverables as a table (file | type | how it was checked). The checklist as one line per item.
+- "What you must do" as a numbered list of 5 items at most, 10 words each.
+- report.md is at most 45 lines. Working detail goes in process/builder-notes.md, not here.
+- Your reply to the orchestrator: 3 lines.

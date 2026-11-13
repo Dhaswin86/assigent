@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Events, the DOM and saved state</title>
+<style>
+:root { --bg: #fbeadb; --panel: #fff; --panel-2: #fdf4ec; --line: #f1dfd0; --line-2: #e2c8b3; --text: #2b2623; --muted: #665d56;
+  --accent: #d97757; --accent-strong: #a9482a; --accent-soft: #fbe3d6; --on-accent: #2a1509; --ok: #2f7d4f; --ok-soft: #e6f3ea; --err: #b93a2f; --err-soft: #f9e5e2; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 980px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 16px; }
+h1 { font-size: 26px; line-height: 1.15; margin: 4px 0 0; letter-spacing: -.02em; }
+h2 { font-size: 18px; margin: 0; }
+p { margin: 0; color: var(--muted); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 18px; display: grid; gap: 14px; box-shadow: 0 8px 24px rgba(60,40,25,.07); }
+.hd { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.n { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-weight: 800; display: grid; place-items: center; flex: none; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.box { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; display: grid; gap: 10px; align-content: start; }
+.lab { font-size: 13px; font-weight: 700; color: var(--muted); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+button, select, input[type=text] { font: inherit; color: inherit; }
+button { border: 0; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-weight: 700; padding: 10px 18px; cursor: pointer; }
+button.ghost { background: var(--panel); border: 1.5px solid var(--line-2); color: var(--text); }
+button:hover { filter: brightness(.96); }
+input[type=text], select { border: 1.5px solid var(--line-2); border-radius: 10px; padding: 9px 11px; background: #fff; min-width: 0; max-width: 100%; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+label.tog { display: inline-flex; gap: 7px; align-items: center; border: 1.5px solid var(--line-2); border-radius: 999px; padding: 6px 12px; background: #fff; cursor: pointer; font-weight: 600; font-size: 14px; }
+label.tog:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+label.tog input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13.5px; }
+pre { margin: 0; background: #2a2725; color: #f6efe8; border-radius: 12px; padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; min-height: 44px; }
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; min-height: 96px; align-content: start; }
+.log li { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 4px 9px; font-size: 13.5px; }
+.log li:first-child { border-color: var(--accent); background: var(--accent-soft); }
+.big { font-size: 40px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.sticker { display: inline-block; padding: 12px 18px; border-radius: 12px; font-weight: 700; border: 2px solid transparent; transition: transform .15s; max-width: 100%; overflow-wrap: anywhere; }
+.sticker.round { border-radius: 999px; } .sticker.outline { border-color: var(--text); } .sticker.tilt { transform: rotate(-4deg); }
+.pill { border-radius: 8px; border: 1.5px solid currentColor; padding: 1px 9px; font-size: 13px; font-weight: 700; }
+.ok { color: var(--ok); } .no { color: var(--err); }
+.match { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px 10px; align-items: center; }
+.q { display: grid; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); } .q:first-of-type { border-top: 0; padding-top: 0; }
+.q .why { font-size: 14px; min-height: 21px; }
+.q button { background: #fff; border: 1.5px solid var(--line-2); color: var(--text); font-weight: 600; padding: 8px 14px; }
+.q button.right { background: var(--ok-soft); border-color: var(--ok); } .q button.wrong { background: var(--err-soft); border-color: var(--err); }
+.links { display: flex; gap: 8px; flex-wrap: wrap; } .links a { color: var(--accent-strong); font-weight: 600; background: #fff; border: 1px solid var(--line-2); border-radius: 999px; padding: 6px 13px; text-decoration: none; }
+.links a:hover { border-color: var(--accent); }
+@media (max-width: 640px) { .two { grid-template-columns: minmax(0, 1fr); } .match { grid-template-columns: minmax(0, 1fr) auto; } .match .res { grid-column: 1 / -1; } }
+@media (prefers-reduced-motion: reduce) { .sticker { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header><h1>Events, the DOM and saved state</h1><p>Five small things to try. Made-up demo, not a real assignment.</p></header>
+
+  <section class="card" aria-labelledby="h1"><div class="hd"><span class="n">1</span><h2 id="h1">Catch an event</h2></div>
+    <p>Choose what the page listens for, then poke the button or type in the box.</p>
+    <div class="two">
+      <div class="box"><span class="lab">The page</span>
+        <div class="row" role="group" aria-label="Listen for">
+          <label class="tog"><input type="checkbox" id="on-click" checked>click</label>
+          <label class="tog"><input type="checkbox" id="on-key">keydown</label>
+          <label class="tog"><input type="checkbox" id="on-input">input</label></div>
+        <div class="row"><button id="poke" type="button">Poke me</button><label class="lab" for="typebox">Type here</label><input type="text" id="typebox" size="12" autocomplete="off"></div>
+        <div><span class="lab">Times a listener ran</span><div class="big" id="count" aria-live="polite">0</div></div></div>
+      <div class="box"><span class="lab">Events the page heard</span><ol class="log" id="evlog" aria-live="polite"><li>Nothing yet</li></ol>
+        <pre id="evcode"></pre></div>
+    </div></section>
+
+  <section class="card" aria-labelledby="h2"><div class="hd"><span class="n">2</span><h2 id="h2">Change the page with code</h2></div>
+    <p>Move the controls. The code on the right is what changes the element.</p>
+    <div class="two">
+      <div class="box"><span class="lab">Controls</span>
+        <div class="row"><label class="lab" for="st-text">Text</label><input type="text" id="st-text" value="Hello" maxlength="24" autocomplete="off"></div>
+        <div class="row"><label class="lab" for="st-col">Colour</label><select id="st-col"><option value="#fbe3d6">peach</option><option value="#e6f3ea">mint</option><option value="#e5edf9">sky</option><option value="#fff3c4">lemon</option></select></div>
+        <div class="row" role="group" aria-label="Classes"><label class="tog"><input type="checkbox" id="c-round">round</label><label class="tog"><input type="checkbox" id="c-outline">outline</label><label class="tog"><input type="checkbox" id="c-tilt">tilt</label></div>
+        <div style="padding:14px 4px"><span class="sticker" id="sticker">Hello</span></div></div>
+      <div class="box"><span class="lab">What the code does</span><pre id="domcode"></pre><span class="lab">What the browser now holds</span><pre id="domhtml"></pre></div>
+    </div></section>
+
+  <section class="card" aria-labelledby="h3"><div class="hd"><span class="n">3</span><h2 id="h3">Save, then refresh</h2></div>
+    <p>Add points, press Refresh, and see what comes back. Then turn saving off and try again.</p>
+    <div class="two">
+      <div class="box"><span class="lab">The page</span><div class="big" id="pts" aria-live="polite">0</div>
+        <div class="row"><button id="plus" type="button">+1 point</button><button id="refresh" type="button" class="ghost">Refresh the page</button></div>
+        <label class="tog"><input type="checkbox" id="saving" checked>Save when it changes</label>
+        <span id="savemsg" class="lab" aria-live="polite">Fresh page</span></div>
+      <div class="box"><span class="lab">Storage (a stand-in for localStorage)</span><pre id="store"></pre>
+        <button id="clear" type="button" class="ghost" style="justify-self:start">Clear storage</button></div>
+    </div></section>
+
+  <section class="card" aria-labelledby="h4"><div class="hd"><span class="n">4</span><h2 id="h4">Which event fits?</h2></div>
+    <p>Pick the event you would listen for.</p>
+    <div class="match" id="match"></div></section>
+
+  <section class="card" aria-labelledby="h5"><div class="hd"><span class="n">5</span><h2 id="h5">Check yourself</h2><span class="pill" id="score" aria-live="polite">0 of 4</span></div>
+    <div id="quiz"></div></section>
+
+  <section class="card" aria-labelledby="h6"><h2 id="h6">Learn more</h2>
+    <div class="links">
+      <a href="https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events" target="_blank" rel="noopener">MDN: Introduction to events</a>
+      <a href="https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener" target="_blank" rel="noopener">MDN: addEventListener</a>
+      <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage" target="_blank" rel="noopener">MDN: localStorage</a>
+      <a href="https://javascript.info/modifying-document" target="_blank" rel="noopener">javascript.info: Modifying the document</a>
+    </div></section>
+</main>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  // 1. events
+  var count = 0, heard = [];
+  function note(type, what) {
+    var id = { click: 'on-click', keydown: 'on-key', input: 'on-input' }[type];
+    if (!$(id).checked) return;
+    count++; $('count').textContent = count;
+    heard.unshift(type + ' on ' + what); heard = heard.slice(0, 5);
+    $('evlog').innerHTML = heard.map(function (h) { return '<li>' + h + '</li>'; }).join('');
+  }
+  function showListeners() {
+    var on = ['click', 'keydown', 'input'].filter(function (t) { return $({ click: 'on-click', keydown: 'on-key', input: 'on-input' }[t]).checked; });
+    $('evcode').textContent = on.length ? on.map(function (t) { return (t === 'click' ? 'button' : 'box') + ".addEventListener('" + t + "', run)"; }).join('\n') : '// no listeners: the page hears nothing';
+  }
+  $('poke').addEventListener('click', function () { note('click', 'the button'); });
+  $('typebox').addEventListener('keydown', function (e) { note('keydown', 'the box (' + (e.key.length === 1 ? e.key : e.key.toLowerCase()) + ')'); });
+  $('typebox').addEventListener('input', function () { note('input', 'the box'); });
+  ['on-click', 'on-key', 'on-input'].forEach(function (id) { $(id).addEventListener('change', showListeners); });
+  showListeners();
+
+  // 2. the DOM
+  function paint() {
+    var s = $('sticker'), text = $('st-text').value || ' ', col = $('st-col').value, lines = [];
+    s.textContent = text; s.style.background = col;
+    lines.push("sticker.textContent = '" + text.replace(/'/g, "\\'") + "'");
+    lines.push("sticker.style.background = '" + col + "'");
+    ['round', 'outline', 'tilt'].forEach(function (c) { var on = $('c-' + c).checked; s.classList.toggle(c, on); if (on) lines.push("sticker.classList.add('" + c + "')"); });
+    $('domcode').textContent = lines.join('\n');
+    $('domhtml').textContent = s.outerHTML.replace(' id="sticker"', '');
+  }
+  ['st-text', 'st-col', 'c-round', 'c-outline', 'c-tilt'].forEach(function (id) { $(id).addEventListener('input', paint); $(id).addEventListener('change', paint); });
+  paint();
+
+  // 3. saving. A sandboxed frame has no real localStorage, so this object stands in for it and survives the pretend refresh.
+  var store = {}, pts = 0;
+  function showStore() { var k = Object.keys(store); $('store').textContent = k.length ? k.map(function (x) { return x + ': ' + JSON.stringify(store[x]); }).join('\n') : '(empty)'; }
+  function showPts() { $('pts').textContent = pts; }
+  $('plus').addEventListener('click', function () {
+    pts++; showPts();
+    if ($('saving').checked) { store.points = String(pts); $('savemsg').textContent = "Saved: storage.setItem('points', '" + pts + "')"; } else $('savemsg').textContent = 'Changed on the page only. Not saved.';
+    showStore();
+  });
+  $('refresh').addEventListener('click', function () {
+    pts = store.points ? Number(store.points) : 0; showPts();
+    $('savemsg').textContent = store.points ? "Refreshed. Read back: storage.getItem('points')" : 'Refreshed. Storage was empty, so it starts at 0.';
+  });
+  $('clear').addEventListener('click', function () { store = {}; showStore(); $('savemsg').textContent = 'Storage cleared. The page still shows its own number.'; });
+  showStore();
+
+  // 4. match
+  var pairs = [['Someone presses the Add button', 'click'], ['Someone presses Enter in a text box', 'keydown'], ['The text in a box changes', 'input'], ['A form is sent', 'submit']];
+  $('match').innerHTML = pairs.map(function (p, i) {
+    return '<label for="m' + i + '">' + p[0] + '</label><select id="m' + i + '" data-a="' + p[1] + '"><option value="">choose</option><option>click</option><option>keydown</option><option>input</option><option>submit</option></select><span class="res pill" id="r' + i + '" aria-live="polite" hidden></span>';
+  }).join('');
+  pairs.forEach(function (p, i) {
+    $('m' + i).addEventListener('change', function (e) {
+      var r = $('r' + i), right = e.target.value === e.target.dataset.a;
+      r.hidden = !e.target.value; r.textContent = right ? 'Yes' : 'Not that one'; r.className = 'res pill ' + (right ? 'ok' : 'no');
+    });
+  });
+
+  // 5. quiz
+  var qs = [
+    ['What does addEventListener do?', ['Runs your function when the event happens', 'Draws a button', 'Saves data'], 0, 'It ties an event to a function that runs each time.'],
+    ['You change textContent in code. What happens?', ['Nothing until a refresh', 'The page shows the new text at once', 'The file on disk changes'], 1, 'The DOM is live: change it and the page updates.'],
+    ['What can localStorage keep?', ['Numbers only', 'Any object as it is', 'Strings'], 2, 'Values are stored as strings, so objects go through JSON.stringify.'],
+    ['Saving is off and you refresh. What comes back?', ['Whatever was last saved', 'The latest value on the page', 'An error'], 0, 'A refresh throws away page memory. Only saved data returns.']
+  ], got = {};
+  $('quiz').innerHTML = qs.map(function (q, i) {
+    return '<div class="q" role="group" aria-labelledby="q' + i + '"><b id="q' + i + '">' + q[0] + '</b><div class="row">' + q[1].map(function (a, k) { return '<button type="button" data-q="' + i + '" data-k="' + k + '">' + a + '</button>'; }).join('') + '</div><span class="why" id="w' + i + '" aria-live="polite"></span></div>';
+  }).join('');
+  $('quiz').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    var i = +b.dataset.q, k = +b.dataset.k, right = k === qs[i][2];
+    Array.prototype.forEach.call($('quiz').querySelectorAll('button[data-q="' + i + '"]'), function (x) { x.classList.remove('right', 'wrong'); });
+    b.classList.add(right ? 'right' : 'wrong');
+    $('w' + i).textContent = (right ? 'Right. ' : 'Not quite. ') + qs[i][3]; $('w' + i).className = 'why ' + (right ? 'ok' : 'no');
+    got[i] = right; $('score').textContent = Object.keys(got).filter(function (x) { return got[x]; }).length + ' of ' + qs.length;
+  });
+})();
+</script>
+</body>
+</html>

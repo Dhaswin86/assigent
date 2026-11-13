@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assigent playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="playpage">
+<header class="top">
+  <a class="brand" href="index.html" aria-label="Assigent, back to the office"><span class="mark" aria-hidden="true"></span>Assigent</a>
+  <label class="pick"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+    <select id="runSel" aria-label="Run with a playground"></select></label>
+  <span class="crumb">Playground</span>
+  <div class="right">
+    <span class="live" id="live"><i></i><span>live</span></span>
+    <a class="back" id="back" href="index.html">← Back to the office</a>
+  </div>
+</header>
+<main id="main" style="display:flex;flex-direction:column;flex:1 1 auto"><div class="play-stage"><div class="play-empty"><b>Loading…</b></div></div></main>
+<script src="playground.js"></script>
+</body>
+</html>

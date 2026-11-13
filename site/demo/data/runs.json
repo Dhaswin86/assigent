@@ -14,6 +14,33 @@
    "done",
    "running",
    "waiting"
-  ]
+  ],
+  "playground": {
+   "state": "done",
+   "title": "Events, the DOM and saved state",
+   "hasFile": true
+  }
+ },
+ {
+  "id": 1,
+  "title": "DEMO \u00b7 Plan a Class Bake Sale",
+  "aiPolicy": "preferred",
+  "updated": "2026-01-01T09:18:00",
+  "created": "2026-01-01T08:54:00",
+  "files": 14,
+  "score": 88,
+  "verdict": "PASS",
+  "demoNow": "2026-01-01T10:30:00",
+  "states": [
+   "done",
+   "done",
+   "done",
+   "done"
+  ],
+  "playground": {
+   "state": "none",
+   "title": "",
+   "hasFile": false
+  }
  }
 ]

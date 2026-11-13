@@ -8,22 +8,24 @@ one made-up demo run (data/run-0.json), so no real assignment content is publish
 Timestamps in the demo are shifted to "now" when the page loads, so the working agent's
 timer and the story read naturally.
 """
-import json, os, shutil, sys
+import json, os, re, shutil, sys
 from datetime import datetime, timedelta
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 BRIEF = """# Brief: Build a Simple To-Do App
 
-## 1. Title and track
-Build a Simple To-Do App · Technology / JavaScript · AI policy: **preferred**
+## 1. Title and course
+Build a Simple To-Do App · Web basics / JavaScript · AI policy: **preferred**
 
 ## 2. Goal in one sentence
 Show you can build a small web page that adds, ticks off and removes tasks, and remembers them.
 
 ## 3. Deliverables
-1. A working web page (index.html, style.css, app.js)
+1. A working web page: index.html, style.css, app.js
+   Required file type: .html (stated)
 2. A short write-up explaining how it works
+   Required file type: .docx (chosen from the deliverable's name)
 
 ## 4. Requirements checklist
 - [ ] A text box and an Add button create a new task
@@ -33,7 +35,14 @@ Show you can build a small web page that adds, ticks off and removes tasks, and 
 - [ ] Empty tasks are not allowed
 - [ ] The page works on a phone screen
 
-## 7. Ambiguities / questions for the user
+## 7. Questions this assignment needs
+### Name on the write-up
+- Kind: name
+- Question: What name should go on the write-up?
+- Needed because: the write-up has a cover line with the author's name
+- Default: leave a marked placeholder
+
+## 8. Ambiguities / questions for the user
 BLOCKING: no
 - Should finished tasks move to the bottom? Default: keep them in place.
 """
@@ -136,18 +145,195 @@ def demo_run():
             "demoNow": now.isoformat(timespec="seconds")}
 
 
+BRIEF2 = """# Brief: Plan a Class Bake Sale
+
+## 1. Title and course
+Plan a Class Bake Sale · Business basics · AI policy: **preferred**
+
+## 2. Goal in one sentence
+Show you can plan a small sale: cost it, price it and pitch it.
+
+## 3. Deliverables
+1. Budget sheet with costs, prices and profit
+   Required file type: .xlsx (chosen from the deliverable's name)
+2. Pitch deck for the class, 5 slides
+   Required file type: .pptx (chosen from the deliverable's name)
+3. One-page plan for the day
+   Required file type: .docx (chosen from the deliverable's name)
+
+## 4. Requirements checklist
+- [ ] The budget lists every ingredient with its cost
+- [ ] Each item has a price and a profit per item
+- [ ] The sheet totals costs, sales and profit with formulas
+- [ ] The deck has 5 slides: idea, items, prices, plan, ask
+- [ ] The plan names who does what on the day
+- [ ] A break-even number of items is stated
+- [ ] All three files carry the team name
+- [ ] Prices are whole or half amounts
+
+## 7. Questions this assignment needs
+### What to sell
+- Kind: choice
+- Question: Which three items do you want to sell?
+- Needed because: the brief says "choose three baked items"
+- Options: cookies, brownies, banana bread | cupcakes, cookies, flapjacks | your own three
+- Default: cookies, brownies, banana bread
+
+### Team name
+- Kind: name
+- Question: What team name goes on the files?
+- Needed because: all three files carry the team name
+- Default: leave a marked placeholder
+
+## 8. Ambiguities / questions for the user
+BLOCKING: no
+"""
+
+SOURCES2 = """# Sources
+
+## Costing and pricing
+- Khan Academy "Break-even point": https://www.khanacademy.org/economics-finance-domain/core-finance
+- Investopedia "Break-even analysis": https://www.investopedia.com/terms/b/breakevenanalysis.asp
+- Investopedia "Markup": https://www.investopedia.com/terms/m/markup.asp
+
+## Spreadsheet formulas
+- Microsoft Support "SUM function": https://support.microsoft.com/en-us/office/sum-function
+- Microsoft Support "Create a simple formula": https://support.microsoft.com/en-us/office/create-a-simple-formula
+
+## Pitching
+- Canva "How to design a presentation": https://www.canva.com/learn/presentation-design
+
+## Gaps
+- None; every requirement has a source.
+"""
+
+REPORT2 = """# Report: Plan a Class Bake Sale
+
+## Requirements
+- [x] The budget lists every ingredient with its cost
+- [x] Each item has a price and a profit per item
+- [x] The sheet totals costs, sales and profit with formulas
+- [x] The deck has 5 slides: idea, items, prices, plan, ask
+- [x] The plan names who does what on the day
+- [x] A break-even number of items is stated
+- [ ] All three files carry the team name: placeholder left, no team name was given
+- [x] Prices are whole or half amounts
+
+## Deliverables
+- deliverables/bake-sale-budget.xlsx: 2 sheets, 14 formulas
+- deliverables/bake-sale-pitch.pptx: 5 slides
+- deliverables/bake-sale-plan.docx: 1 page
+
+## What you must do
+1. Put your team name where it says [YOUR TEAM NAME] in all three files.
+2. Check the ingredient prices against your local shop.
+3. Practise the pitch once out loud.
+4. Hand the three files in yourself.
+"""
+
+EVAL2 = """# Evaluation: Plan a Class Bake Sale
+
+Score: 88/100
+Verdict: PASS
+Round: 1
+
+## Requirements
+- [x] The budget lists every ingredient with its cost: PASS. 11 rows on the Costs sheet
+- [x] Each item has a price and a profit per item: PASS. Columns D and E on the Prices sheet
+- [x] The sheet totals costs, sales and profit with formulas: PASS. 14 formulas, none hard-typed
+- [x] The deck has 5 slides: PASS. 5 slides in the asked order
+- [x] The plan names who does what on the day: PASS. Table of 4 roles
+- [x] A break-even number of items is stated: PASS. Stated on slide 3 and in the sheet
+- [ ] All three files carry the team name: PARTIAL. Marked placeholder in all three
+- [x] Prices are whole or half amounts: PASS. All 3 prices checked
+
+## Must fix
+1. bake-sale-pitch.pptx: slide 3 says break-even is 40 items, the sheet says 42. Make them match.
+2. bake-sale-plan.docx: the clean-up role has no name or placeholder.
+
+## Nice to fix
+- Add a chart of profit per item to the budget sheet.
+
+## Left for the user
+- Fill in the team name.
+"""
+
+LOGS2 = {
+    "analyst": ["Started: reading the assignment text", "Read assignment-source.md: 3 deliverables, AI policy preferred",
+                "Two things are left open: what to sell, and the team name", "brief.md written: 3 deliverables, 8 checklist items. Done."],
+    "finder": ["Started: reading brief.md", "Searched for break-even point for a small sale", "Opened Khan Academy \"Break-even point\"",
+               "Opened Investopedia \"Break-even analysis\"", "Opened Investopedia \"Markup\"", "Searched for spreadsheet sum formula",
+               "Opened Microsoft Support \"SUM function\"", "Opened Microsoft Support \"Create a simple formula\"",
+               "Opened Canva \"How to design a presentation\"", "sources.md written: 6 sources, no gaps. Done."],
+    "builder": ["Started: reading brief, sources and choices", "Plan: budget sheet first, then the deck, then the plan",
+                "Built bake-sale-budget.xlsx: 2 sheets, 14 formulas", "Opened the sheet again: totals add up, break-even is 42 items",
+                "Built bake-sale-pitch.pptx: 5 slides", "Built bake-sale-plan.docx: 1 page with a roles table",
+                "Team name not given: left a marked placeholder in all three files", "report.md written: 7 of 8 ticked. Done."],
+    "evaluator": ["Started: round 1", "Opened bake-sale-budget.xlsx: 2 sheets, 14 formulas, none hard-typed",
+                  "Opened bake-sale-pitch.pptx: 5 slides in the asked order", "Slide 3 says 40 items, the sheet says 42: must fix",
+                  "Opened bake-sale-plan.docx: clean-up role is empty: must fix", "evaluation.md written: 88 out of 100, pass, 2 to fix. Done."],
+}
+
+
+def demo_run_done():
+    """A second made-up run that has finished, so the viewer has every kind of result to show."""
+    now = datetime(2026, 1, 1, 10, 30, 0)
+    t = lambda m: (now - timedelta(minutes=m)).isoformat(timespec="seconds")
+    base = demo_run()["agents"]
+    spans = {"analyst": (95, 93), "finder": (93, 88), "builder": (88, 76), "evaluator": (76, 72)}
+    outs = {"analyst": BRIEF2, "finder": SOURCES2, "builder": REPORT2, "evaluator": EVAL2}
+    sums = {"analyst": "3 deliverables, 8 checklist items, 2 questions, not blocking.", "finder": "6 sources on 4 websites, no gaps.",
+            "builder": "3 of 3 deliverables, 7 of 8 checks ticked.", "evaluator": "88/100, PASS, 2 left to fix"}
+    agents, events = [], [{"t": t(96), "agent": "pipeline", "msg": "Pipeline created (AI policy: preferred)"}]
+    for a in base:
+        s, f = spans[a["id"]]
+        a = dict(a, state="done", started=t(s), finished=t(f), summary=sums[a["id"]], outputText=outs[a["id"]],
+                 logText=f"# {a['label']} log\n\n" + "".join(f"- **step {i + 1}** {line}\n" for i, line in enumerate(LOGS2[a["id"]])))
+        agents.append(a)
+        events.append({"t": t(s), "agent": a["id"], "kind": "start", "msg": "Started"})
+        if a["id"] == "analyst":
+            events.append({"t": t(92.5), "agent": "pipeline", "kind": "event", "msg": "Answers: cookies, brownies, banana bread; team name skipped"})
+        events.append({"t": t(f), "agent": a["id"], "kind": "done", "msg": sums[a["id"]]})
+    ts = now.timestamp()
+    files = [{"path": p, "size": z, "mtime": ts - age} for p, z, age in [
+        ("assignment-source.md", 2210, 5800), ("brief.md", len(BRIEF2), 5600), ("choices.md", 410, 5500), ("sources.md", len(SOURCES2), 5300),
+        ("deliverables/bake-sale-budget.xlsx", 18432, 4900), ("deliverables/bake-sale-pitch.pptx", 412672, 4700),
+        ("deliverables/bake-sale-plan.docx", 24576, 4600), ("report.md", len(REPORT2), 4560), ("evaluation.md", len(EVAL2), 4320),
+        ("process/analyst-log.md", 380, 5600), ("process/finder-log.md", 720, 5300), ("process/builder-log.md", 690, 4560),
+        ("process/evaluator-log.md", 540, 4320), ("status.json", 2400, 4320)]]
+    return {"title": "DEMO · Plan a Class Bake Sale", "aiPolicy": "preferred", "folder": "~/Documents/Assignments/Bake Sale (demo)",
+            "created": t(96), "updated": t(72), "agents": agents, "events": events, "files": files,
+            "demoNow": now.isoformat(timespec="seconds")}
+
+
 def build(out):
     os.makedirs(os.path.join(out, "data"), exist_ok=True)
     shutil.copytree(os.path.join(HERE, "icons"), os.path.join(out, "icons"), dirs_exist_ok=True)
     for name in ("office3d.js", "style.css"):
         shutil.copy(os.path.join(HERE, name), os.path.join(out, name))
-    run = demo_run()
-    with open(os.path.join(out, "data", "run-0.json"), "w") as f:
-        json.dump(run, f, indent=1)
+    all_runs = [demo_run(), demo_run_done()]
+    # The first demo run has a made-up playground (demo/playground/); the second has none, to show the empty state.
+    with open(os.path.join(HERE, "demo", "playground", "playground.json")) as f:
+        meta = json.load(f)
+    shutil.copytree(os.path.join(HERE, "demo", "playground"), os.path.join(out, "play", "0"), dirs_exist_ok=True)
+    all_runs[0]["playground"] = {"state": "done", "title": meta["title"], "hasFile": True, "concepts": meta["concepts"],
+                                 "activities": meta["activities"], "minutes": meta["minutes"], "summary": "5 activities, about 10 minutes.",
+                                 "started": all_runs[0]["agents"][1]["finished"], "finished": all_runs[0]["agents"][2]["started"]}
+    all_runs[1]["playground"] = {"state": "none", "title": "", "hasFile": False, "concepts": [], "activities": [], "minutes": None, "summary": ""}
+    listing = []
+    for i, run in enumerate(all_runs):
+        with open(os.path.join(out, "data", f"run-{i}.json"), "w") as f:
+            json.dump(run, f, indent=1)
+        ev = next((a for a in run["agents"] if a["id"] == "evaluator"), {})
+        sc = re.search(r"^Score:\s*(\d+)\s*/\s*100", ev.get("outputText") or "", re.M)
+        vd = re.search(r"^Verdict:\s*(PASS|REVISE)", ev.get("outputText") or "", re.M)
+        listing.append({"id": i, "title": run["title"], "aiPolicy": run["aiPolicy"], "updated": run["updated"],
+                        "created": run["created"], "files": len(run["files"]), "score": int(sc.group(1)) if sc else None,
+                        "verdict": vd.group(1) if vd else None, "demoNow": run["demoNow"],
+                        "states": [a["state"] for a in run["agents"]],
+                        "playground": {k: run["playground"][k] for k in ("state", "title", "hasFile")}})
     with open(os.path.join(out, "data", "runs.json"), "w") as f:
-        json.dump([{"id": 0, "title": run["title"], "aiPolicy": run["aiPolicy"], "updated": run["updated"],
-                    "created": run["created"], "files": len(run["files"]), "score": None, "verdict": None,
-                    "demoNow": run["demoNow"], "states": [a["state"] for a in run["agents"]]}], f, indent=1)
+        json.dump(listing, f, indent=1)
     with open(os.path.join(out, "data", "me.json"), "w") as f:
         json.dump({"name": ""}, f)
 
@@ -196,6 +382,14 @@ const route = () =>"""),
     for name, text in files.items():
         with open(os.path.join(out, name), "w") as f:
             f.write(text)
+    # the separate playground page: same files, with the three addresses pointed at the static copies
+    shutil.copy(os.path.join(HERE, "playground.html"), os.path.join(out, "playground.html"))
+    js = open(os.path.join(HERE, "playground.js")).read()
+    live = "const API = { runs: '/api/runs', run: id => '/api/run?id=' + id, play: id => '/play/' + id + '/index.html' };"
+    if live not in js:
+        sys.exit("build_static: playground.js no longer has the API line this build rewrites")
+    with open(os.path.join(out, "playground.js"), "w") as f:
+        f.write(js.replace(live, "const API = { runs: 'data/runs.json', run: id => 'data/run-' + id + '.json', play: id => 'play/' + id + '/index.html' };", 1))
     open(os.path.join(out, ".nojekyll"), "w").close()
     print("built", out)
 

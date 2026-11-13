@@ -14,10 +14,16 @@ Four subagents, run one after another, each handing a file to the next:
 | 3 | `assigent-builder` | brief.md, choices.md, sources.md, inputs/, process/app-permissions.md | deliverables/, process/, report.md |
 | 4 | `assigent-evaluator` | assignment-source.md, brief.md, choices.md, report.md, deliverables/ | evaluation.md |
 
+Beside those four, the **Tutor** (`assigent-tutor`) builds a learning playground:
+
+| When | Agent | Reads | Writes |
+|---|---|---|---|
+| after step 2, while step 3 runs | `assigent-tutor` | assignment-source.md, brief.md, sources.md, choices.md | playground/index.html, playground/playground.json |
+
 The order of a run:
 ask where the assignment is → get it → make the folder → analyse →
-**ask only what this assignment needs** (one round) → find sources → build →
-evaluate (one fix round) → finish.
+**ask only what this assignment needs** (one round) → find sources → start the Tutor →
+build → evaluate (one fix round) → finish.
 
 **There is no setup and no fixed list of questions.** Every question comes from the
 assignment in front of you and what it needs. Nothing in this skill depends on
@@ -135,7 +141,7 @@ answers.
 |---|---|---|---|
 | `preferred` | analyse, ask, sources, build, evaluate | the full assignment; keeps the chat transcript if the deliverables ask for one | marks the deliverables; one fix round |
 | `not_preferred` | analyse, ask, sources, build in **coach mode**; evaluate only if the user's own draft exists | no finished deliverables: a step-by-step plan, a starter skeleton, and feedback on the user's own draft | feedback on the user's draft, no rewriting |
-| `banned` | analyse, ask (choices only), sources | nothing. Tell the user this one must be their own work; offer only the brief and study sources | nothing (skip, with the reason) |
+| `banned` | analyse, ask (choices only), sources, Tutor | nothing. Tell the user this one must be their own work; offer only the brief and study sources | nothing (skip, with the reason) |
 
 Never get around the policy, even if asked: say what it is and why the step is skipped.
 
@@ -255,6 +261,34 @@ Firecrawl CLI only if that is already installed and signed in. If this session's
 `~/.claude/agents/assigent-finder.md`. Show its summary; ask for any Gaps only the
 user can fill.
 
+## Step 6: start the Tutor (a playground for learning the concept)
+Run `assigent-tutor` with the folder path, the aiPolicy and the answers from Step 4.
+It builds `playground/index.html`: one self-contained page with 3 to 5 hands-on
+activities and a short quiz on the concept behind this assignment.
+
+- **It runs for every AI policy**, `banned` and coach mode included. Learning the
+  concept is always allowed. It never produces the assignment's answer.
+- **Start it, then start the Builder. Never wait for the Tutor before the Builder.**
+  Run it in the background where the session allows; otherwise run it after the
+  Builder has been started, or right after the Builder if agents can only run one at
+  a time. Under `banned` there is no Builder, so simply run it.
+- Keep the viewer current. The playground is tracked beside the four agents:
+
+```
+python3 ~/.claude/skills/assigent/ui/status.py playground start "<folder>" "Building the playground"
+python3 ~/.claude/skills/assigent/ui/status.py playground done  "<folder>" "<n> activities, about <m> minutes"
+python3 ~/.claude/skills/assigent/ui/status.py playground skip  "<folder>" "<reason>"
+python3 ~/.claude/skills/assigent/ui/status.py playground error "<folder>" "<what went wrong>"
+```
+
+- If this session has no `assigent-tutor` agent type, run a general-purpose agent told
+  to follow `~/.claude/agents/assigent-tutor.md`.
+- When it returns, check that `playground/index.html` exists, makes no network
+  requests and does not contain the assignment's answer. If it does, delete it and
+  record `playground error`.
+- The user opens it on its own page: `assigent play`, or the Playground icon in the
+  viewer.
+
 ## Deliverable file types
 Every deliverable is handed in as the file type the assignment requires: the stated
 type first; otherwise by what it is.
@@ -275,14 +309,14 @@ analyst writes `Required file type` per deliverable, the builder makes the real 
 and opens it to prove it, the evaluator fails a wrong or missing type. Check this
 yourself too before reporting.
 
-## Step 6: do the assignment
+## Step 7: do the assignment
 Run `assigent-builder` with the folder path, the aiPolicy, the answers from Step 4
 (choices and app permissions) and any answers the user gave to the Ambiguities. Then check its claims
 yourself: open the deliverables and confirm report.md's ticks. If the builder returned
 the report.md text in its reply instead of writing the file, save it yourself.
 Tell the builder not to use a browser.
 
-## Step 7: evaluate
+## Step 8: evaluate
 Run `assigent-evaluator` with the folder path, the aiPolicy, the answers from Step 4
 and `round 1`. If this
 session has no `assigent-evaluator` agent type, run a general-purpose agent told to
@@ -301,4 +335,5 @@ Finish with `status.py done "<folder>" evaluator "<score>/100, <verdict>, <n> le
 Tell the user: the folder path, deliverables done X/Y with their file types, the
 answers the work was built on (and which of them were defaults), the apps used, the evaluator's score and verdict, anything still on its "Must fix" list, unmet
 requirements, the placeholders they must fill in their own words, and the manual
-steps left. Handing in on the portal is always the user's step.
+steps left. Add one line for the playground: "Playground: open it with `assigent play`,
+or the file `<folder>/playground/index.html`." Handing in on the portal is always the user's step.

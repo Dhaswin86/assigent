@@ -1,0 +1,226 @@
+{
+ "title": "DEMO \u00b7 Plan a Class Bake Sale",
+ "aiPolicy": "preferred",
+ "folder": "~/Documents/Assignments/Bake Sale (demo)",
+ "created": "2026-01-01T08:54:00",
+ "updated": "2026-01-01T09:18:00",
+ "agents": [
+  {
+   "id": "analyst",
+   "name": "assigent-analyst",
+   "label": "Analyst",
+   "role": "Reads the brief and turns it into a checkable plan",
+   "reads": [
+    "assignment-source.md",
+    "inputs/"
+   ],
+   "output": "brief.md",
+   "log": "process/analyst-log.md",
+   "state": "done",
+   "started": "2026-01-01T08:55:00",
+   "finished": "2026-01-01T08:57:00",
+   "summary": "3 deliverables, 8 checklist items, 2 questions, not blocking.",
+   "outputText": "# Brief: Plan a Class Bake Sale\n\n## 1. Title and course\nPlan a Class Bake Sale \u00b7 Business basics \u00b7 AI policy: **preferred**\n\n## 2. Goal in one sentence\nShow you can plan a small sale: cost it, price it and pitch it.\n\n## 3. Deliverables\n1. Budget sheet with costs, prices and profit\n   Required file type: .xlsx (chosen from the deliverable's name)\n2. Pitch deck for the class, 5 slides\n   Required file type: .pptx (chosen from the deliverable's name)\n3. One-page plan for the day\n   Required file type: .docx (chosen from the deliverable's name)\n\n## 4. Requirements checklist\n- [ ] The budget lists every ingredient with its cost\n- [ ] Each item has a price and a profit per item\n- [ ] The sheet totals costs, sales and profit with formulas\n- [ ] The deck has 5 slides: idea, items, prices, plan, ask\n- [ ] The plan names who does what on the day\n- [ ] A break-even number of items is stated\n- [ ] All three files carry the team name\n- [ ] Prices are whole or half amounts\n\n## 7. Questions this assignment needs\n### What to sell\n- Kind: choice\n- Question: Which three items do you want to sell?\n- Needed because: the brief says \"choose three baked items\"\n- Options: cookies, brownies, banana bread | cupcakes, cookies, flapjacks | your own three\n- Default: cookies, brownies, banana bread\n\n### Team name\n- Kind: name\n- Question: What team name goes on the files?\n- Needed because: all three files carry the team name\n- Default: leave a marked placeholder\n\n## 8. Ambiguities / questions for the user\nBLOCKING: no\n",
+   "logText": "# Analyst log\n\n- **step 1** Started: reading the assignment text\n- **step 2** Read assignment-source.md: 3 deliverables, AI policy preferred\n- **step 3** Two things are left open: what to sell, and the team name\n- **step 4** brief.md written: 3 deliverables, 8 checklist items. Done.\n"
+  },
+  {
+   "id": "finder",
+   "name": "assigent-finder",
+   "label": "Source finder",
+   "role": "Finds docs, tutorials and past work for each requirement",
+   "reads": [
+    "brief.md"
+   ],
+   "output": "sources.md",
+   "log": "process/finder-log.md",
+   "state": "done",
+   "started": "2026-01-01T08:57:00",
+   "finished": "2026-01-01T09:02:00",
+   "summary": "6 sources on 4 websites, no gaps.",
+   "outputText": "# Sources\n\n## Costing and pricing\n- Khan Academy \"Break-even point\": https://www.khanacademy.org/economics-finance-domain/core-finance\n- Investopedia \"Break-even analysis\": https://www.investopedia.com/terms/b/breakevenanalysis.asp\n- Investopedia \"Markup\": https://www.investopedia.com/terms/m/markup.asp\n\n## Spreadsheet formulas\n- Microsoft Support \"SUM function\": https://support.microsoft.com/en-us/office/sum-function\n- Microsoft Support \"Create a simple formula\": https://support.microsoft.com/en-us/office/create-a-simple-formula\n\n## Pitching\n- Canva \"How to design a presentation\": https://www.canva.com/learn/presentation-design\n\n## Gaps\n- None; every requirement has a source.\n",
+   "logText": "# Source finder log\n\n- **step 1** Started: reading brief.md\n- **step 2** Searched for break-even point for a small sale\n- **step 3** Opened Khan Academy \"Break-even point\"\n- **step 4** Opened Investopedia \"Break-even analysis\"\n- **step 5** Opened Investopedia \"Markup\"\n- **step 6** Searched for spreadsheet sum formula\n- **step 7** Opened Microsoft Support \"SUM function\"\n- **step 8** Opened Microsoft Support \"Create a simple formula\"\n- **step 9** Opened Canva \"How to design a presentation\"\n- **step 10** sources.md written: 6 sources, no gaps. Done.\n"
+  },
+  {
+   "id": "builder",
+   "name": "assigent-builder",
+   "label": "Builder",
+   "role": "Does the assignment and checks it against the brief",
+   "reads": [
+    "brief.md",
+    "sources.md",
+    "inputs/"
+   ],
+   "output": "report.md",
+   "log": "process/builder-log.md",
+   "state": "done",
+   "started": "2026-01-01T09:02:00",
+   "finished": "2026-01-01T09:14:00",
+   "summary": "3 of 3 deliverables, 7 of 8 checks ticked.",
+   "outputText": "# Report: Plan a Class Bake Sale\n\n## Requirements\n- [x] The budget lists every ingredient with its cost\n- [x] Each item has a price and a profit per item\n- [x] The sheet totals costs, sales and profit with formulas\n- [x] The deck has 5 slides: idea, items, prices, plan, ask\n- [x] The plan names who does what on the day\n- [x] A break-even number of items is stated\n- [ ] All three files carry the team name: placeholder left, no team name was given\n- [x] Prices are whole or half amounts\n\n## Deliverables\n- deliverables/bake-sale-budget.xlsx: 2 sheets, 14 formulas\n- deliverables/bake-sale-pitch.pptx: 5 slides\n- deliverables/bake-sale-plan.docx: 1 page\n\n## What you must do\n1. Put your team name where it says [YOUR TEAM NAME] in all three files.\n2. Check the ingredient prices against your local shop.\n3. Practise the pitch once out loud.\n4. Hand the three files in yourself.\n",
+   "logText": "# Builder log\n\n- **step 1** Started: reading brief, sources and choices\n- **step 2** Plan: budget sheet first, then the deck, then the plan\n- **step 3** Built bake-sale-budget.xlsx: 2 sheets, 14 formulas\n- **step 4** Opened the sheet again: totals add up, break-even is 42 items\n- **step 5** Built bake-sale-pitch.pptx: 5 slides\n- **step 6** Built bake-sale-plan.docx: 1 page with a roles table\n- **step 7** Team name not given: left a marked placeholder in all three files\n- **step 8** report.md written: 7 of 8 ticked. Done.\n"
+  },
+  {
+   "id": "evaluator",
+   "name": "assigent-evaluator",
+   "label": "Evaluator",
+   "role": "Marks the finished work like a strict reviewer and lists what to fix",
+   "reads": [
+    "assignment-source.md",
+    "brief.md",
+    "report.md",
+    "deliverables/"
+   ],
+   "output": "evaluation.md",
+   "log": "process/evaluator-log.md",
+   "state": "done",
+   "started": "2026-01-01T09:14:00",
+   "finished": "2026-01-01T09:18:00",
+   "summary": "88/100, PASS, 2 left to fix",
+   "outputText": "# Evaluation: Plan a Class Bake Sale\n\nScore: 88/100\nVerdict: PASS\nRound: 1\n\n## Requirements\n- [x] The budget lists every ingredient with its cost: PASS. 11 rows on the Costs sheet\n- [x] Each item has a price and a profit per item: PASS. Columns D and E on the Prices sheet\n- [x] The sheet totals costs, sales and profit with formulas: PASS. 14 formulas, none hard-typed\n- [x] The deck has 5 slides: PASS. 5 slides in the asked order\n- [x] The plan names who does what on the day: PASS. Table of 4 roles\n- [x] A break-even number of items is stated: PASS. Stated on slide 3 and in the sheet\n- [ ] All three files carry the team name: PARTIAL. Marked placeholder in all three\n- [x] Prices are whole or half amounts: PASS. All 3 prices checked\n\n## Must fix\n1. bake-sale-pitch.pptx: slide 3 says break-even is 40 items, the sheet says 42. Make them match.\n2. bake-sale-plan.docx: the clean-up role has no name or placeholder.\n\n## Nice to fix\n- Add a chart of profit per item to the budget sheet.\n\n## Left for the user\n- Fill in the team name.\n",
+   "logText": "# Evaluator log\n\n- **step 1** Started: round 1\n- **step 2** Opened bake-sale-budget.xlsx: 2 sheets, 14 formulas, none hard-typed\n- **step 3** Opened bake-sale-pitch.pptx: 5 slides in the asked order\n- **step 4** Slide 3 says 40 items, the sheet says 42: must fix\n- **step 5** Opened bake-sale-plan.docx: clean-up role is empty: must fix\n- **step 6** evaluation.md written: 88 out of 100, pass, 2 to fix. Done.\n"
+  }
+ ],
+ "events": [
+  {
+   "t": "2026-01-01T08:54:00",
+   "agent": "pipeline",
+   "msg": "Pipeline created (AI policy: preferred)"
+  },
+  {
+   "t": "2026-01-01T08:55:00",
+   "agent": "analyst",
+   "kind": "start",
+   "msg": "Started"
+  },
+  {
+   "t": "2026-01-01T08:57:30",
+   "agent": "pipeline",
+   "kind": "event",
+   "msg": "Answers: cookies, brownies, banana bread; team name skipped"
+  },
+  {
+   "t": "2026-01-01T08:57:00",
+   "agent": "analyst",
+   "kind": "done",
+   "msg": "3 deliverables, 8 checklist items, 2 questions, not blocking."
+  },
+  {
+   "t": "2026-01-01T08:57:00",
+   "agent": "finder",
+   "kind": "start",
+   "msg": "Started"
+  },
+  {
+   "t": "2026-01-01T09:02:00",
+   "agent": "finder",
+   "kind": "done",
+   "msg": "6 sources on 4 websites, no gaps."
+  },
+  {
+   "t": "2026-01-01T09:02:00",
+   "agent": "builder",
+   "kind": "start",
+   "msg": "Started"
+  },
+  {
+   "t": "2026-01-01T09:14:00",
+   "agent": "builder",
+   "kind": "done",
+   "msg": "3 of 3 deliverables, 7 of 8 checks ticked."
+  },
+  {
+   "t": "2026-01-01T09:14:00",
+   "agent": "evaluator",
+   "kind": "start",
+   "msg": "Started"
+  },
+  {
+   "t": "2026-01-01T09:18:00",
+   "agent": "evaluator",
+   "kind": "done",
+   "msg": "88/100, PASS, 2 left to fix"
+  }
+ ],
+ "files": [
+  {
+   "path": "assignment-source.md",
+   "size": 2210,
+   "mtime": 1767237800.0
+  },
+  {
+   "path": "brief.md",
+   "size": 1513,
+   "mtime": 1767238000.0
+  },
+  {
+   "path": "choices.md",
+   "size": 410,
+   "mtime": 1767238100.0
+  },
+  {
+   "path": "sources.md",
+   "size": 686,
+   "mtime": 1767238300.0
+  },
+  {
+   "path": "deliverables/bake-sale-budget.xlsx",
+   "size": 18432,
+   "mtime": 1767238700.0
+  },
+  {
+   "path": "deliverables/bake-sale-pitch.pptx",
+   "size": 412672,
+   "mtime": 1767238900.0
+  },
+  {
+   "path": "deliverables/bake-sale-plan.docx",
+   "size": 24576,
+   "mtime": 1767239000.0
+  },
+  {
+   "path": "report.md",
+   "size": 879,
+   "mtime": 1767239040.0
+  },
+  {
+   "path": "evaluation.md",
+   "size": 1039,
+   "mtime": 1767239280.0
+  },
+  {
+   "path": "process/analyst-log.md",
+   "size": 380,
+   "mtime": 1767238000.0
+  },
+  {
+   "path": "process/finder-log.md",
+   "size": 720,
+   "mtime": 1767238300.0
+  },
+  {
+   "path": "process/builder-log.md",
+   "size": 690,
+   "mtime": 1767239040.0
+  },
+  {
+   "path": "process/evaluator-log.md",
+   "size": 540,
+   "mtime": 1767239280.0
+  },
+  {
+   "path": "status.json",
+   "size": 2400,
+   "mtime": 1767239280.0
+  }
+ ],
+ "demoNow": "2026-01-01T10:30:00",
+ "playground": {
+  "state": "none",
+  "title": "",
+  "hasFile": false,
+  "concepts": [],
+  "activities": [],
+  "minutes": null,
+  "summary": ""
+ }
+}

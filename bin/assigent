@@ -3,6 +3,7 @@
 
   assigent run           start Claude Code on your next assignment
   assigent view          open the viewer that shows a run
+  assigent play          open the playground made for a run
   assigent status        list your runs, each agent's state and the score
   assigent doctor        check that everything is installed
   assigent preferences   optional: see or change the answers Assigent remembers
@@ -30,7 +31,7 @@ VIEWER_STATE = os.path.join(CONFIG_DIR, "viewer.json")
 AGENTS_DIR = os.path.join(HOME, ".claude", "agents")
 SKILL_DIR = os.path.join(HOME, ".claude", "skills", "assigent")
 CLI_PATH = os.path.join(HOME, ".local", "bin", "assigent")
-AGENT_FILES = ["assigent-analyst.md", "assigent-finder.md", "assigent-builder.md", "assigent-evaluator.md"]
+AGENT_FILES = ["assigent-analyst.md", "assigent-finder.md", "assigent-builder.md", "assigent-evaluator.md", "assigent-tutor.md"]
 DEFAULT_FOLDER = "~/Documents/Assignments"
 FIRST_PORT = 8850
 
@@ -441,7 +442,10 @@ def find_runs(root):
             continue
         folder = os.path.dirname(p)
         score, verdict = read_score(folder)
-        runs.append({"folder": folder, "title": s.get("title") or os.path.basename(folder),
+        pg = s.get("playground") if isinstance(s.get("playground"), dict) else {}
+        has_play = os.path.isfile(os.path.join(folder, "playground", "index.html"))
+        play = "being made" if pg.get("state") == "running" else "ready" if has_play else "skipped" if pg.get("state") == "skipped" else "none"
+        runs.append({"playground": play, "folder": folder, "title": s.get("title") or os.path.basename(folder),
                      "aiPolicy": s.get("aiPolicy"), "updated": s.get("updated", ""),
                      "agents": agents, "score": score, "verdict": verdict})
     runs.sort(key=lambda r: r["updated"], reverse=True)
@@ -470,8 +474,47 @@ def cmd_status(a):
             say(f"  score: {r['score']}/100" + (f", {r['verdict']}" if r["verdict"] else ""))
         else:
             say("  score: not marked yet")
+        say(f"  playground: {r['playground']}" + ("   (open it with: assigent play)" if r["playground"] == "ready" else ""))
         say(f"  AI policy: {r['aiPolicy'] or 'unknown'}   updated: {r['updated'] or 'unknown'}")
         say(f"  folder: {r['folder']}\n")
+    return OK
+
+
+# ---------------------------------------------------------------- play
+
+def cmd_play(a):
+    """Open a run's playground: on its own viewer page when the viewer is running, otherwise the file itself."""
+    root = save_folder(quiet_config())
+    runs = find_runs(root) if os.path.isdir(root) else []
+    if not runs:
+        fail("No runs yet, so there is no playground. Start one with: assigent run", FAILED)
+    want = " ".join(a.run).strip()
+    if not want:
+        idx = next((i for i, r in enumerate(runs) if r["playground"] == "ready"), 0)
+    elif want.isdigit():
+        idx = int(want) - 1
+        if not 0 <= idx < len(runs):
+            fail(f"There is no run number {want}. \"assigent status\" lists {len(runs)}.", USAGE)
+    else:
+        idx = next((i for i, r in enumerate(runs) if want.lower() in str(r["title"]).lower()), None)
+        if idx is None:
+            fail(f"No run has \"{want}\" in its name. See them with: assigent status", USAGE)
+    run = runs[idx]
+    if run["playground"] != "ready":
+        why = {"being made": "is still being made. Try again in a minute.", "skipped": "was skipped for this run."}.get(
+            run["playground"], "has not been made yet. The Tutor makes it after the Source finder.")
+        fail(f"The playground for \"{run['title']}\" {why}", FAILED)
+    path = os.path.join(run["folder"], "playground", "index.html")
+    st = viewer_state()
+    target = f"http://127.0.0.1:{st['port']}/playground.html?run={idx}" if st else "file://" + urllib.request.pathname2url(path)
+    say(f"Playground for \"{run['title']}\"")
+    say(target if st else path)
+    if not a.no_open:
+        try:
+            import webbrowser
+            webbrowser.open(target)
+        except Exception:
+            say("Open that in your browser.")
     return OK
 
 
@@ -616,7 +659,7 @@ def cmd_doctor(a):
               "Run: assigent preferences")
 
     missing = [f for f in AGENT_FILES if not os.path.isfile(os.path.join(AGENTS_DIR, f))]
-    check("Agents", not missing, "missing " + ", ".join(missing) if missing else "4 agents in ~/.claude/agents",
+    check("Agents", not missing, "missing " + ", ".join(missing) if missing else "5 agents in ~/.claude/agents",
           "Run the installer again (./install.sh)")
 
     skill_ok = all(os.path.isfile(os.path.join(SKILL_DIR, p)) for p in
@@ -718,6 +761,12 @@ def main(argv=None):
     s.add_argument("--foreground", action="store_true", help="keep running in this terminal until Ctrl+C")
     s.add_argument("--stop", action="store_true", help="stop the viewer")
     s.set_defaults(fn=cmd_view)
+
+    s = sub.add_parser("play", help="open the playground made for a run",
+                       description="Open a run's playground. With no name it opens the newest run that has one.")
+    s.add_argument("run", nargs="*", help="a run number from \"assigent status\", or part of its name")
+    s.add_argument("--no-open", action="store_true", help="print where it is, do not open the browser")
+    s.set_defaults(fn=cmd_play)
 
     s = sub.add_parser("status", help="list your runs, each agent's state and the score")
     s.add_argument("--json", action="store_true", help="print as JSON")

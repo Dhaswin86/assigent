@@ -68,3 +68,11 @@ One line per step, plain words.
   reference lives only there, list it under Gaps and say the user must download it
   into `inputs/`.
 - End your reply with a 3-line summary: sources found, gaps, the single most useful source.
+
+## Keep it short: results are read at a glance
+The user said the agents' results are "too texty". So:
+- Start sources.md with a 2-line summary: how many sources, what they cover, any gap.
+- One table, one row per source: what it is for | title as a link | one-line takeaway (12 words at most).
+  No paragraphs under each source. At most 12 sources unless the brief needs more.
+- Gaps as a short list. Nothing else.
+- Your reply to the orchestrator: 3 lines.

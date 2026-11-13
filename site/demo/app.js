@@ -194,46 +194,142 @@ function office(s) {
   </svg>`;
 }
 
-/* ---------- task status sidebar ---------- */
-let filter = 'all';
-let copyLabel = 'Copy start command';
-function tasks(s) {
-  const out = [];
-  s.agents.forEach(a => {
-    const items = logItems(a.logText);
-    items.forEach((it, i) => {
-      const live = a.state === 'running' && i === items.length - 1;
-      out.push({ st: live ? 'doing' : 'done', txt: it.t, agent: a.label, out: a.output, n: it.n, when: live ? 'now' : (a.finished ? fmtTime(a.finished) : '') });
-    });
-    if (a.state === 'running' && !items.length) out.push({ st: 'doing', txt: 'Getting started…', agent: a.label, out: a.output, when: 'now' });
-    if (a.state === 'waiting') out.push({ st: 'waiting', txt: `Write ${a.output}`, agent: a.label, out: a.output, when: 'next' });
-    if (a.state === 'skipped') out.push({ st: 'skipped', txt: a.summary || 'Skipped by AI policy', agent: a.label, out: a.output, when: '' });
-  });
-  return out.reverse();
+/* ---------- results at a glance: numbers read from the agents' own files ---------- */
+// Everything here is parsed from text the viewer already loaded. A value that cannot be read is null and shows as a dash.
+const EXT = 'pptx|xlsx|docx|pdf|psd|ai|fig|indd|png|jpe?g|mp4|html|css|js|py|java|key|numbers|pages|csv|zip|txt|md';
+const dash = v => (v === null || v === undefined || v === '') ? '–' : v;
+const openDisc = new Set();          // which "show more" parts are open; kept across re-renders
+// The text under a heading, whether it is written "## 3. Deliverables" or "3. **Deliverables**: ..."
+function sect(out, names) {
+  const m = new RegExp('^(?:#{1,4}[ \\t]*)?(?:\\d+\\.[ \\t]*)?\\**[ \\t]*(?:' + names + ')\\b[^\\n]*$', 'im').exec(out || '');
+  if (!m) return null;
+  const rest = out.slice(m.index + m[0].length), end = /^(?:#{1,2}[ \t]+\S|\d+\.[ \t]*\*\*)/m.exec(rest);
+  return m[0].replace(/^[^:]*:?/, '') + '\n' + (end ? rest.slice(0, end.index) : rest);
 }
+const extOf = name => { const m = new RegExp('\\.(' + EXT + ')\\b', 'i').exec(name || ''); return m ? m[1].toLowerCase() : ''; };
+const clip = (x, n) => x.length > n ? x.slice(0, n - 1).trimEnd() + '…' : x;
+const bare = x => x.replace(/[*_`]/g, '').replace(/\s+/g, ' ').trim();
+function analystFacts(out) {
+  if (!out) return { deliverables: null, list: [], checks: null, questions: null, blocking: null };
+  const d = sect(out, 'Deliverables'), list = [];
+  if (d !== null) d.split('\n').forEach(l => {
+    const item = /^\s*\d+\.\s+(.*)$/.exec(l), row = /^\s*\|\s*(?!-)([^|]+)\|\s*`?\.?([a-z0-9]{2,7})`?\s*\|/i.exec(l), type = /Required file type:\s*`?\.?([a-z0-9]{2,7})/i.exec(l);
+    if (item) list.push({ name: clip(bare(item[1]).replace(/\s*[(:].*$/, ''), 44), ext: extOf(item[1]) });
+    else if (row && new RegExp('^(' + EXT + ')$', 'i').test(row[2])) list.push({ name: clip(bare(row[1]), 44), ext: row[2].toLowerCase() });
+    if (type && list.length) list[list.length - 1].ext = type[1].toLowerCase();
+  });
+  const q = sect(out, 'Questions this assignment needs|Choices for the user');
+  const b = /BLOCKING:\s*(yes|no)/i.exec(out);
+  return { deliverables: d === null ? null : list.length, list, checks: (out.match(/^\s*- \[[ xX]\]/gm) || []).length,
+    questions: q === null ? null : (q.match(/^\s*###\s+\S/gm) || []).length, blocking: b ? b[1].toLowerCase() : null };
+}
+function finderFacts(s, a) {
+  const u = sitesUsed(s), out = a.outputText || '', g = sect(out, 'Gaps');
+  const gaps = g === null ? null : (g.match(/^\s*[-*]\s+(?!none\b)\S/gim) || []).length;
+  return { sources: out ? u.sites.reduce((x, y) => x + y.pages.length, 0) : null, sites: out ? u.sites.length : null, top: u.sites, gaps, searches: u.searches };
+}
+function builderFacts(s, a) {
+  const out = a.outputText || '', files = s.files.filter(f => f.path.startsWith('deliverables/'));
+  const all = (out.match(/^\s*- \[[ xX]\]/gm) || []).length, ticked = (out.match(/^\s*- \[[xX]\]/gm) || []).length;
+  return { files, all: out ? all : null, ticked: out ? ticked : null, left: handIns(s) };
+}
+function evalFacts(out) {
+  if (!out) return { score: null, verdict: '', pass: null, partial: null, fail: null, must: [], round: null };
+  const v = verdict(out), r = sect(out, 'Requirements') || '', count = k => (r.match(new RegExp(':\\s*\\**' + k + '\\b', 'g')) || []).length;
+  const must = (sect(out, 'Must fix') || '').split('\n').map(l => /^\s*(?:\d+\.|[-*])\s+(.+)$/.exec(l)).filter(m => m && !/^(none|nothing)\b/i.test(m[1])).map(m => bare(m[1]));
+  const round = /^Round:\s*(\d+)/im.exec(out);
+  return { score: v.score, verdict: v.verdict, pass: count('PASS'), partial: count('PARTIAL'), fail: count('FAIL'), must, round: round ? +round[1] : null };
+}
+// The 2 to 4 numbers that sum an agent up (used on its page, in its story chapter and on the home screen)
+function tilesFor(s, a) {
+  if (a.id === 'analyst') { const f = analystFacts(a.outputText); return [[f.deliverables, 'things to hand in'], [a.outputText ? f.checks : null, 'checklist items'], [f.questions, 'questions for you']]; }
+  if (a.id === 'finder') { const f = finderFacts(s, a); return [[f.sources, 'sources'], [f.sites, 'websites'], [f.gaps, 'gaps']]; }
+  if (a.id === 'builder') { const f = builderFacts(s, a); return [[f.files.length || null, 'files made'], [f.all ? `${f.ticked}/${f.all}` : null, 'checks ticked'], [a.outputText ? f.left.length : null, 'left for you']]; }
+  const f = evalFacts(a.outputText);
+  return [[f.score === null ? null : f.score, 'out of 100'], [a.outputText ? f.must.length : null, 'must fix'], [f.pass, 'passed']];
+}
+const tiles = list => `<div class="tiles">${list.map(([v, k]) => `<div class="tile"><b>${esc(dash(v))}</b><span>${esc(k)}</span></div>`).join('')}</div>`;
+// One short chip for the home timeline
+function resultChip(s, a) {
+  if (!a.outputText && a.id !== 'builder') return '';
+  if (a.id === 'analyst') { const f = analystFacts(a.outputText); return f.checks ? `${f.checks} checks` : ''; }
+  if (a.id === 'finder') { const f = finderFacts(s, a); return f.sources ? `${f.sources} sources` : ''; }
+  if (a.id === 'builder') { const n = builderFacts(s, a).files.length; return n ? `${n} file${n === 1 ? '' : 's'}` : ''; }
+  const f = evalFacts(a.outputText); return f.score === null ? '' : `${f.score}/100${f.verdict ? ' ' + f.verdict : ''}`;
+}
+const badge = ext => ext ? `<i class="ext x-${esc(ext.replace(/jpe?g/, 'jpg'))}">.${esc(ext)}</i>` : '';
+const more = (n, shown) => n > shown ? `<span class="chipx more-n">+${n - shown} more</span>` : '';
+function disclosure(key, closed, open) {
+  const on = openDisc.has(key);
+  return `<button class="disc" type="button" data-disc="${esc(key)}" aria-expanded="${on}" aria-controls="d-${esc(key)}"><i aria-hidden="true"></i><span>${on ? open : closed}</span></button>`;
+}
+function resultCard(s, a, compact) {
+  const has = !!a.outputText;
+  let body = '';
+  if (a.id === 'analyst') {
+    const f = analystFacts(a.outputText);
+    body = `${f.list.length ? `<div class="chips" aria-label="Things to hand in">${f.list.slice(0, compact ? 3 : 8).map(d => `<span class="chipx file">${badge(d.ext)}${esc(d.name)}</span>`).join('')}${more(f.list.length, compact ? 3 : 8)}</div>` : ''}
+      ${f.blocking ? `<div class="chips"><span class="tag ${f.blocking === 'yes' ? 'go' : 'ok'}">${f.blocking === 'yes' ? 'Needs your answer first' : 'Nothing blocks the work'}</span></div>` : ''}`;
+  } else if (a.id === 'finder') {
+    const f = finderFacts(s, a);
+    body = `${f.top.length ? `<div class="chips" aria-label="Websites used">${f.top.slice(0, compact ? 3 : 6).map(x => `<span class="chipx site">${esc(x.host)}<i class="n">${x.pages.length}</i></span>`).join('')}${more(f.top.length, compact ? 3 : 6)}</div>` : ''}
+      ${!compact && f.searches.length ? `<div class="chips searches" aria-label="Searches"><span class="lab">Searched</span>${f.searches.slice(0, 5).map(q => `<span class="chipx q">${esc(clip(plain(q), 38))}</span>`).join('')}${more(f.searches.length, 5)}</div>` : ''}
+      ${f.gaps !== null ? `<div class="chips"><span class="tag ${f.gaps ? 'go' : 'ok'}">${f.gaps ? f.gaps + ' gap' + (f.gaps === 1 ? '' : 's') : 'No gaps'}</span></div>` : ''}`;
+  } else if (a.id === 'builder') {
+    const f = builderFacts(s, a), pct = f.all ? Math.round(f.ticked / f.all * 100) : 0;
+    body = `${f.all ? `<div class="prog" role="img" aria-label="${f.ticked} of ${f.all} checks ticked"><i style="width:${pct}%"></i></div>` : ''}
+      ${f.files.length ? `<div class="chips" aria-label="Files made">${f.files.slice(0, compact ? 3 : 8).map(x => { const n = x.path.replace(/^deliverables\//, ''); return `<span class="chipx file" title="${esc(x.path)}">${badge(extOf(n))}${esc(clip(n, 34))}<i class="n">${size(x.size)}</i></span>`; }).join('')}${more(f.files.length, compact ? 3 : 8)}</div>` : ''}
+      ${!compact && f.left.length ? `<div class="left"><span class="lab">Left for you</span><ol>${f.left.slice(0, 3).map(x => `<li>${esc(clip(x, 110))}</li>`).join('')}</ol>${more(f.left.length, 3)}</div>` : ''}`;
+  } else {
+    const f = evalFacts(a.outputText), n = (f.pass || 0) + (f.partial || 0) + (f.fail || 0), C = 2 * Math.PI * 34;
+    const seg = (k, v) => v ? `<i class="${k}" style="flex:${v}" title="${v} ${k}"></i>` : '';
+    body = has ? `<div class="marks">
+        <div class="ring ${f.verdict || 'none'}" role="img" aria-label="${f.score === null ? 'No score yet' : f.score + ' out of 100'}">
+          <svg viewBox="0 0 80 80" aria-hidden="true"><circle class="bg" cx="40" cy="40" r="34"/>${f.score === null ? '' : `<circle class="fg" cx="40" cy="40" r="34" stroke-dasharray="${(C * Math.min(100, f.score) / 100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/>`}</svg>
+          <b>${dash(f.score)}</b><span>of 100</span></div>
+        <div class="marks-side"><div class="chips">${f.verdict ? `<span class="tag ${f.verdict === 'pass' ? 'ok' : 'go'}">${f.verdict === 'pass' ? 'Pass' : 'Revise'}</span>` : ''}${f.round ? `<span class="tag idle">Round ${f.round}</span>` : ''}<span class="tag ${f.must.length ? 'no' : 'ok'}">${f.must.length} must fix</span></div>
+          ${n ? `<div class="stack" role="img" aria-label="${f.pass} passed, ${f.partial} partial, ${f.fail} failed">${seg('pass', f.pass)}${seg('partial', f.partial)}${seg('fail', f.fail)}</div>
+          <div class="legend"><span><i class="pass"></i>${f.pass} pass</span><span><i class="partial"></i>${f.partial} partial</span><span><i class="fail"></i>${f.fail} fail</span></div>` : ''}</div></div>
+      ${!compact && f.must.length ? `<div class="left"><span class="lab">Must fix</span><ol>${f.must.slice(0, 3).map(x => `<li>${esc(clip(x, 110))}</li>`).join('')}</ol>${more(f.must.length, 3)}</div>` : ''}` : '';
+  }
+  const key = 'full-' + a.id;
+  return `<section class="rcard${compact ? ' compact' : ''}" data-result="${a.id}">
+    ${compact ? '' : `<div class="rhead"><b>Result</b><code>${esc(a.output)}</code></div>`}
+    ${a.id === 'evaluator' && has ? '' : tiles(tilesFor(s, a))}
+    ${body}
+    ${!has && a.id !== 'builder' ? `<p class="empty">Not written yet.</p>` : ''}
+    ${!compact && has ? `${disclosure(key, 'Read the full file', 'Hide the full file')}<div class="full md" id="d-${key}" ${openDisc.has(key) ? '' : 'hidden'}>${md(a.outputText)}</div>` : ''}
+  </section>`;
+}
+
+/* ---------- home: what happened, as four rows (plus the Tutor, which has no room) ---------- */
+const PLAY_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.500h6a1.500 1.500 0 0 1 1.500 1.500v1.500h1.500a2.500 2.500 0 0 1 0 5H16.500V18a1.500 1.500 0 0 1-1.500 1.500h-2v-1.500a1.500 1.500 0 0 0-3 0v1.500H9A1.500 1.500 0 0 1 7.500 18v-4H6a2 2 0 0 1 0-4h1.500V6A1.500 1.500 0 0 1 9 4.500z"/></svg>';
+function tutorRow(s) {
+  const p = s.playground || { state: 'none' }, n = (p.activities || []).length;
+  const tag = p.state === 'running' ? ['go', 'Making it'] : p.state === 'done' && p.hasFile ? ['ok', 'Ready'] : p.state === 'skipped' ? ['idle', 'Skipped'] : p.state === 'error' ? ['no', 'Stopped'] : ['idle', 'Not made'];
+  const chip = p.hasFile ? (n ? `${n} activities` : 'Open') : '';
+  return `<li><a class="tl-row tutor s-${esc(p.state)}" href="playground.html?run=${runId}" aria-label="Tutor: playground ${tag[1]}${chip ? ', ' + chip : ''}">
+    <span class="tl-ic glyph" aria-hidden="true">${PLAY_ICON}</span>
+    <span class="tl-main"><b>Tutor</b><span class="tl-sub"><span class="tag ${tag[0]}">${tag[1]}</span><span class="tl-time">Playground</span></span></span>
+    ${chip ? `<span class="chipx res">${esc(chip)}</span>` : '<span class="chipx res none">–</span>'}</a></li>`;
+}
+let copyLabel = 'Copy start command';
 function sidebar(s) {
-  const all = tasks(s), count = k => all.filter(t => t.st === k).length;
-  const shown = filter === 'all' ? all : all.filter(t => t.st === filter);
-  const f = (k, label, n) => `<button data-filter="${k}" class="${filter === k ? 'on' : ''}">${label} ${n}</button>`;
+  const tagOf = a => a.state === 'running' ? ['go', 'Working'] : a.state === 'done' ? ['ok', 'Done'] : a.state === 'error' ? ['no', 'Stopped'] : a.state === 'skipped' ? ['idle', 'Skipped'] : ['idle', 'Waiting'];
+  const last = s.agents.slice().reverse().find(a => a.outputText) || null;
   return `<aside class="dash-side">
     <section class="dcard side">
       <div class="hd"><h2>What happened</h2><small><a href="#/story">Open the full story</a></small></div>
-      <div class="sec"><div class="filters" role="group" aria-label="How to show it"><button data-mode="story" class="${mode === 'story' ? 'on' : ''}">Story</button><button data-mode="list" class="${mode === 'list' ? 'on' : ''}">List</button></div>
-      ${mode === 'list' ? `<div class="filters" role="group" aria-label="Filter the list">${f('all', 'all', all.length)}${f('doing', 'doing', count('doing'))}${f('waiting', 'waiting', count('waiting'))}${f('done', 'done', count('done'))}</div>` : ''}</div>
-      <div class="tasks">${mode === 'story' ? story(s, false) : shown.length ? shown.map(t => `<div class="task">
-        <span class="pill ${t.st}">${t.st}</span><span class="txt">${esc(t.txt)}</span><span class="when">${esc(t.when)}</span>
-        ${t.st === 'doing' ? '<div class="bar"><i></i></div>' : ''}
-        <span class="sub">${esc(t.agent)}, ${esc(t.out)}${t.n ? ', ' + esc(t.n) : ''}</span></div>`).join('') : '<p class="empty">Nothing here.</p>'}</div>
+      <ol class="tl">${s.agents.map(a => {
+        const tag = tagOf(a), chip = resultChip(s, a), file = (WORKERS[a.id] || [[]])[0][0];
+        const time = a.state === 'running' ? `<span class="el" data-start="${esc(a.started)}">${dur(a.started)}</span>` : a.started && a.finished ? dur(a.started, a.finished) : '';
+        return `<li><a class="tl-row s-${a.state}" href="#/${a.id}" aria-label="${esc(a.label)}: ${tag[1]}${chip ? ', ' + esc(chip) : ''}">
+          <span class="tl-ic" aria-hidden="true">${ICONS[file] || ''}</span>
+          <span class="tl-main"><b>${esc(a.label)}</b><span class="tl-sub"><span class="tag ${tag[0]}">${tag[1]}</span>${time ? `<span class="tl-time">${time}</span>` : ''}</span></span>
+          ${chip ? `<span class="chipx res">${esc(chip)}</span>` : '<span class="chipx res none">–</span>'}</a></li>`;
+      }).join('')}${tutorRow(s)}</ol>
     </section>
-    <section class="dcard">
-      <div class="hd"><h2>The four agents</h2><small>AI help: ${esc(String(s.aiPolicy).replace('_', ' '))}</small></div>
-      <div class="agents">${s.agents.map(a => {
-        const steps = logItems(a.logText).length, T = TEAM[a.id] || { dot: 'var(--faint)' };
-        const tag = a.state === 'running' ? ['go', 'Working'] : a.state === 'done' ? ['ok', 'Done'] : a.state === 'error' ? ['no', 'Stopped'] : a.state === 'skipped' ? ['idle', 'Skipped'] : ['idle', 'Waiting'];
-        return `<a class="acard s-${a.state}" href="#/${a.id}"><span class="dot" style="background:${T.dot}"></span><b>${esc(a.label)}</b>
-          <span class="what">${steps} step${steps === 1 ? '' : 's'} logged, writes ${esc(a.output)}</span><span class="tag ${tag[0]}">${tag[1]}</span></a>`;
-      }).join('')}</div>
-    </section>
+    ${last ? `<section class="dcard latest"><div class="hd"><h2>Latest result</h2><small><a href="#/${last.id}">${esc(last.label)}</a></small></div>${resultCard(s, last, true)}</section>` : ''}
   </aside>`;
 }
 
@@ -241,15 +337,15 @@ function sidebar(s) {
 let runsList = [], meName = '';
 const firstName = n => String(n || '').trim().split(/\s+/)[0] || '';
 function nowLine(s) {
-  const ag = s.agents, run = ag.find(a => a.state === 'running'), title = `<b>${esc(s.title)}</b>`;
+  const ag = s.agents, run = ag.find(a => a.state === 'running'), title = `<b>${esc(clip(String(s.title || ''), 46))}</b>`;
   if (run) return `The ${esc(run.label)} is working on ${title}.`;
-  if (ag.some(a => a.state === 'error')) return `${title} stopped with a problem. Open the agent to see why.`;
+  if (ag.some(a => a.state === 'error')) return `${title} stopped with a problem.`;
   if (ag.every(a => a.state === 'done' || a.state === 'skipped')) {
     const ev = ag.find(a => a.id === 'evaluator'), v = ev && ev.outputText ? verdict(ev.outputText) : { score: null };
-    return `All the agents finished ${title}${v.score === null ? '' : `, marked ${v.score} out of 100`}. Handing it in is your step.`;
+    return `${title} is finished${v.score === null ? '' : `: ${v.score} out of 100`}.`;
   }
-  if (ag.every(a => a.state === 'waiting')) return `${title} is set up and waiting to start.`;
-  return `Nothing is running right now on ${title}.`;
+  if (ag.every(a => a.state === 'waiting')) return `${title} is waiting to start.`;
+  return `Nothing is running on ${title}.`;
 }
 // Real activity only: pipeline notes (which carry a full time) and log steps stamped HH:MM. Untimed steps are left out.
 function activity(s) {
@@ -319,17 +415,11 @@ function greeting(s) {
 }
 
 /* ---------- the story: the whole run told simply, start to end ---------- */
-let mode = 'story';
-const openCh = new Set();
 const KID = {
-  analyst: { done: 'read the homework and made a to-do list', running: 'is reading the homework', waiting: 'will read the homework first',
-    why: 'Like reading the question twice before you start, so nothing gets missed.' },
-  finder: { done: 'looked things up', running: 'is looking things up', waiting: 'will look things up next',
-    why: 'It visits websites and your old work to find help for every item on the to-do list.' },
-  builder: { done: 'did the work and checked it', running: 'is doing the work', waiting: 'will do the work last',
-    why: 'It makes the answers, tests that they work, and ticks off the to-do list.' },
-  evaluator: { done: 'marked the work like a teacher', running: 'is marking the work', waiting: 'will mark the work at the end',
-    why: 'It did not make the work, so it checks it with fresh eyes, gives a score, and says what to fix before you hand it in.' },
+  analyst: { done: 'read the brief and made a checklist', running: 'is reading the brief', waiting: 'reads the brief first' },
+  finder: { done: 'looked things up', running: 'is looking things up', waiting: 'looks things up next' },
+  builder: { done: 'did the work and checked it', running: 'is doing the work', waiting: 'does the work after that' },
+  evaluator: { done: 'marked the work', running: 'is marking the work', waiting: 'marks the work at the end' },
 };
 // What kind of step is this? A picture and a plain word for it.
 // A step failed only if it names a failure and isn't just recalling an earlier one ("worked this time (403 last run)")
@@ -339,6 +429,9 @@ function kind(t) {
   if (/403|returned empty|couldn.?t open/i.test(t) && !recovered(t)) return ['🚫', "couldn't open"];
   if (/blocked|failed|not allowed|refused/i.test(t) && !recovered(t)) return ['✋', "wasn't allowed"];
   if (/^start/i.test(t)) return ['🚀', 'started'];
+  if (/must fix|does not match|mismatch/i.test(t)) return ['⚠️', 'flagged'];
+  if (/^(built|made|created)\b/i.test(t)) return ['🧱', 'built'];
+  if (/placeholder|left open|not given|skipped by/i.test(t)) return ['📝', 'noted'];
   if (/^(search|looking)/i.test(t)) return ['🔍', 'searched'];
   if (/^\S+\.md written|^(wrote|writing|saved)/i.test(t)) return ['✍️', 'wrote'];
   if (/^open/i.test(t)) return ['🌐', 'visited a website'];
@@ -405,64 +498,50 @@ function sitesUsed(s) {
 const finderLog = s => ((s.agents.find(a => a.id === 'finder') || {}).logText || '');
 function handIns(s) {
   const b = s.agents.find(a => a.id === 'builder') || {};
-  const part = ((b.outputText || '').split(/^##\s*What (the user|you) must do.*$/im)[2] || '').split(/^##\s/m)[0];
+  const part = sect(b.outputText || '', 'What (?:the user|you) (?:must|still need to) do|Left for (?:you|the user)|Manual steps|Your remaining steps|By hand') || '';
   return part.split('\n').filter(l => /^\s*(\d+\.|[-*])\s+/.test(l)).map(l => l.replace(/^\s*(\d+\.|[-*])\s+/, '').replace(/\*\*/g, ''));
 }
 
-function story(s, full) {
+function story(s) {
   const ag = s.agents, created = (s.events[0] || {}).t || s.created;
   let n = 0;
   const chapters = ag.map((a, i) => {
-    const K = KID[a.id] || { done: 'did its part', running: 'is working', waiting: 'is waiting', why: '' };
-    const items = logItems(a.logText), T = TEAM[a.id];
+    const K = KID[a.id] || { done: 'did its part', running: 'is working', waiting: 'is waiting' };
+    const items = logItems(a.logText), T = TEAM[a.id], key = 'ch-' + a.id, open = openDisc.has(key);
     const first = n + 1; n += items.length;
-    const show = full || openCh.has(a.id) || items.length <= 4 ? items : items.slice(-4);
-    const hidden = items.length - show.length;
+    const show = open || items.length <= 4 ? items : items.slice(-4);
     const verb = a.state === 'done' ? K.done : a.state === 'running' ? K.running : a.state === 'skipped' ? 'was skipped' : K.waiting;
-    const when = a.started ? `${fmtTime(a.started)} to ${a.finished ? fmtTime(a.finished) : 'now'}, ${a.finished ? 'took ' + dur(a.started, a.finished) : 'working for ' + dur(a.started)}` : 'Not started yet';
+    const when = a.started ? `${fmtTime(a.started)} to ${a.finished ? fmtTime(a.finished) : 'now'}` : '';
+    const took = a.started ? (a.finished ? dur(a.started, a.finished) : dur(a.started)) : '';
     const steps = show.map((it, k) => {
       const [pic, word] = kind(it.t), num = first + (items.length - show.length) + k, live = a.state === 'running' && k === show.length - 1;
       return `<li class="${live ? 'live' : ''}"><span class="pic">${pic}</span><span><span class="num">Step ${num}</span><span class="word">${word}</span>
-        <span class="say">${esc(plain(it.t))}</span></span></li>`;
+        <span class="say${open ? '' : ' clamp'}" title="${esc(plain(it.t))}">${esc(plain(it.t))}</span></span></li>`;
     }).join('');
     let extra = '';
     if (a.id === 'finder' && items.length) {
       const u = sitesUsed(s);
-      extra = `<div class="sites"><div class="sites-h">🌐 Websites it used <small>${u.sites.reduce((x, y) => x + y.pages.length, 0)} pages on ${u.sites.length} websites</small></div>
-        ${u.sites.map(st => `<div class="site"><div class="site-top"><b>${esc(st.host)}</b><span class="cnt">${st.pages.length} page${st.pages.length > 1 ? 's' : ''}</span></div>
-          <div class="site-what">${esc(siteName(st.host))}</div>
-          ${full ? `<div class="pages">${st.pages.map(p => `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.page)}</a>`).join('')}</div>` : ''}</div>`).join('') || '<p class="empty">No websites yet.</p>'}
-        ${u.local ? '<div class="site local"><div class="site-top"><b>📁 Your own past work</b></div><div class="site-what">It also checked your Documents folder for older homework like this one.</div></div>' : ''}
-        ${u.searches.length ? `<div class="sites-h">🔍 What it searched for${/firecrawl/i.test(finderLog(s)) ? ' <small>with Firecrawl</small>' : ''}</div><ul class="mini">${u.searches.map(q => `<li>${esc(plain(q))}</li>`).join('')}</ul>` : ''}
-        ${u.failed.length ? `<div class="sites-h">🚫 Websites that wouldn't open</div><ul class="mini">${u.failed.map(q => `<li>${esc(plain(q))}</li>`).join('')}</ul>` : ''}
-      </div>`;
-    }
-    if (a.id === 'evaluator' && a.outputText) {
-      const v = verdict(a.outputText);
-      extra = `<div class="sites"><div class="sites-h">📝 The marks <small>${v.verdict === 'pass' ? 'good to hand in' : v.verdict === 'revise' ? 'needs fixes first' : ''}</small></div>
-        <div class="site"><div class="site-top"><b>${v.score === null ? 'No score yet' : v.score + ' out of 100'}</b><span class="cnt">${v.fixes} to fix</span></div>
-          <div class="site-what">${v.verdict === 'pass' ? 'The Evaluator found nothing that must change.' : v.verdict === 'revise' ? 'The Evaluator sent it back to the Builder with a fix list.' : 'The marking sheet has no verdict line.'}</div></div></div>`;
+      extra = `${u.sites.length ? `<div class="chips">${u.sites.slice(0, 8).map(st => `<a class="chipx site" href="${esc(st.pages[0].url)}" target="_blank" rel="noopener" title="${esc(siteName(st.host))}">${esc(st.host)}<i class="n">${st.pages.length}</i></a>`).join('')}${more(u.sites.length, 8)}</div>` : ''}
+        ${u.failed.length ? `<div class="chips"><span class="tag idle">${u.failed.length} would not open</span></div>` : ''}`;
     }
     return `<section class="ch s-${a.state}" style="--team:${T.dot}">
       <div class="ch-head"><span class="ch-n">${i + 1}</span>
-        <div><div class="ch-title">The <b>${esc(a.label)}</b> ${esc(verb)}</div><div class="ch-why">${esc(K.why)}</div></div></div>
-      <div class="ch-meta"><span>${esc(when)}</span>${items.length ? `<span>${items.length} steps</span>` : ''}</div>
-      ${items.length ? `${hidden > 0 ? `<button class="more" data-open="${a.id}">show the first ${hidden} steps too</button>` : ''}<ol class="steps">${steps}</ol>` : `<p class="empty">${a.state === 'waiting' ? 'It is waiting for its turn.' : 'No steps written down.'}</p>`}
-      ${a.summary ? `<div class="ch-end">🎯 <b>What it finished with:</b> ${esc(plain(a.summary))}</div>` : ''}
+        <div class="ch-title">The <b>${esc(a.label)}</b> ${esc(verb)}</div>
+        <div class="ch-meta">${when ? `<span>${esc(when)}</span>` : ''}${took ? `<span>${esc(took)}</span>` : ''}${items.length ? `<span>${items.length} steps</span>` : ''}</div></div>
+      ${a.state === 'waiting' ? '' : tiles(tilesFor(s, a))}
       ${extra}
+      ${items.length ? `<ol class="steps" id="d-${key}">${steps}</ol>${items.length > 4 ? disclosure(key, `Show all ${items.length} steps`, 'Show only the last 4') : ''}` : ''}
     </section>`;
-  }).join('<div class="hand">⬇︎ passes its work to the next agent</div>');
+  }).join('');
   const b = ag[ag.length - 1], left = handIns(s), allDone = ag.every(a => a.state === 'done' || a.state === 'skipped');
-  return `<div class="story ${full ? 'full' : ''}">
-    <section class="ch start"><div class="ch-head"><span class="ch-n">🏁</span><div><div class="ch-title"><b>It started</b> at ${fmtTime(created) || '–'}</div>
-      <div class="ch-why">A new assignment came in: <b>${esc(s.title)}</b>. Using AI is <b>${esc(String(s.aiPolicy).replace('_', ' '))}</b> for this one.</div></div></div></section>
-    <div class="hand">⬇︎ the Analyst goes first</div>
+  return `<div class="story full">
+    <section class="ch start"><div class="ch-head"><span class="ch-n">🏁</span><div class="ch-title"><b>Started</b> at ${fmtTime(created) || '–'}</div>
+      <div class="ch-meta"><span class="tag idle">AI help: ${esc(String(s.aiPolicy).replace('_', ' '))}</span></div></div></section>
     ${chapters}
-    <div class="hand">⬇︎</div>
-    <section class="ch finish ${allDone ? 's-done' : ''}"><div class="ch-head"><span class="ch-n">${allDone ? '🏆' : '⏳'}</span><div>
-      <div class="ch-title">${allDone ? `<b>It ended</b> at ${fmtTime(b.finished)}` : '<b>Not finished yet</b>'}</div>
-      <div class="ch-why">${allDone ? 'All the agents are done. The agents never hand in your work. That part is yours.' : 'The agents are still working. This story updates by itself.'}</div></div></div>
-      ${allDone && left.length ? `<div class="sites-h">🙋 What you still need to do</div><ol class="mini todo">${left.map(t => `<li>${esc(t)}</li>`).join('')}</ol>` : ''}
+    <section class="ch finish ${allDone ? 's-done' : ''}"><div class="ch-head"><span class="ch-n">${allDone ? '🏆' : '⏳'}</span>
+      <div class="ch-title">${allDone ? `<b>Ended</b> at ${fmtTime(b.finished)}` : '<b>Not finished yet</b>'}</div>
+      <div class="ch-meta"><span>${allDone ? 'Handing in is your step' : 'Updates by itself'}</span></div></div>
+      ${allDone && left.length ? `<div class="left"><span class="lab">Left for you</span><ol>${left.slice(0, 3).map(x => `<li>${esc(clip(x, 110))}</li>`).join('')}</ol>${more(left.length, 3)}</div>` : ''}
     </section>
   </div>`;
 }
@@ -487,10 +566,13 @@ function statusLine(a) {
   if (a.state === 'skipped') return `<div class="status"><span class="ic">⊘</span><span>Skipped</span></div>`;
   return `<div class="status"><span class="ic">○</span><span>Waiting</span></div>`;
 }
-function logHtml(text, running) {
-  const items = logItems(text);
-  if (!items.length) return `<div class="md">${md(text)}</div>`;
-  return `<ul class="log">${items.map((it, i) => `<li class="${running && i === items.length - 1 ? 'last' : ''}"><span class="ic">⏺</span><span>${it.n ? `<span class="n">${esc(it.n)}</span>` : ''}${esc(it.t)}</span></li>`).join('')}</ul>${running ? '<span class="cursor"></span>' : ''}`;
+// The log as a compact timeline: the last 5 steps, each clamped to 2 lines, with one toggle for the rest
+function logHtml(a) {
+  const items = logItems(a.logText), running = a.state === 'running', key = 'log-' + a.id, open = openDisc.has(key);
+  if (!items.length) return `<div class="md clamp4">${md(a.logText)}</div>`;
+  const show = open || items.length <= 5 ? items : items.slice(-5), skip = items.length - show.length;
+  return `<ol class="log" id="d-${key}" start="${skip + 1}">${show.map((it, i) => `<li class="${running && i === show.length - 1 ? 'last' : ''}"><span class="ic" aria-hidden="true"></span><span class="tx${open ? '' : ' clamp'}" title="${esc(it.t)}">${it.n ? `<span class="n">${esc(it.n)}</span>` : ''}${esc(it.t)}</span></li>`).join('')}</ol>
+    ${items.length > 5 ? disclosure(key, `Show all ${items.length} steps`, 'Show only the last 5') : ''}`;
 }
 function agentPage(s, a) {
   const ag = s.agents, i = ag.indexOf(a), prev = ag[i - 1], next = ag[i + 1];
@@ -503,25 +585,20 @@ function agentPage(s, a) {
       <div class="s3-title"><span class="d"></span>${esc(a.label)}'s room <small>${a.state === 'waiting' ? 'Asleep until its turn' : a.state === 'running' ? 'Working now' : a.state === 'done' ? 'Finished' : ''}</small></div>
       <div class="s3-ui"><button data-3d="in" title="Zoom in" aria-label="Zoom in">+</button><button data-3d="out" title="Zoom out" aria-label="Zoom out">−</button>
         <button data-3d="spin" title="Spin around" aria-label="Spin around">⟳</button><button data-3d="reset" title="Reset view" aria-label="Reset view">⌂</button></div>
-      <div class="s3-hint">Drag to look around the room. Pinch, or hold ⌘ and scroll, to zoom.</div>
+      <div class="s3-hint">Drag to look around</div>
       ${a.state === 'done' ? '<span class="s3-done">✓ done</span>' : ''}
     </section>
     <section class="hero s-${a.state}">
-      <div><h1>${esc(a.label)}</h1><div class="handle">Step ${i + 1} of ${ag.length}, run by the ${esc(a.name)} agent</div>
-        <p class="role">${esc(a.role)}</p>${statusLine(a)}
-        ${a.summary ? `<div class="result"><span>⎿</span><span>${esc(a.summary)}</span></div>` : ''}
-        <div class="meta"><span>started <b>${fmtTime(a.started) || '–'}</b></span><span>finished <b>${fmtTime(a.finished) || '–'}</b></span>
-          <span>gets work from <b>${prev ? esc(prev.label) : 'the assignment brief'}</b></span><span>hands to <b>${next ? esc(next.label) : 'you'}</b></span></div>
-        <div class="io">reads ${a.reads.map(r => `<span class="chip">${esc(r)}</span>`).join('')} → <span class="chip out">${esc(a.output)}</span></div>
-      </div>
+      <div class="hero-top"><h1>${esc(a.label)}</h1><span class="handle">Step ${i + 1} of ${ag.length}</span>${statusLine(a)}</div>
+      <div class="io"><span class="lab">Reads</span>${a.reads.map(r => `<span class="chip">${esc(r)}</span>`).join('')}<span class="lab">Writes</span><span class="chip out">${esc(a.output)}</span>
+        <span class="lab">Then</span><span class="chip plain">${next ? esc(next.label) : 'you'}</span></div>
     </section>
     <div class="two">
-      <section class="panel"><div class="bar"><b>What it's doing</b><span class="r">${esc(a.log)}</span></div>
-        <div class="body">${a.logText ? logHtml(a.logText, a.state === 'running') : `<p class="empty">No activity yet.</p>`}</div></section>
-      <section class="panel"><div class="bar"><b>Output</b><span class="r">${esc(a.output)}</span></div>
-        <div class="body">${a.outputText ? `<div class="md">${md(a.outputText)}</div>` : `<p class="empty">${esc(a.output)} hasn't been written yet.</p>`}</div></section>
+      ${resultCard(s, a, false)}
+      <section class="panel"><div class="bar"><b>What it's doing</b><span class="r">${logItems(a.logText).length || 'no'} steps</span></div>
+        <div class="body">${a.logText ? logHtml(a) : `<p class="empty">No activity yet.</p>`}</div></section>
     </div>
-    <div class="two">
+    <div class="two tight">
       <section class="panel"><div class="bar"><b>Timeline</b></div><div class="body">${feed(s.events.filter(e => e.agent === a.id), ag)}</div></section>
       <section class="panel"><div class="bar"><b>Files it wrote</b></div><div class="body">${fileList(agentFiles(s, a))}</div></section>
     </div>
@@ -594,7 +671,8 @@ function demoRuns(rs) {
 }
 const route = () => (location.hash.match(/^#\/(\w+)/) || [])[1] || '';
 function markRail(s) {
-  const r = route();
+  const r = route(), play = $('#railPlay');
+  if (play) play.href = 'playground.html?run=' + runId;      // the playground is a separate page
   document.querySelectorAll('#rail a').forEach(el => {
     const on = el.dataset.nav === r;
     el.classList.toggle('on', on);
@@ -603,7 +681,14 @@ function markRail(s) {
     el.classList.toggle('busy', !!(ag && ag.state === 'running'));
   });
 }
+const sigNow = () => JSON.stringify(current) + JSON.stringify(runsList) + runId + meName + route();
+// Redraw, keeping the keyboard focus on a "show more" button if it had it
 function render(s) {
+  const held = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.disc : null;
+  draw(s);
+  if (held) { const again = document.querySelector(`[data-disc="${held}"]`); if (again) again.focus({ preventScroll: true }); }
+}
+function draw(s) {
   markRail(s);
   const a = s.agents.find(x => x.id === route());
   $('#crumb').textContent = a ? a.label : route() === 'story' ? 'What happened' : '';
@@ -612,11 +697,10 @@ function render(s) {
   if (route()) mountOffice3d(null);
   if (route() === 'story') {
     $('#main').innerHTML = `<div class="page storypage"><h1>The whole story</h1>
-      <p class="lead">Everything that happened, from the moment the homework arrived to the end: who did each step, what they did, and every website they used.</p>
-      ${story(s, true)}<div class="stepnav"><a href="#/">← Back to the office</a></div></div>`;
+      <p class="lead">${esc(s.title)}</p>
+      ${story(s)}<div class="stepnav"><a href="#/">← Back to the office</a></div></div>`;
     return;
   }
-  const tasksScroll = $('.tasks') ? $('.tasks').scrollTop : 0;
   const has3d = !!(window.THREE && window.Office3D);
   $('#main').innerHTML = `<div class="dash"><div class="dash-main">
     ${greeting(s)}
@@ -628,14 +712,13 @@ function render(s) {
         <div class="s3-title"><span class="d" style="background:var(--accent)"></span>The office</div>
         <div class="s3-ui"><button data-3d="in" title="Zoom in" aria-label="Zoom in">+</button><button data-3d="out" title="Zoom out" aria-label="Zoom out">−</button>
           <button data-3d="spin" title="Spin around" aria-label="Spin around">⟳</button><button data-3d="reset" title="Reset view" aria-label="Reset view">⌂</button></div>
-        <div class="s3-hint">Drag to look around. Pinch, or hold ⌘ and scroll, to zoom. Click a room to go in.</div>
+        <div class="s3-hint">Drag to look around. Click a room to open it.</div>
       </div></div>` : `<div class="floor">${office(s)}
       <div class="hint">Drag to move. Click a team to open it.</div>
       <div class="zoom"><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="reset" aria-label="Reset view">⌂</button></div>
     </div>`}</section>
     </div>${sidebar(s)}</div>`;
   if (has3d) mountOffice3d(s); else applyCam();
-  if ($('.tasks')) $('.tasks').scrollTop = tasksScroll;
 }
 
 let runId = 0, current = null, lastSig = '';
@@ -655,7 +738,7 @@ async function tick() {
       sel.value = runId;
       current = demoShift(await (await fetch('data/run-' + runId + '.json')).json());
       // re-render only when the data changes, so the workers' animations run uninterrupted
-      const sig = JSON.stringify(current) + JSON.stringify(rs) + runId + meName + route() + filter;
+      const sig = sigNow();
       if (sig !== lastSig && !drag) { render(current); lastSig = sig; }
     }
     $('#live').classList.remove('off'); $('#live span').textContent = 'live';
@@ -666,12 +749,15 @@ async function tick() {
 document.addEventListener('click', e => {
   const z = e.target.closest('[data-zoom]');
   if (z) { if (z.dataset.zoom === 'reset') { cam.k = 1; cam.x = 0; cam.y = 0; applyCam(); } else zoomBy(z.dataset.zoom === 'in' ? 1.2 : 1 / 1.2); return; }
-  const m = e.target.closest('[data-mode]');
-  if (m) { mode = m.dataset.mode; lastSig = ''; if (current) render(current); return; }
-  const o = e.target.closest('[data-open]');
-  if (o) { openCh.add(o.dataset.open); lastSig = ''; if (current) render(current); return; }
-  const f = e.target.closest('[data-filter]');
-  if (f) { filter = f.dataset.filter; if (current) render(current); return; }
+  const dsc = e.target.closest('[data-disc]');
+  if (dsc) {   // a "show more" button: remember it, redraw, and put the keyboard focus back on the same button
+    const key = dsc.dataset.disc, y = window.scrollY;
+    if (openDisc.has(key)) openDisc.delete(key); else openDisc.add(key);
+    if (current) { render(current); lastSig = sigNow(); }
+    const again = document.querySelector(`[data-disc="${key}"]`); if (again) again.focus({ preventScroll: true });
+    window.scrollTo(0, y);
+    return;
+  }
   if (e.target.closest('#copyCmd')) {
     // the label lives in copyLabel so a re-render in between cannot wipe the confirmation
     const t = $('#cmdText').textContent, say = x => { copyLabel = x; const l = $('#copyCmd span'); if (l) l.textContent = x; };
