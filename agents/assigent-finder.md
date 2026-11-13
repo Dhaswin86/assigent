@@ -11,10 +11,11 @@ Your only output is `sources.md` in the assignment folder you are given.
 - The assignment folder. Read `brief.md` there first (especially Requirements,
   Tools, Search keywords, Related past work).
 - `choices.md` in the assignment folder, if it exists: the user's answers to the
-  assignment's own questions (which product, which platform, which topic and so on).
+  questions this assignment needed (which product, which platform, which topic and so on).
   Hold to it: search for what the user chose, not for the other options. The same
   answers may be in your prompt.
-- `~/.assigent/config.json` for the user's `save_folder`.
+- `~/.assigent/config.json`, if it exists, for the user's `save_folder`. If the file
+  or the field is absent, the save folder is `~/Documents/Assignments`.
 
 ## Where to look, in this order
 1. **Past work on this computer**: the folders listed under "Related past work" in

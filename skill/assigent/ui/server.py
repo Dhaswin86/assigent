@@ -2,14 +2,15 @@
 """Local viewer for the Assigent 4-agent pipeline. Serves on 127.0.0.1 only.
 
 GET /                 the viewer page (index.html, style.css, app.js, office3d.js, icons/)
-GET /api/runs         every assignment folder that has a status.json
+GET /api/runs         every assignment folder that has a status.json (with start time, file count, score)
+GET /api/me           {"name": ...}: the saved name from ~/.assigent/config.json, or "" when there is none
 GET /api/run?id=N     status + the text of each agent's log and output, and the file list
 
 Runs are looked for under the save folder: the ASSIGENT_ROOT environment variable if set,
 else "save_folder" in ~/.assigent/config.json, else ~/Documents/Assignments. Any
 status.json up to 4 folders deep counts as a run. PORT sets the port (default 8850).
 """
-import json, os
+import json, os, re
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -43,6 +44,27 @@ def status_files(root):
     return found
 
 
+def saved_name():
+    try:
+        with open(os.path.expanduser("~/.assigent/config.json")) as f:
+            name = json.load(f).get("name")
+    except (OSError, ValueError, AttributeError):
+        name = ""
+    return name.strip() if isinstance(name, str) else ""
+
+
+def score_of(folder):
+    """(score, verdict) from the Score and Verdict lines of evaluation.md, or (None, None)."""
+    try:
+        with open(os.path.join(folder, "evaluation.md"), errors="replace") as f:
+            text = f.read(20000)
+    except OSError:
+        return None, None
+    s = re.search(r"^Score:\s*(\d{1,3})\s*/\s*100", text, re.M)
+    v = re.search(r"^Verdict:\s*(PASS|REVISE)\b", text, re.M)
+    return (int(s.group(1)) if s else None), (v.group(1) if v else None)
+
+
 def runs():
     paths = status_files(save_folder())
     out = []
@@ -53,9 +75,12 @@ def runs():
             states = [a["state"] for a in s.get("agents", [])]
         except (OSError, ValueError, KeyError, TypeError, AttributeError):
             continue
-        out.append({"folder": os.path.dirname(p), "title": s.get("title"),
+        folder = os.path.dirname(p)
+        score, verdict = score_of(folder)
+        out.append({"folder": folder, "title": s.get("title"),
                     "aiPolicy": s.get("aiPolicy"), "updated": s.get("updated", ""),
-                    "states": states})
+                    "created": s.get("created", ""), "files": len(file_tree(folder)),
+                    "score": score, "verdict": verdict, "states": states})
     out.sort(key=lambda r: r["updated"], reverse=True)
     for i, r in enumerate(out):
         r["id"] = i
@@ -124,6 +149,8 @@ class Handler(BaseHTTPRequestHandler):
         if u.path in assets:
             with open(os.path.join(HERE, u.path.lstrip("/")), "rb") as f:
                 return self.send(200, f.read(), assets[u.path] + "; charset=utf-8")
+        if u.path == "/api/me":
+            return self.send(200, json.dumps({"name": saved_name()}), "application/json")
         if u.path == "/api/runs":
             return self.send(200, json.dumps(runs()), "application/json")
         if u.path == "/api/run":

@@ -9,10 +9,10 @@
     gold: 0xe9b949, goldDark: 0xc99a2e, blue: 0x3b6fd8, dark: 0x3a3f48, card: 0xc4834d, cardLight: 0xd9a066,
   };
   const TEAMS = {
-    analyst: { floor: 0x5f9a6b, wall: 0x4d845a, roles: ['brief reader', 'planner', 'question sorter'] },
-    finder: { floor: 0x4f7fb5, wall: 0x41699a, roles: ['web searcher', 'doc reader', 'source filer'] },
-    builder: { floor: 0xc39a48, wall: 0xa5813a, roles: ['maker', 'coder', 'tester'] },
-    evaluator: { floor: 0x9a6fb5, wall: 0x845a9c, roles: ['rubric checker', 'fact checker', 'scorer'] },
+    analyst: { floor: 0x86ab90, wall: 0x73977d, roles: ['brief reader', 'planner', 'question sorter'] },
+    finder: { floor: 0x7d9fc6, wall: 0x688bb2, roles: ['web searcher', 'doc reader', 'source filer'] },
+    builder: { floor: 0xd9b46c, wall: 0xc29f58, roles: ['maker', 'coder', 'tester'] },
+    evaluator: { floor: 0xb096c6, wall: 0x9b81b2, roles: ['rubric checker', 'fact checker', 'scorer'] },
   };
 
   function makeKit(track) {
@@ -416,7 +416,7 @@
     const leaf2 = new THREE.Mesh(K.track(new THREE.IcosahedronGeometry(0.35, 0)), K.mat(0x57a86b)); leaf2.position.set(0.3, 1.5, 0.1); leaf2.castShadow = true; plant.add(leaf2);
     K.box(2.6, 0.05, 1.8, 0xffffff, 0, 0.001, 4.2, room, { transparent: true, opacity: 0.12 });
     // glowing outline for hover / working
-    const ringMat = K.track(new THREE.MeshBasicMaterial({ color: 0x6d9cff, transparent: true, opacity: 0 }));
+    const ringMat = K.track(new THREE.MeshBasicMaterial({ color: 0xd97757, transparent: true, opacity: 0 }));
     [[13.8, 0.25, 0, 6.9], [13.8, 0.25, 0, -6.9], [0.25, 13.8, 6.9, 0], [0.25, 13.8, -6.9, 0]].forEach(([w, d, x, z]) => {
       const m = K.box(w, 0.12, d, ringMat, x, -0.7, z, room); m.castShadow = false;
     });
@@ -453,6 +453,14 @@
     };
   }
 
+  /* ---------- scene colours: a light warm office by default, charcoal when the page is in dark mode ---------- */
+  const DARK = !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  const SCENE = DARK
+    ? { bg: 0x1b1917, ground: 0x24211e, hub: 0x3d3733, hubEdge: 0x2e2a27, road: 0x35302c, dash: 0x5c544d, node: 0xe08a6d, nodeGlow: 0xd97757,
+        line: 0xe08a6d, dot: 0xb98572, dotOn: 0xf3ab92, sky: 0xfff1e6, below: 0x2a2623, skyPower: 0.7, sun: 0.8 }
+    : { bg: 0xf5eee6, ground: 0xede3d8, hub: 0x4a433d, hubEdge: 0x3a3430, road: 0xdfd2c4, dash: 0xfbf7f2, node: 0xd97757, nodeGlow: 0xd97757,
+        line: 0xc4633f, dot: 0xc98f79, dotOn: 0xc4633f, sky: 0xfff6ee, below: 0xcbbdae, skyPower: 0.72, sun: 0.7 };
+
   /* ---------- shared viewer: renderer, lights, smooth 360° orbit, buttons, loop ---------- */
   function createViewer(host, opts) {
     const owned = [];
@@ -465,8 +473,8 @@
     const canvas = renderer.domElement; canvas.className = 's3-canvas';
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 400);
-    scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x2a2f3a, 0.75));
-    const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+    scene.add(new THREE.HemisphereLight(SCENE.sky, SCENE.below, SCENE.skyPower));
+    const sun = new THREE.DirectionalLight(0xffffff, SCENE.sun);
     const S = opts.shadowSize || 10;
     sun.position.set(S * 0.8, S * 1.4, S * 0.9); sun.castShadow = true;
     sun.shadow.mapSize.set(opts.shadowMap || 1024, opts.shadowMap || 1024);
@@ -634,13 +642,13 @@
     let hovered = null;
     const view = createViewer(host, {
       home: { theta: 0.35, phi: 0.9, r: 74 }, limits: { phi: [0.25, 1.42], r: [24, 140] }, fov: 30, target: [0, 0, 0],
-      shadowSize: 34, shadowMap: 2048, spin: 0.12, background: 0x0b1430, fog: [95, 190],
+      shadowSize: 34, shadowMap: 2048, spin: 0.12, background: SCENE.bg, fog: [110, 220],
       build(K, scene) {
-        const ground = K.box(400, 0.2, 400, 0x13224a, 0, -1.05, 0, scene); ground.castShadow = false;
+        const ground = K.box(400, 0.2, 400, SCENE.ground, 0, -1.05, 0, scene); ground.castShadow = false;
         // The Brain hub
         const hub = new THREE.Group(); scene.add(hub);
-        K.box(8, 0.6, 8, 0x2f3a52, 0, -0.75, 0, hub); K.box(8.3, 0.12, 8.3, 0x253049, 0, -0.85, 0, hub);
-        const nodeMat = K.track(new THREE.MeshStandardMaterial({ color: 0x6d9cff, emissive: 0x3b6fd8, emissiveIntensity: 0.9 }));
+        K.box(8, 0.6, 8, SCENE.hub, 0, -0.75, 0, hub); K.box(8.3, 0.12, 8.3, SCENE.hubEdge, 0, -0.85, 0, hub);
+        const nodeMat = K.track(new THREE.MeshStandardMaterial({ color: SCENE.node, emissive: SCENE.nodeGlow, emissiveIntensity: 0.9 }));
         const pts = [[-2, -1.2], [1.2, -2], [2.4, 0.4], [-0.4, 1.8], [-2.6, 1.2], [0.6, -0.2], [1.8, 2.2]];
         const nodes = pts.map(([x, z]) => {
           const m = new THREE.Mesh(K.track(new THREE.SphereGeometry(0.28, 12, 10)), nodeMat); m.position.set(x, 0.5, z); hub.add(m); return m;
@@ -649,7 +657,7 @@
         const seg = [];
         pts.forEach((a, i) => pts.slice(i + 1).forEach(b => { if (Math.hypot(a[0] - b[0], a[1] - b[1]) < 3.6) seg.push(a[0], 0.5, a[1], b[0], 0.5, b[1]); }));
         lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(seg, 3));
-        const lineMat = K.track(new THREE.LineBasicMaterial({ color: 0x8fb3ff, transparent: true, opacity: 0.6 }));
+        const lineMat = K.track(new THREE.LineBasicMaterial({ color: SCENE.line, transparent: true, opacity: 0.6 }));
         hub.add(new THREE.LineSegments(lineGeo, lineMat));
         // rooms + roads
         const rooms = {}, roads = {};
@@ -658,9 +666,9 @@
           const len = Math.hypot(x, z), ang = Math.atan2(x, z);
           const road = new THREE.Group(); road.rotation.y = ang; scene.add(road);
           const from = 4.2, to = len - 6.6, mid = (from + to) / 2;
-          K.box(2.4, 0.1, to - from, 0x2a3550, 0, -0.75, mid, road).castShadow = false;
-          for (let d = from + 0.6; d < to - 0.3; d += 1.2) K.box(0.14, 0.02, 0.6, 0x4a5c84, 0, -0.64, d, road).castShadow = false;
-          const pmat = K.track(new THREE.MeshStandardMaterial({ color: 0x8fb3ff, emissive: 0x6d9cff, emissiveIntensity: 1.4 }));
+          K.box(2.4, 0.1, to - from, SCENE.road, 0, -0.75, mid, road).castShadow = false;
+          for (let d = from + 0.6; d < to - 0.3; d += 1.2) K.box(0.14, 0.02, 0.6, SCENE.dash, 0, -0.64, d, road).castShadow = false;
+          const pmat = K.track(new THREE.MeshStandardMaterial({ color: SCENE.node, emissive: SCENE.nodeGlow, emissiveIntensity: 1.4 }));
           const packet = new THREE.Mesh(K.track(new THREE.SphereGeometry(0.35, 14, 10)), pmat); road.add(packet); packet.visible = false;
           roads[team] = { packet, from, to };
         });
@@ -672,7 +680,7 @@
           const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
           const geo = K.track(new THREE.BufferGeometry());
           geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
-          const mat = K.track(new THREE.PointsMaterial({ color: 0x8fb3ff, size: 2.6, sizeAttenuation: false, transparent: true, opacity: 0.45, depthWrite: false }));
+          const mat = K.track(new THREE.PointsMaterial({ color: SCENE.dot, size: 2.6, sizeAttenuation: false, transparent: true, opacity: 0.45, depthWrite: false }));
           const pts = new THREE.Points(geo, mat); pts.frustumCulled = false; scene.add(pts);
           links.push({ curve, geo, mat, n, team, shift: 0 });
         }
@@ -711,7 +719,7 @@
           const on = b.states[l.team] === 'running';
           l.shift += dt * (on ? 7 : 1.2);
           l.mat.opacity += ((on ? 0.95 : l.team ? 0.5 : 0.22) - l.mat.opacity) * Math.min(1, dt * 4);
-          l.mat.color.setHex(on ? 0x9ec0ff : 0x6f8fd0);
+          l.mat.color.setHex(on ? SCENE.dotOn : SCENE.dot);
           const arr = l.geo.attributes.position.array;
           for (let i = 0; i < l.n; i++) {
             l.curve.getPoint(((i + l.shift) % l.n) / l.n, tmp);

@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Assigent</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -13,16 +14,27 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="top">
-  <a class="brand" href="#/">Assigent</a>
-  <span class="conn"><i></i>Reading your assignment folders</span>
+<header class="top">
+  <a class="brand" href="#/"><span class="mark" aria-hidden="true"></span>Assigent</a>
+  <label class="pick"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+    <select id="runSel" aria-label="Assignment run"></select></label>
   <span class="crumb" id="crumb"></span>
   <div class="right">
-    <select id="runSel" aria-label="Assignment run"></select>
+    <span class="conn"><i></i>Reading your assignment folders</span>
     <span class="live" id="live"><i></i><span>live</span></span>
     <span class="clock" id="clock">--:--:--</span>
+    <span class="me" id="me" hidden><span class="av" id="meAv" aria-hidden="true"></span><span class="who"><small>Signed-in name</small><b id="meName"></b></span></span>
   </div>
-</div>
+</header>
+<nav class="rail" id="rail" aria-label="Sections">
+  <a href="#/" data-nav="" aria-label="Office" data-tip="Office"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg></a>
+  <a href="#/story" data-nav="story" aria-label="Story" data-tip="Story"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5c-2-1.4-4.6-1.8-7.5-1.5v13c2.900-.3 5.500.1 7.500 1.500 2-1.400 4.600-1.800 7.500-1.500V5c-2.900-.3-5.500.1-7.500 1.500z"/><path d="M12 6.500V19.500"/></svg></a>
+  <span class="sep" aria-hidden="true"></span>
+  <a href="#/analyst" data-nav="analyst" aria-label="Analyst" data-tip="Analyst"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5.500" y="4.500" width="13" height="16" rx="2"/><path d="M9 4.500h6v2.500H9z"/><path d="M8.500 11.500l1.500 1.500 2.500-2.800M8.500 16.500h7M14.500 12h1"/></svg></a>
+  <a href="#/finder" data-nav="finder" aria-label="Source finder" data-tip="Source finder"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.500"/><path d="M16 16l4.500 4.500M8.500 11h5M11 8.500v5"/></svg></a>
+  <a href="#/builder" data-nav="builder" aria-label="Builder" data-tip="Builder"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4.500l5.500 5.500-2.500 2.500L11.500 7z"/><path d="M12.800 8.300L4.500 16.600V19.500h2.900l8.300-8.300"/></svg></a>
+  <a href="#/evaluator" data-nav="evaluator" aria-label="Evaluator" data-tip="Evaluator"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M8.300 12.300l2.600 2.600 4.800-5.400"/></svg></a>
+</nav>
 <main id="main"><div class="none">Loading…</div></main>
 <script src="app.js"></script>
 </body>

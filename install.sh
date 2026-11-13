@@ -92,13 +92,13 @@ say "Installed the command at $BIN_DIR/assigent"
 
 say ""
 case ":${PATH:-}:" in
-  *":$BIN_DIR:"*) NEXT="assigent setup" ;;
+  *":$BIN_DIR:"*) NEXT="assigent run" ;;
   *)
     say "Note: $BIN_DIR is not on your PATH, so the shell cannot find \"assigent\" yet."
     say "Add this line to your shell profile (~/.zshrc or ~/.bashrc), then open a new terminal:"
     say "  export PATH=\"\$HOME/.local/bin:\$PATH\""
     say ""
-    NEXT="$BIN_DIR/assigent setup"
+    NEXT="$BIN_DIR/assigent run"
     ;;
 esac
 
@@ -107,5 +107,6 @@ if ! command -v claude >/dev/null 2>&1; then
   say ""
 fi
 
-say "Assigent is installed. Next, answer the setup questions:"
-say "  $NEXT"
+say "Assigent is installed. There is nothing to set up."
+say "It asks only what each assignment needs, when it needs it."
+say "Next: $NEXT"

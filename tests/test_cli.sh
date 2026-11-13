@@ -50,12 +50,15 @@ for a in analyst finder builder evaluator; do
   check "agent assigent-$a.md installed" test -f "$HOME/.claude/agents/assigent-$a.md"
 done
 check "skill SKILL.md installed" test -f "$HOME/.claude/skills/assigent/SKILL.md"
-check "skill setup-questions.md installed" test -f "$HOME/.claude/skills/assigent/setup-questions.md"
+check "skill preferences.md installed" test -f "$HOME/.claude/skills/assigent/preferences.md"
+check "old setup-questions.md is not shipped" test ! -e "$HOME/.claude/skills/assigent/setup-questions.md"
 check "viewer installed with the skill" test -f "$HOME/.claude/skills/assigent/ui/server.py"
 check "viewer icons installed" test -f "$HOME/.claude/skills/assigent/ui/icons/analyst.svg"
 check "command installed and executable" test -x "$HOME/.local/bin/assigent"
 check "install warns that ~/.local/bin is not on PATH" has "$OUT" "is not on your PATH"
-check "install ends by pointing to assigent setup" has "$OUT" "assigent setup"
+check "install ends with Next: assigent run" sh -c "tail -1 '$OUT' | grep -q '^Next: .*assigent run$'"
+check "install does not send people to setup" sh -c "! grep -q 'assigent setup' '$OUT'"
+check "install says there is nothing to set up" has "$OUT" "nothing to set up"
 check "install made no config" test ! -e "$HOME/.assigent/config.json"
 
 echo "--- install.sh again: existing files are backed up"
@@ -66,6 +69,7 @@ check "second install says it backed files up" has "$OUT" "Backed up your existi
 check "the edited agent is kept in a backup" sh -c "grep -rqF '# my own edit' '$HOME/.assigent/backups'"
 check "the installed agent is the fresh copy" sh -c "! grep -qF '# my own edit' '$HOME/.claude/agents/assigent-analyst.md'"
 check "no PATH warning when ~/.local/bin is on PATH" sh -c "! grep -qF 'is not on your PATH' '$OUT'"
+check "with PATH set, the last line is exactly Next: assigent run" sh -c "[ \"\$(tail -1 '$OUT')\" = 'Next: assigent run' ]"
 
 echo "--- install.sh piped (the download is replaced by a local tarball)"
 mkdir -p "$TMP/curlbin" "$TMP/home2"
@@ -93,30 +97,42 @@ check "--version exits 0 and prints a version" sh -c "[ $rc = 0 ] && grep -qE '^
 assigent --help > "$OUT" 2>&1; rc=$?
 check "--help exits 0 and lists the commands" sh -c "[ $rc = 0 ] && grep -q 'doctor' '$OUT' && grep -q 'uninstall' '$OUT'"
 
-echo "--- before setup"
-assigent config > "$OUT" 2>&1; rc=$?
-check "config with no settings exits 2" code_is $rc 2
+echo "--- straight after install: no config, everything works"
+check "there is no config yet" test ! -e "$HOME/.assigent/config.json"
 assigent run > "$OUT" 2>&1; rc=$?
-check "run with no settings exits 2 and points to setup" sh -c "[ $rc = 2 ] && grep -q 'assigent setup' '$OUT'"
+check "run works with no config" sh -c "[ $rc = 0 ] && grep -qx 'FAKE-CLAUDE:/assigent' '$OUT'"
+check "run creates the default save folder" test -d "$HOME/Documents/Assignments"
+check "run wrote no config by itself" test ! -e "$HOME/.assigent/config.json"
+check "run never mentions setup" sh -c "! grep -qi 'setup' '$OUT'"
+rmdir "$HOME/Documents/Assignments"
+assigent status > "$OUT" 2>&1; rc=$?
+check "status works with no config and no folder" sh -c "[ $rc = 0 ] && grep -q 'No runs yet' '$OUT'"
 assigent doctor > "$OUT" 2>&1; rc=$?
-check "doctor with no settings exits 1" code_is $rc 1
-check "doctor names the fix for missing settings" has "$OUT" "Fix: Run: assigent setup"
-assigent setup --yes > "$OUT" 2>&1; rc=$?
-check "setup --yes with no name exits 2" code_is $rc 2
-check "a refused setup writes no config" test ! -e "$HOME/.assigent/config.json"
+check "doctor exits 0 with no config" code_is $rc 0
+check "doctor treats a missing config as fine" has "$OUT" "ok   Preferences: no saved preferences yet"
+check "doctor has no FIX line with no config" sh -c "! grep -q '^FIX' '$OUT'"
+check "doctor accepts a save folder that does not exist yet" has "$OUT" "(created on the first run)"
+assigent config > "$OUT" 2>&1; rc=$?
+check "config with no saved preferences exits 0" sh -c "[ $rc = 0 ] && grep -q 'No saved preferences yet' '$OUT'"
+assigent view --no-open > "$OUT" 2>&1; rc=$?
+URL0="$(grep -oE 'http://127\.0\.0\.1:[0-9]+/' "$OUT" | head -1)"
+check "view works with no config" sh -c "[ $rc = 0 ] && [ -n '$URL0' ]"
+python3 -c "import json,urllib.request as u; assert json.load(u.urlopen('${URL0}api/runs',timeout=3)) == []" > /dev/null 2>&1
+check "viewer with no config lists no runs" code_is $? 0
+assigent view --stop > /dev/null 2>&1
+assigent preferences --yes > "$OUT" 2>&1; rc=$?
+check "preferences --yes with no answers saves nothing and exits 0" sh -c "[ $rc = 0 ] && [ ! -e '$HOME/.assigent/config.json' ]"
 
-echo "--- assigent setup with flags"
+echo "--- assigent preferences with flags (optional)"
 SAVE="$HOME/School Work"
-assigent setup --name "Sam O'Lee" --folder "$SAVE" --platform canvas \
+assigent preferences --name "Sam O'Lee" --folder "$SAVE" --platform canvas \
   --portal-url "school.example/courses" --browser brave --browser-access yes \
-  --ai-help full --apps "powerpoint, Excel,word,figma,blender" --code-editor vscode \
-  --app-permission ask --ask-choices never --yes > "$OUT" 2>&1; rc=$?
-check "setup with flags exits 0" code_is $rc 0
+  --ai-help full --apps "powerpoint, Excel,word,figma,blender" --code-editor vscode --yes > "$OUT" 2>&1; rc=$?
+check "preferences with flags exits 0" code_is $rc 0
 check "config.json is valid JSON" python3 -c "import json; json.load(open('$HOME/.assigent/config.json'))"
 check "name saved (with its apostrophe)" cfg_is name "\"Sam O'Lee\""
 check "save folder saved" cfg_is save_folder "\"$SAVE\""
 check "save folder created" test -d "$SAVE"
-check "platform saved" cfg_is platform '"canvas"'
 check "portal address gets https://" cfg_is portal_url '"https://school.example/courses"'
 check "browser saved" cfg_is browser '"brave"'
 check "browser_access true after an explicit yes" cfg_is browser_access true
@@ -127,66 +143,64 @@ check "apps sorted into documents" cfg_is apps.documents '["word"]'
 check "apps sorted into design" cfg_is apps.design '["figma"]'
 check "unknown app kept under other" cfg_is apps.other '["blender"]'
 check "code editor saved" cfg_is code_editor '"vscode"'
-check "app_permission saved" cfg_is app_permission '"ask"'
-check "ask_choices saved from --ask-choices never" cfg_is ask_choices '"never"'
-check "setup summary shows the assignment questions setting" has "$OUT" "Assignment questions:  never"
+check "no app_permission field is written" sh -c "! grep -q 'app_permission' '$HOME/.assigent/config.json'"
+check "no ask_choices field is written" sh -c "! grep -q 'ask_choices' '$HOME/.assigent/config.json'"
+check "preferences ends with Next: assigent run" sh -c "[ \"\$(tail -1 '$OUT')\" = 'Next: assigent run' ]"
 
-echo "--- setup rules"
-assigent setup --browser chrome --yes > "$OUT" 2>&1
+echo "--- remembering answers one at a time"
+assigent preferences --add-apps "keynote,figma" --yes > "$OUT" 2>&1
+check "--add-apps adds without dropping the saved ones" sh -c "python3 -c \"import json,os; a=json.load(open(os.path.expanduser('~/.assigent/config.json')))['apps']; assert a['slides']==['powerpoint','keynote'] and a['design']==['figma'] and a['sheets']==['excel']\""
+check "other answers are kept when one is changed" cfg_is name "\"Sam O'Lee\""
+assigent preferences --browser chrome --yes > "$OUT" 2>&1
 check "changing browser without a yes turns access off" cfg_is browser_access false
-check "other answers are kept on a re-run" cfg_is name "\"Sam O'Lee\""
-assigent setup --platform paste --yes > "$OUT" 2>&1
-check "paste platform records no browser" cfg_is browser '"none"'
-check "paste platform records no access" cfg_is browser_access false
-check "paste platform clears the portal address" cfg_is portal_url '""'
-check "ask_choices is kept on a re-run" cfg_is ask_choices '"never"'
-assigent setup --ask-choices always --yes > "$OUT" 2>&1; rc=$?
-check "--ask-choices always is saved" sh -c "[ $rc = 0 ] && [ \"\$(python3 -c 'import json,os;print(json.load(open(os.path.expanduser(\"~/.assigent/config.json\")))[\"ask_choices\"])')\" = always ]"
-assigent setup --ask-choices sometimes --yes > "$OUT" 2>&1; rc=$?
-check "an unknown --ask-choices exits 2" sh -c "[ $rc = 2 ] && grep -q 'always or never' '$OUT'"
-check "a refused --ask-choices leaves the config as it was" cfg_is ask_choices '"always"'
-assigent setup --help > "$OUT" 2>&1
-check "setup --help lists --ask-choices" has "$OUT" "--ask-choices"
-assigent setup --platform nonsense --yes > "$OUT" 2>&1; rc=$?
-check "an unknown platform exits 2" code_is $rc 2
-assigent setup --ai-help everything --yes > "$OUT" 2>&1; rc=$?
+assigent preferences --ai-help ask --yes > "$OUT" 2>&1
+check "--ai-help ask means ask per assignment" cfg_is ai_help '"ask"'
+assigent preferences --ai-help everything --yes > "$OUT" 2>&1; rc=$?
 check "an unknown --ai-help exits 2" code_is $rc 2
-check "a refused setup leaves the config as it was" cfg_is platform '"paste"'
+check "a refused change leaves the config as it was" cfg_is ai_help '"ask"'
 
-echo "--- ask_choices default and an older config"
-rm -f "$HOME/.assigent/config.json"
-assigent setup --name "Default Dee" --yes > "$OUT" 2>&1
-check "ask_choices defaults to always" cfg_is ask_choices '"always"'
-python3 -c "import json,sys; p=sys.argv[1]; c=json.load(open(p)); del c['ask_choices']; json.dump(c,open(p,'w'))" "$HOME/.assigent/config.json"
+echo "--- the old command name and old flags still work"
+assigent setup --name "Old Command" --app-permission auto --ask-choices never --yes > "$OUT" 2>&1; rc=$?
+check "assigent setup still works as an alias" sh -c "[ $rc = 0 ]"
+check "the alias saved the name" cfg_is name '"Old Command"'
+check "old --app-permission is accepted and ignored" has "$OUT" "--app-permission is no longer used and was ignored"
+check "old --ask-choices is accepted and ignored" has "$OUT" "--ask-choices is no longer used and was ignored"
+check "ignored flags write nothing to the config" sh -c "! grep -q 'app_permission\|ask_choices' '$HOME/.assigent/config.json'"
+assigent --help > "$OUT" 2>&1
+check "--help lists preferences, not setup" sh -c "grep -q '^    preferences' '$OUT' && ! grep -q '^    setup' '$OUT'"
+check "--help says there is no setup to do" has "$OUT" "There is no setup to do"
+python3 - "$HOME/.assigent/config.json" <<'PY'
+import json, sys
+c = json.load(open(sys.argv[1])); c["app_permission"] = "ask"; c["ask_choices"] = "always"; c["version"] = 1
+json.dump(c, open(sys.argv[1], "w"))
+PY
 assigent doctor > "$OUT" 2>&1; rc=$?
-check "doctor flags a config that lacks ask_choices" sh -c "[ $rc = 1 ] && grep -q 'ask_choices' '$OUT'"
+check "a config from the older version still passes doctor" sh -c "[ $rc = 0 ] && grep -q 'ok   Preferences' '$OUT'"
+assigent run > "$OUT" 2>&1; rc=$?
+check "run works with a config from the older version" sh -c "[ $rc = 0 ] && grep -qx 'FAKE-CLAUDE:/assigent' '$OUT'"
 
-echo "--- setup with typed answers (prompts)"
+echo "--- preferences with typed answers (prompts), all optional"
 rm -f "$HOME/.assigent/config.json"
-printf '%s\n' "Ada Typed" "$SAVE" "5" "teams.example/class" "3" "yes" "2" "keynote" "numbers" "pages" "canva" "zed" "2" "2" \
-  | assigent setup > "$OUT" 2>&1; rc=$?
-check "prompted setup exits 0" code_is $rc 0
-check "prompted setup shows the permission sentence" has "$OUT" "Assigent will only read assignment pages in the browser you are signed in to. It never signs in, never submits."
+printf '\n\n\n\n\n\n\n\n\n\n' | assigent preferences > "$OUT" 2>&1; rc=$?
+check "pressing Enter through every prompt exits 0" code_is $rc 0
+check "skipping everything saves no name" cfg_is name '""'
+check "skipping everything keeps AI help as ask" cfg_is ai_help '"ask"'
+check "skipping everything gives no browser access" cfg_is browser_access false
+check "the prompts say it is optional" has "$OUT" "All of this is optional"
+printf '%s\n' "Ada Typed" "$SAVE" "3" "keynote" "numbers" "pages" "canva" "zed" "3" "yes" "teams.example/class" \
+  | assigent preferences > "$OUT" 2>&1; rc=$?
+check "prompted preferences exits 0" code_is $rc 0
+check "prompted preferences shows the permission sentence" has "$OUT" "Assigent will only read assignment pages in the browser you are signed in to. It never signs in, never submits."
 check "prompted: name" cfg_is name '"Ada Typed"'
-check "prompted: platform" cfg_is platform '"microsoft-teams"'
-check "prompted: browser" cfg_is browser '"edge"'
-check "prompted: browser_access" cfg_is browser_access true
+check "prompted: save folder" cfg_is save_folder "\"$SAVE\""
 check "prompted: ai_help" cfg_is ai_help '"coach"'
 check "prompted: slides app" cfg_is apps.slides '["keynote"]'
 check "prompted: design app" cfg_is apps.design '["canva"]'
 check "prompted: code editor" cfg_is code_editor '"zed"'
-check "prompted: app_permission" cfg_is app_permission '"auto"'
-check "prompted: ask_choices" cfg_is ask_choices '"never"'
-# questions come in the stated order
-python3 - "$OUT" > /dev/null 2>&1 <<'PY'
-import sys
-t = open(sys.argv[1]).read()
-marks = ["1. Your name", "2. Where to save", "3. Your learning platform", "4. Browser to use",
-         "Allow Assigent to read your portal", "5. How much AI help", "6. Apps you have", "7. Before each assignment", "8. Many assignments leave a choice"]
-pos = [t.find(m) for m in marks]
-sys.exit(0 if all(p >= 0 for p in pos) and pos == sorted(pos) else 1)
-PY
-check "prompted setup asks the eight questions in order" code_is $? 0
+check "prompted: browser" cfg_is browser '"edge"'
+check "prompted: browser_access" cfg_is browser_access true
+check "prompted: portal address" cfg_is portal_url '"https://teams.example/class"'
+check "the prompts do not ask about app permission mode or assignment questions" sh -c "! grep -qi 'app permission\|assignment.s own questions\|Before each assignment' '$OUT'"
 
 echo "--- assigent config"
 assigent config > "$OUT" 2>&1; rc=$?
@@ -194,11 +208,19 @@ check "config exits 0" code_is $rc 0
 check "config shows the name" has "$OUT" "Ada Typed"
 assigent config --json > "$OUT" 2>&1
 check "config --json prints valid JSON" python3 -c "import json; json.load(open('$OUT'))"
+echo "{ not json" > "$HOME/.assigent/config.json.broken"; cp "$HOME/.assigent/config.json" "$TMP/good.json"; cp "$HOME/.assigent/config.json.broken" "$HOME/.assigent/config.json"
+assigent run > "$OUT" 2>&1; rc=$?
+check "run still starts when the config file is broken" sh -c "[ $rc = 0 ] && grep -qx 'FAKE-CLAUDE:/assigent' '$OUT' && grep -q 'Using the defaults' '$OUT'"
+assigent doctor > "$OUT" 2>&1; rc=$?
+check "doctor flags a broken config file with a fix" sh -c "[ $rc = 1 ] && grep -A1 '^FIX  Preferences' '$OUT' | grep -q 'preferences --reset'"
+assigent preferences --reset > "$OUT" 2>&1; rc=$?
+check "preferences --reset forgets the saved answers" sh -c "[ $rc = 0 ] && [ ! -e '$HOME/.assigent/config.json' ]"
+cp "$TMP/good.json" "$HOME/.assigent/config.json"; rm -f "$HOME/.assigent/config.json.broken"
 
 echo "--- assigent doctor"
 assigent doctor > "$OUT" 2>&1; rc=$?
 check "doctor exits 0 when all is well" code_is $rc 0
-check "doctor prints six checks" sh -c "[ \$(grep -c '^ok   ' '$OUT') = 6 ]"
+check "doctor prints six ok lines" sh -c "[ \$(grep -c '^ok   ' '$OUT') = 6 ]"
 PATH="$HOME/.local/bin:$BASE_PATH" assigent doctor > "$OUT" 2>&1; rc=$?
 check "doctor exits 1 when Claude Code is missing" code_is $rc 1
 check "doctor gives a fix for Claude Code" sh -c "grep -A1 '^FIX  Claude Code' '$OUT' | grep -q 'Fix:'"
@@ -268,9 +290,9 @@ check "uninstall --yes exits 0" code_is $rc 0
 check "agents removed" sh -c "! ls '$HOME/.claude/agents/' | grep -q assigent"
 check "skill removed" test ! -e "$HOME/.claude/skills/assigent"
 check "command removed" test ! -e "$HOME/.local/bin/assigent"
-check "settings kept unless asked" test -f "$HOME/.assigent/config.json"
+check "saved answers kept unless asked" test -f "$HOME/.assigent/config.json"
 check "assignment folders left alone" test -f "$RUN/evaluation.md"
-check "uninstall says the settings were kept" has "$OUT" "Kept your settings"
+check "uninstall says the saved answers were kept" has "$OUT" "Kept your saved answers"
 python3 "$REPO/bin/assigent" uninstall --yes --delete-config < /dev/null > "$OUT" 2>&1; rc=$?
 check "uninstall --delete-config removes ~/.assigent" sh -c "[ $rc = 0 ] && [ ! -e '$HOME/.assigent' ]"
 check "assignment folders still there" test -d "$RUN/deliverables"

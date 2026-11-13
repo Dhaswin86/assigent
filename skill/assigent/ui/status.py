@@ -2,6 +2,7 @@
 """Record pipeline progress in <assignment folder>/status.json for the agent viewer.
 
   status.py init  <folder> "<title>" <aiPolicy>
+  status.py policy <folder> <aiPolicy>            (when the AI policy is settled later)
   status.py start <folder> <agent> "<what it is doing>"
   status.py event <folder> <agent> "<message>"
   status.py done  <folder> <agent> "<summary>"
@@ -63,6 +64,13 @@ def main(argv):
                                 "finished": None, "summary": ""})
         s["events"].append({"t": now(), "agent": "pipeline",
                             "msg": f"Pipeline created (AI policy: {policy})"})
+        save(folder, s)
+        return
+    if cmd == "policy":
+        s = load(folder)
+        s["aiPolicy"] = argv[3]
+        s["events"].append({"t": now(), "agent": "pipeline", "kind": "event",
+                            "msg": f"AI policy set to {argv[3]}"})
         save(folder, s)
         return
     agent, msg = argv[3], argv[4] if len(argv) > 4 else ""

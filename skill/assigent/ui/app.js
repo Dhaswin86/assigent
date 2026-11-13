@@ -30,10 +30,10 @@ const iconsReady = Promise.all(Object.values(WORKERS).flat().map(([file]) =>
   }).catch(() => {})));
 
 const TEAM = {
-  analyst: { top: '#5f9a6b', left: '#3f6e4a', right: '#4d845a', dot: '#7cc79a', verb: 'Analysing' },
-  finder:  { top: '#4f7fb5', left: '#33577f', right: '#41699a', dot: '#8fb3ff', verb: 'Searching' },
-  builder: { top: '#c39a48', left: '#87672a', right: '#a5813a', dot: '#e9b949', verb: 'Building' },
-  evaluator: { top: '#9a6fb5', left: '#6a4a80', right: '#845a9c', dot: '#c59cf0', verb: 'Marking' },
+  analyst: { top: '#8fb59a', left: '#6b9478', right: '#7aa086', dot: '#5fa377', verb: 'Analysing' },
+  finder:  { top: '#86a8cf', left: '#6283ab', right: '#7093bb', dot: '#5b8fc9', verb: 'Searching' },
+  builder: { top: '#e0bd77', left: '#b99752', right: '#caa862', dot: '#d9a531', verb: 'Building' },
+  evaluator: { top: '#b9a0cf', left: '#927aab', right: '#a48bbb', dot: '#a17bc4', verb: 'Marking' },
 };
 const SPIN = ['·', '✢', '✳', '✶', '✻', '✽', '✻', '✶', '✳', '✢'];
 let spinI = 0;
@@ -182,7 +182,7 @@ function office(s) {
     <g id="cam">
       ${nets}${roads}
       <g class="hub ${busy ? 'busy' : ''}">
-        ${isoBox(HUB.x, HUB.y + 10, HUB.s * 1.6, HUB.s * 1.6, 10, '#2f3a52', '#1d2538', '#253049')}
+        ${isoBox(HUB.x, HUB.y + 10, HUB.s * 1.6, HUB.s * 1.6, 10, '#4a433d', '#332e2a', '#3d3733')}
         ${hubLinks}${nodes.map(n => `<circle class="hub-node" cx="${n[0]}" cy="${n[1]}" r="2.4"/>`).join('')}
       </g>
       ${ag.map((a, i) => island(s, a, i)).join('')}
@@ -196,6 +196,7 @@ function office(s) {
 
 /* ---------- task status sidebar ---------- */
 let filter = 'all';
+let copyLabel = 'Copy start command';
 function tasks(s) {
   const out = [];
   s.agents.forEach(a => {
@@ -214,21 +215,107 @@ function sidebar(s) {
   const all = tasks(s), count = k => all.filter(t => t.st === k).length;
   const shown = filter === 'all' ? all : all.filter(t => t.st === filter);
   const f = (k, label, n) => `<button data-filter="${k}" class="${filter === k ? 'on' : ''}">${label} ${n}</button>`;
-  return `<aside class="side">
-    <div class="sec"><div class="cmd">
-      <div class="row1"><span class="d"></span>Start the next assignment</div>
-      <code id="cmdText">/assigent</code>
-      <div class="row2"><span class="chipbtn" title="How much AI help this assignment allows">AI help: ${esc(String(s.aiPolicy).replace('_', ' '))}</span>
-        <button class="chipbtn primary" id="copyCmd">Copy command</button></div>
-    </div></div>
-    <div class="sec"><h2>What happened <small><a href="#/story">Open the full story</a></small></h2>
-      <div class="filters"><button data-mode="story" class="${mode === 'story' ? 'on' : ''}">📖 story</button><button data-mode="list" class="${mode === 'list' ? 'on' : ''}">☰ list</button></div>
-      ${mode === 'list' ? `<div class="filters">${f('all', 'all', all.length)}${f('doing', 'doing', count('doing'))}${f('waiting', 'waiting', count('waiting'))}${f('done', 'done', count('done'))}</div>` : ''}</div>
-    <div class="tasks">${mode === 'story' ? story(s, false) : shown.length ? shown.map(t => `<div class="task">
-      <span class="pill ${t.st}">${t.st}</span><span class="txt">${esc(t.txt)}</span><span class="when">${esc(t.when)}</span>
-      ${t.st === 'doing' ? '<div class="bar"><i></i></div>' : ''}
-      <span class="sub">${esc(t.agent)} · ${esc(t.out)}${t.n ? ' · ' + esc(t.n) : ''}</span></div>`).join('') : '<p class="empty">Nothing here.</p>'}</div>
+  return `<aside class="dash-side">
+    <section class="dcard side">
+      <div class="hd"><h2>What happened</h2><small><a href="#/story">Open the full story</a></small></div>
+      <div class="sec"><div class="filters" role="group" aria-label="How to show it"><button data-mode="story" class="${mode === 'story' ? 'on' : ''}">Story</button><button data-mode="list" class="${mode === 'list' ? 'on' : ''}">List</button></div>
+      ${mode === 'list' ? `<div class="filters" role="group" aria-label="Filter the list">${f('all', 'all', all.length)}${f('doing', 'doing', count('doing'))}${f('waiting', 'waiting', count('waiting'))}${f('done', 'done', count('done'))}</div>` : ''}</div>
+      <div class="tasks">${mode === 'story' ? story(s, false) : shown.length ? shown.map(t => `<div class="task">
+        <span class="pill ${t.st}">${t.st}</span><span class="txt">${esc(t.txt)}</span><span class="when">${esc(t.when)}</span>
+        ${t.st === 'doing' ? '<div class="bar"><i></i></div>' : ''}
+        <span class="sub">${esc(t.agent)}, ${esc(t.out)}${t.n ? ', ' + esc(t.n) : ''}</span></div>`).join('') : '<p class="empty">Nothing here.</p>'}</div>
+    </section>
+    <section class="dcard">
+      <div class="hd"><h2>The four agents</h2><small>AI help: ${esc(String(s.aiPolicy).replace('_', ' '))}</small></div>
+      <div class="agents">${s.agents.map(a => {
+        const steps = logItems(a.logText).length, T = TEAM[a.id] || { dot: 'var(--faint)' };
+        const tag = a.state === 'running' ? ['go', 'Working'] : a.state === 'done' ? ['ok', 'Done'] : a.state === 'error' ? ['no', 'Stopped'] : a.state === 'skipped' ? ['idle', 'Skipped'] : ['idle', 'Waiting'];
+        return `<a class="acard s-${a.state}" href="#/${a.id}"><span class="dot" style="background:${T.dot}"></span><b>${esc(a.label)}</b>
+          <span class="what">${steps} step${steps === 1 ? '' : 's'} logged, writes ${esc(a.output)}</span><span class="tag ${tag[0]}">${tag[1]}</span></a>`;
+      }).join('')}</div>
+    </section>
   </aside>`;
+}
+
+/* ---------- dashboard pieces: greeting, activity chart, runs table ---------- */
+let runsList = [], meName = '';
+const firstName = n => String(n || '').trim().split(/\s+/)[0] || '';
+function nowLine(s) {
+  const ag = s.agents, run = ag.find(a => a.state === 'running'), title = `<b>${esc(s.title)}</b>`;
+  if (run) return `The ${esc(run.label)} is working on ${title}.`;
+  if (ag.some(a => a.state === 'error')) return `${title} stopped with a problem. Open the agent to see why.`;
+  if (ag.every(a => a.state === 'done' || a.state === 'skipped')) {
+    const ev = ag.find(a => a.id === 'evaluator'), v = ev && ev.outputText ? verdict(ev.outputText) : { score: null };
+    return `All the agents finished ${title}${v.score === null ? '' : `, marked ${v.score} out of 100`}. Handing it in is your step.`;
+  }
+  if (ag.every(a => a.state === 'waiting')) return `${title} is set up and waiting to start.`;
+  return `Nothing is running right now on ${title}.`;
+}
+// Real activity only: pipeline notes (which carry a full time) and log steps stamped HH:MM. Untimed steps are left out.
+function activity(s) {
+  const day = String(s.created || ((s.events || [])[0] || {}).t || '').slice(0, 11), ts = [];
+  (s.events || []).forEach(e => { const d = Date.parse(e.t); if (!isNaN(d)) ts.push(d); });
+  (s.agents || []).forEach(a => logItems(a.logText).forEach(it => {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(String(it.n).trim());
+    if (m && day.length === 11) { const d = Date.parse(day + m[1].padStart(2, '0') + ':' + m[2] + ':00'); if (!isNaN(d)) ts.push(d); }
+  }));
+  if (ts.length < 2) return null;
+  const t0 = Math.min(...ts), t1 = Math.max(...ts);
+  if (t1 - t0 < 60000) return null;
+  const n = 10, counts = new Array(n).fill(0);
+  ts.forEach(x => { counts[Math.min(n - 1, Math.floor((x - t0) / (t1 - t0) * n))]++; });
+  return { counts, t0, t1, total: ts.length };
+}
+function chartHtml(s) {
+  const a = activity(s);
+  if (!a) return '';
+  const W = 600, H = 150, top = 16, base = 132, max = Math.max(...a.counts);
+  const pt = a.counts.map((c, i) => [i / (a.counts.length - 1) * W, base - c / max * (base - top)]);
+  // a smooth line through the midpoints: it stays inside the points, so it never dips below zero
+  let d = `M${pt[0][0]} ${pt[0][1].toFixed(1)}`;
+  for (let i = 1; i < pt.length - 1; i++) d += ` Q${pt[i][0].toFixed(1)} ${pt[i][1].toFixed(1)} ${((pt[i][0] + pt[i + 1][0]) / 2).toFixed(1)} ${((pt[i][1] + pt[i + 1][1]) / 2).toFixed(1)}`;
+  d += ` L${pt[pt.length - 1][0]} ${pt[pt.length - 1][1].toFixed(1)}`;
+  const clock = x => new Date(x).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const grid = [0.25, 0.5, 0.75].map(f => `<line class="gr" x1="${W * f}" y1="${top}" x2="${W * f}" y2="${base}"/>`).join('');
+  return `<figure class="chart" style="margin:0" aria-label="Activity over this run: ${a.total} timed notes between ${clock(a.t0)} and ${clock(a.t1)}">
+    <span class="cap">Activity in this run<b>${a.total} timed notes</b></span>
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-hidden="true">${grid}
+      <path class="ar" d="${d} L${W} ${base} L0 ${base} Z"/><path class="ln" d="${d}"/></svg>
+    <div class="ax"><span>${clock(a.t0)}</span><span>${clock((a.t0 + a.t1) / 2)}</span><span>${clock(a.t1)}</span></div>
+  </figure>`;
+}
+const RUN_LABELS = ['Analyst', 'Source finder', 'Builder', 'Evaluator'];
+function runState(r) {
+  const st = r.states || [], i = st.indexOf('running');
+  if (i >= 0) return ['run', (RUN_LABELS[i] || 'An agent') + ' working'];
+  if (st.includes('error')) return ['err', 'Stopped'];
+  if (st.length && st.every(x => x === 'done' || x === 'skipped')) return ['done', 'Finished'];
+  if (st.some(x => x === 'done')) return ['', 'Paused'];
+  return ['', 'Waiting'];
+}
+function runsTable() {
+  const when = t => { const d = new Date(t); return t && !isNaN(d) ? d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ', ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '–'; };
+  const rule = p => p === 'preferred' ? 'ok' : p === 'banned' ? 'no' : 'go';
+  return `<section class="dcard runs"><div class="hd"><h2>Runs</h2><small>${runsList.length} in your save folder</small></div>
+    <div class="wrap"><table><thead><tr><th>Name</th><th class="c-started">Started</th><th class="c-rule">AI rule</th><th class="num c-files">Files</th><th class="num">Score</th><th>State</th></tr></thead>
+    <tbody>${runsList.map(r => {
+      const [cls, label] = runState(r);
+      return `<tr data-run="${r.id}" tabindex="0" class="${r.id === runId ? 'cur' : ''}" ${r.id === runId ? 'aria-current="true"' : ''}>
+        <td class="nm" title="${esc(r.title)}">${esc(r.title)}</td><td class="c-started">${esc(when(r.created))}</td>
+        <td class="c-rule"><span class="tag ${rule(r.aiPolicy)}">${esc(String(r.aiPolicy || 'unknown').replace('_', ' '))}</span></td>
+        <td class="num c-files">${r.files == null ? '–' : r.files}</td>
+        <td class="num">${r.score == null ? '<span class="none-yet">not marked</span>' : `<b>${r.score}</b>/100`}</td>
+        <td><span class="st ${cls}"><i></i>${esc(label)}</span></td></tr>`;
+    }).join('')}</tbody></table></div></section>`;
+}
+function greeting(s) {
+  const who = firstName(meName), chart = chartHtml(s);
+  return `<section class="greet" ${chart ? '' : 'style="grid-template-columns:minmax(0,1fr)"'}>
+    <div><h1>Hello${who ? ' ' + esc(who) : ''}</h1><p class="sub">${nowLine(s)}</p>
+      <div class="act"><button class="btn-pill" id="copyCmd"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.500"/><path d="M5 15V6.500A1.500 1.500 0 0 1 6.500 5H15"/></svg><span>${esc(copyLabel)}</span></button>
+        <code id="cmdText">/assigent</code></div></div>
+    ${chart}
+  </section>`;
 }
 
 /* ---------- the story: the whole run told simply, start to end ---------- */
@@ -286,7 +373,6 @@ const SITE_NAMES = {
   'oracle.com': 'Oracle: the company that makes Java.',
   'w3schools.com': 'W3Schools: a free website that teaches coding.',
   'visual-paradigm.com': 'Visual Paradigm: guides about planning software.',
-  'onslate.in': "Your assignment's own learning guide.",
   'dev.java': 'dev.java: the newest official Java website.',
   'baeldung.com': 'Baeldung: a Java tutorial blog.',
   'geeksforgeeks.org': 'GeeksforGeeks: a coding tutorial website.',
@@ -415,8 +501,8 @@ function agentPage(s, a) {
       ${window.THREE && window.Office3D ? '' : crew2d}
       <div class="s3-labels"></div>
       <div class="s3-title"><span class="d"></span>${esc(a.label)}'s room <small>${a.state === 'waiting' ? 'Asleep until its turn' : a.state === 'running' ? 'Working now' : a.state === 'done' ? 'Finished' : ''}</small></div>
-      <div class="s3-ui"><button data-3d="in" title="Zoom in">+</button><button data-3d="out" title="Zoom out">−</button>
-        <button data-3d="spin" title="Spin around">⟳</button><button data-3d="reset" title="Reset view">⌂</button></div>
+      <div class="s3-ui"><button data-3d="in" title="Zoom in" aria-label="Zoom in">+</button><button data-3d="out" title="Zoom out" aria-label="Zoom out">−</button>
+        <button data-3d="spin" title="Spin around" aria-label="Spin around">⟳</button><button data-3d="reset" title="Reset view" aria-label="Reset view">⌂</button></div>
       <div class="s3-hint">Drag to look around the room. Pinch, or hold ⌘ and scroll, to zoom.</div>
       ${a.state === 'done' ? '<span class="s3-done">✓ done</span>' : ''}
     </section>
@@ -483,9 +569,20 @@ function mountOffice3d(s) {
   try { office3d = Office3D.mountOffice(host, list, team => { location.hash = '#/' + team; }); } catch (e) { console.error(e); office3d = null; }
 }
 const route = () => (location.hash.match(/^#\/(\w+)/) || [])[1] || '';
+function markRail(s) {
+  const r = route();
+  document.querySelectorAll('#rail a').forEach(el => {
+    const on = el.dataset.nav === r;
+    el.classList.toggle('on', on);
+    if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
+    const ag = s && s.agents.find(x => x.id === el.dataset.nav);
+    el.classList.toggle('busy', !!(ag && ag.state === 'running'));
+  });
+}
 function render(s) {
+  markRail(s);
   const a = s.agents.find(x => x.id === route());
-  $('#crumb').textContent = a ? '/ ' + a.label : route() === 'story' ? '/ What happened' : '';
+  $('#crumb').textContent = a ? a.label : route() === 'story' ? 'What happened' : '';
   if (a) { $('#main').innerHTML = agentPage(s, a); mountOffice3d(null); mount3d(a); return; }
   mount3d(null);
   if (route()) mountOffice3d(null);
@@ -497,18 +594,22 @@ function render(s) {
   }
   const tasksScroll = $('.tasks') ? $('.tasks').scrollTop : 0;
   const has3d = !!(window.THREE && window.Office3D);
-  $('#main').innerHTML = `<div class="office">${has3d ? `<section class="floor floor3d">
+  $('#main').innerHTML = `<div class="dash"><div class="dash-main">
+    ${greeting(s)}
+    ${runsTable()}
+    <section class="dcard officecard">${has3d ? `<div class="floor3d">
       <div class="stage3d office3d" id="office3d">
         <div class="s3-labels">${s.agents.map(x => `<div class="card s3-room s-${x.state}" data-go="${x.id}">${cardBody(s, x)}</div>`).join('')}
           <span class="s3-tag s3-brain"><b>The Brain</b>, ${s.events.length} notes</span></div>
         <div class="s3-title"><span class="d" style="background:var(--accent)"></span>The office</div>
-        <div class="s3-ui"><button data-3d="in" title="Zoom in">+</button><button data-3d="out" title="Zoom out">−</button>
-          <button data-3d="spin" title="Spin around">⟳</button><button data-3d="reset" title="Reset view">⌂</button></div>
+        <div class="s3-ui"><button data-3d="in" title="Zoom in" aria-label="Zoom in">+</button><button data-3d="out" title="Zoom out" aria-label="Zoom out">−</button>
+          <button data-3d="spin" title="Spin around" aria-label="Spin around">⟳</button><button data-3d="reset" title="Reset view" aria-label="Reset view">⌂</button></div>
         <div class="s3-hint">Drag to look around. Pinch, or hold ⌘ and scroll, to zoom. Click a room to go in.</div>
-      </div></section>` : `<section class="floor">${office(s)}
-      <div class="hint">drag to move · click a team to open it</div>
+      </div></div>` : `<div class="floor">${office(s)}
+      <div class="hint">Drag to move. Click a team to open it.</div>
       <div class="zoom"><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="reset" aria-label="Reset view">⌂</button></div>
-    </section>`}${sidebar(s)}</div>`;
+    </div>`}</section>
+    </div>${sidebar(s)}</div>`;
   if (has3d) mountOffice3d(s); else applyCam();
   if ($('.tasks')) $('.tasks').scrollTop = tasksScroll;
 }
@@ -518,17 +619,19 @@ try { const v = localStorage.getItem('pipe.run'); if (v !== null) runId = +v; } 
 async function tick() {
   try {
     const rs = await (await fetch('/api/runs')).json();
+    runsList = rs;
     const sel = $('#runSel');
     const opts = rs.map(r => `<option value="${r.id}">${esc(r.title)}</option>`).join('');
     if (sel.innerHTML !== opts) sel.innerHTML = opts;
     if (!rs.length) {
-      $('#main').innerHTML = '<div class="none">No runs yet. Start one with <code>/assigent</code>.</div>';
+      markRail(null);
+      $('#main').innerHTML = `<div class="none"><b>Hello${firstName(meName) ? ' ' + esc(firstName(meName)) : ''}.</b> No runs yet. Start one with <code>/assigent</code> in Claude Code, or <code>assigent run</code> in your terminal.</div>`;
     } else {
       if (!rs.some(r => r.id === runId)) runId = 0;
       sel.value = runId;
       current = await (await fetch('/api/run?id=' + runId)).json();
       // re-render only when the data changes, so the workers' animations run uninterrupted
-      const sig = JSON.stringify(current) + route() + filter;
+      const sig = JSON.stringify(current) + JSON.stringify(rs) + runId + meName + route() + filter;
       if (sig !== lastSig && !drag) { render(current); lastSig = sig; }
     }
     $('#live').classList.remove('off'); $('#live span').textContent = 'live';
@@ -546,18 +649,31 @@ document.addEventListener('click', e => {
   const f = e.target.closest('[data-filter]');
   if (f) { filter = f.dataset.filter; if (current) render(current); return; }
   if (e.target.closest('#copyCmd')) {
-    const t = $('#cmdText').textContent, b = $('#copyCmd');
-    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { b.textContent = 'Copied'; }, () => { b.textContent = 'Select it and copy'; });
-    setTimeout(() => { if ($('#copyCmd')) $('#copyCmd').textContent = 'Copy command'; }, 1500);
+    // the label lives in copyLabel so a re-render in between cannot wipe the confirmation
+    const t = $('#cmdText').textContent, say = x => { copyLabel = x; const l = $('#copyCmd span'); if (l) l.textContent = x; };
+    const after = x => { say(x); setTimeout(() => say('Copy start command'), 1500); };
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => after('Copied'), () => after('Select it and copy'));
     return;
   }
+  const row = e.target.closest('tr[data-run]');
+  if (row) { pickRun(+row.dataset.run); return; }
   const g = e.target.closest('[data-go]');
   if (g && !moved) location.hash = '#/' + g.dataset.go;
 });
-window.addEventListener('hashchange', () => { if (current) { render(current); lastSig = ''; window.scrollTo(0, 0); } });
-$('#runSel').addEventListener('change', e => {
-  runId = +e.target.value; lastSig = '';
+document.addEventListener('keydown', e => {
+  const row = (e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('tr[data-run]');
+  if (row) { e.preventDefault(); pickRun(+row.dataset.run); }
+});
+function pickRun(id) {
+  runId = id; lastSig = '';
   try { localStorage.setItem('pipe.run', runId); } catch (err) {}
   tick();
-});
+}
+window.addEventListener('hashchange', () => { if (current) { render(current); lastSig = ''; window.scrollTo(0, 0); } });
+$('#runSel').addEventListener('change', e => pickRun(+e.target.value));
+// The saved name (if any) for the greeting and the top bar. No name saved: it just says "Hello".
+fetch('/api/me').then(r => r.ok ? r.json() : {}).then(m => {
+  meName = String((m && m.name) || '').trim();
+  if (meName) { $('#meName').textContent = meName; $('#meAv').textContent = meName[0].toUpperCase(); $('#me').hidden = false; lastSig = ''; }
+}).catch(() => {});
 iconsReady.then(() => { tick(); setInterval(tick, 2000); });

@@ -146,7 +146,10 @@ def build(out):
         json.dump(run, f, indent=1)
     with open(os.path.join(out, "data", "runs.json"), "w") as f:
         json.dump([{"id": 0, "title": run["title"], "aiPolicy": run["aiPolicy"], "updated": run["updated"],
-                    "states": [a["state"] for a in run["agents"]]}], f, indent=1)
+                    "created": run["created"], "files": len(run["files"]), "score": None, "verdict": None,
+                    "demoNow": run["demoNow"], "states": [a["state"] for a in run["agents"]]}], f, indent=1)
+    with open(os.path.join(out, "data", "me.json"), "w") as f:
+        json.dump({"name": ""}, f)
 
     # index.html holds the page, app.js the page logic; each swap applies to whichever file has the text
     files = {"index.html": open(os.path.join(HERE, "index.html")).read(),
@@ -154,7 +157,8 @@ def build(out):
     swaps = [
         ("fetch('/icons/' + file + '.svg')", "fetch('icons/' + file + '.svg')"),
         ('<script src="/office3d.js"></script>', '<script src="office3d.js"></script>'),
-        ("await (await fetch('/api/runs')).json()", "await (await fetch('data/runs.json')).json()"),
+        ("await (await fetch('/api/runs')).json()", "demoRuns(await (await fetch('data/runs.json')).json())"),
+        ("fetch('/api/me')", "fetch('data/me.json')"),
         ("current = await (await fetch('/api/run?id=' + runId)).json();",
          "current = demoShift(await (await fetch('data/run-' + runId + '.json')).json());"),
         ('<span class="conn"><i></i>Reading your assignment folders</span>', '<span class="conn"><i></i>Demo data, not a real assignment</span>'),
@@ -171,6 +175,16 @@ function demoShift(d) {
   d.files.forEach(f => { f.mtime += demoOffset / 1000; });
   delete d.demoNow;
   return d;
+}
+function demoRuns(rs) {
+  rs.forEach(r => {
+    if (!r.demoNow) return;
+    const off = Date.now() - new Date(r.demoNow).getTime(), p = n => String(n).padStart(2, '0');
+    const local = t => { if (!t) return t; const x = new Date(new Date(t).getTime() + off);
+      return `${x.getFullYear()}-${p(x.getMonth() + 1)}-${p(x.getDate())}T${p(x.getHours())}:${p(x.getMinutes())}:${p(x.getSeconds())}`; };
+    r.created = local(r.created); r.updated = local(r.updated); delete r.demoNow;
+  });
+  return rs;
 }
 const route = () =>"""),
     ]

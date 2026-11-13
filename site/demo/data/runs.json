@@ -4,6 +4,11 @@
   "title": "DEMO \u00b7 Build a Simple To-Do App",
   "aiPolicy": "preferred",
   "updated": "2026-01-01T10:29:00",
+  "created": "2026-01-01T10:20:00",
+  "files": 9,
+  "score": null,
+  "verdict": null,
+  "demoNow": "2026-01-01T10:30:00",
   "states": [
    "done",
    "done",

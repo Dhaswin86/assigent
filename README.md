@@ -11,125 +11,99 @@ It runs on your own computer, on your own Claude plan. You hand in the work your
 - A Claude plan that includes Claude Code, with Claude Code installed
 - Python 3 (already on most Macs and Linux computers)
 - Optional: the Claude browser extension in Chrome, Brave or Edge, if you want
-  Assigent to read your learning platform for you
+  Assigent to read the assignment from your portal tab
 
-## Install
+## Install and run
 
 ```
 curl -fsSL https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh | bash
+assigent run
 ```
 
-Or from a copy of this folder:
+Or from a copy of this folder: `./install.sh`, then `assigent run`.
 
-```
-./install.sh
-```
+That is all. There is no setup and no list of questions to get through first.
 
 The installer copies four agents to `~/.claude/agents/`, the skill to
 `~/.claude/skills/assigent/` and the command to `~/.local/bin/assigent`. It backs up
 any file of the same name first and never uses sudo.
 
-Then answer the setup questions:
+## It asks only what your assignment needs
 
-```
-assigent setup
-```
+Assigent has no fixed questions. It reads the assignment first, then asks you only
+what that assignment needs an answer to, in one round, before any research or
+building starts.
 
-## The setup questions
+It starts with one question: where is the assignment? You can paste it, give a file,
+or have it read from the portal tab open in your browser. Only if you choose the
+browser does it ask your permission to read that tab.
 
-Assigent asks these once, before anything runs.
+Then the questions come from the brief:
 
-1. Your name, as it should appear on hand-ins.
-2. Where to save assignment folders. The default is `~/Documents/Assignments`.
-3. Your learning platform: Zoho Schools, Google Classroom, Canvas, Moodle, Microsoft
-   Teams, other, or "I'll paste the brief myself". If you pick a platform, it also
-   asks for the portal's web address.
-4. The browser to use: Chrome, Brave, Edge or none. If you pick a browser, Assigent
-   asks your permission to read your portal through it. It will only read assignment
-   pages in the browser you are signed in to. It never signs in, never submits.
-5. How much AI help you want when an assignment states no AI rule: full work, coach
-   only, or study sources only.
-6. The apps you have for slides, sheets, documents, design and code, so files come
-   out in a type you can open.
-7. Whether Assigent should ask before each assignment which apps it may use (`ask`,
-   the default) or use the apps you listed without asking (`auto`).
-8. Whether Assigent should ask you the assignment's own questions before starting
-   (recommended), or pick defaults for you.
+| The brief says | Assigent asks |
+|---|---|
+| "Explore a Zoho product and write a review" | Which product do you want? |
+| "Plan a week of posts for social media" | Which platform or platforms do you want? |
+| "Make a poster with a design tool" | Figma, Photoshop, Illustrator or Canva? May it use that app? |
+| "Hand in a deck with your name on the title slide" | What name should go on it? Asked once, then remembered |
+| Nothing about AI | How much help do you want: full work, coach only, or study sources only? |
+| "Write 500 words on the water cycle, AI allowed" | Nothing. The brief fixes everything, so it starts |
 
-Your answers are saved in `~/.assigent/config.json`. Run `assigent setup` again to
-change them. The full list of choices and flags is in
-[skill/assigent/setup-questions.md](skill/assigent/setup-questions.md).
+The rules behind this:
 
-You can also give every answer as a flag and skip the prompts:
+- If the assignment names an app, a product, a platform, a tool or anything else with
+  more than one possible option and does not say which, Assigent asks which one you
+  want. It never picks silently.
+- It never asks what the assignment does not need. An essay gets no app question.
+- It never asks what the brief already fixes. If the brief names the platform, there
+  is no platform question.
+- It never asks twice. Answers it can reuse, such as your name and the apps you have,
+  are remembered.
+- Each question comes with a few options and a recommended default. You can type your
+  own answer. If you skip one, it uses the default and says so in the report.
 
-```
-assigent setup --name "Sam Lee" --platform canvas \
-  --portal-url "https://school.example/courses" --browser chrome \
-  --browser-access yes --ai-help coach --apps "powerpoint,excel,word" \
-  --app-permission ask --ask-choices always --yes
-```
-
-## What it asks you for each assignment
-
-Before any research or building starts, Assigent asks you one round of questions.
-
-First, the questions the assignment itself needs answered. The rule is simple: if the
-assignment names an app, a product, a platform, a tool or anything else that has more
-than one possible option, and does not say which, Assigent asks which one you want.
-It never picks for you silently.
-
-- "Explore a Zoho product": which product do you want?
-- "Post on a social media platform": which platform do you want?
-- "Use a design tool": Figma, Photoshop, Illustrator or Canva?
-- "Make a spreadsheet": which spreadsheet app?
-
-The same goes for a topic, a brand or an audience. Each question comes with a few
-options and a recommended default, and you can type your own answer. Apps you listed
-in setup are offered first. If you skip a question, Assigent uses the default and
-says so in the report. It does not ask about things the brief already fixes.
-
-Then, in the same round, which apps it may use.
-
-Your answers are saved in the assignment folder (`choices.md` and
-`process/app-permissions.md`). The agents hold to them, and the Evaluator fails work
-that ignores a choice you made.
+Answers for one assignment are saved in its folder (`choices.md`). The agents hold to
+them, and the Evaluator fails work that ignores a choice you made.
 
 ## Two ways to use it
 
 ### In the terminal
 
 ```
-assigent run                  start Claude Code on your next assignment
+assigent run                     start Claude Code on your next assignment
 assigent run --paste brief.txt   start from a brief you saved in a file
-assigent view                 open the viewer that shows the agents at work
-assigent status               list your runs, each agent's state and the score
-assigent doctor               check that everything is installed
+assigent view                    open the viewer that shows the agents at work
+assigent status                  list your runs, each agent's state and the score
+assigent doctor                  check that everything is installed
 ```
 
 ### In Claude Code, with the browser extension
 
 1. Install the Claude extension in Chrome, Brave or Edge.
-2. Sign in to your learning platform in that browser, as you normally do.
+2. Sign in to your learning platform in that browser, as you normally do, and open
+   your assignments page.
 3. Open Claude Code and type `/assigent`.
-4. When Claude asks, allow it to read the portal tab.
+4. Choose "read it from the portal tab open in my browser" and allow it to read the
+   tab.
 
-Assigent lists the assignments that are open and you pick one. If the portal is signed
-out, it asks you to sign in. It does not sign in for you.
+It works the same way on any platform, because it reads the page you can see. If the
+portal is signed out, it asks you to sign in. It does not sign in for you.
 
 No browser? Paste the brief into Claude Code after typing `/assigent`.
 
 ## What happens in a run
 
-1. The Analyst reads the brief and writes `brief.md`, a checklist of what is asked.
-2. Assigent asks you what the assignment leaves open, such as which product or which
-   social media platform. Then it tells you which apps the assignment needs, and asks
-   whether it may use each one and whether you want a specific app of your own choice.
-3. The Source finder gathers docs and tutorials into `sources.md`.
-4. The Builder does the work into `deliverables/` and writes `report.md`.
-5. The Evaluator marks it out of 100 and writes `evaluation.md`. If it says revise,
+1. Assigent asks where the assignment is, and reads it.
+2. The Analyst writes `brief.md`: a checklist of what is asked, and the questions this
+   assignment needs.
+3. Assigent asks you those questions, once. If there are none, it says so and goes on.
+4. The Source finder gathers docs and tutorials into `sources.md`.
+5. The Builder does the work into `deliverables/` and writes `report.md`.
+6. The Evaluator marks it out of 100 and writes `evaluation.md`. If it says revise,
    the Builder gets one round to fix the list.
 
-Everything lands in one folder per assignment, inside your save folder.
+Everything lands in one folder per assignment, inside `~/Documents/Assignments`
+unless you choose another folder.
 
 ## Rules it always keeps
 
@@ -138,8 +112,10 @@ Everything lands in one folder per assignment, inside your save folder.
 - It never sends messages or posts for you.
 - It never gets around an assignment's AI rule. If AI is not allowed, it only gives
   you the brief and a reading list.
+- It never picks silently when the assignment leaves a choice to you.
+- It opens an app on your computer only after you allowed it for that assignment.
 - Parts that must come from your own life or in your own voice stay as marked
-  placeholders for you to fill.
+  placeholders for you to fill, unless you supply them.
 - It only runs when you start it. Nothing watches your portal in the background.
 - Files come out in the type the assignment asks for: a deck is a `.pptx`, a sheet is
   a `.xlsx`, a report is a `.docx`. Never a Markdown file or a PDF stand-in.
@@ -147,16 +123,33 @@ Everything lands in one folder per assignment, inside your save folder.
 Check your school's rules on AI help before you use it. You are responsible for what
 you hand in.
 
+## Preferences (optional)
+
+Assigent remembers answers it can reuse in `~/.assigent/config.json`: your name, your
+save folder, your AI-help preference, the apps you have and your browser permission.
+You never have to touch this. If you want to see or change it:
+
+```
+assigent config                                   print what is remembered
+assigent preferences                              go through the saved answers
+assigent preferences --name "Sam Lee" --yes       change one answer
+assigent preferences --folder "~/School" --yes    use another save folder
+assigent preferences --reset                      forget everything
+```
+
+Details are in [skill/assigent/preferences.md](skill/assigent/preferences.md).
+`assigent setup` is the old name of `assigent preferences` and still works.
+
 ## Commands
 
 | Command | What it does |
 |---|---|
-| `assigent setup` | Ask the setup questions, or take them as flags |
 | `assigent run` | Start Claude Code with `/assigent` |
 | `assigent view` | Start the viewer and open it. `assigent view --stop` stops it |
 | `assigent status` | List runs with each agent's state and the score |
 | `assigent doctor` | Check the install, one line per check with a fix |
-| `assigent config` | Print your settings |
+| `assigent preferences` | Optional: see or change what Assigent remembers |
+| `assigent config` | Print what Assigent remembers |
 | `assigent uninstall` | Remove Assigent |
 | `assigent --version` | Print the version |
 
@@ -167,7 +160,7 @@ assigent uninstall
 ```
 
 This removes the agents, the skill and the command. Your assignment folders are left
-alone. It asks before it deletes your settings in `~/.assigent`.
+alone. It asks before it deletes your saved answers in `~/.assigent`.
 
 ## For developers
 

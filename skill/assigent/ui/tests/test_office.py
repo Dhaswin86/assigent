@@ -21,6 +21,13 @@ def check(name, ok, detail=""):
     print(("PASS " if ok else "FAIL ") + name + (f"  ({detail})" if detail else ""))
 
 
+def office_box(page):
+    """The office is one card on a scrolling dashboard: bring it to the middle of the window, then measure it."""
+    page.evaluate("document.querySelector('#office3d').scrollIntoView({block: 'center'})")
+    page.wait_for_timeout(250)
+    return page.locator("#office3d canvas").bounding_box()
+
+
 def view(page, which="office3d"):
     return page.evaluate(f"{which} && {which}.view")
 
@@ -45,6 +52,48 @@ with sync_playwright() as p:
     check("dotted links are drawn", links >= 5, f"{links} links")
     check("auto-spin is off by default", view(page)["auto"] is False)
 
+    # --- the dashboard around the office ---
+    check("charcoal top bar with the run picker", page.locator("header.top .pick select#runSel").count() == 1)
+    check("greeting block says hello", page.inner_text(".greet h1").startswith("Hello"), page.inner_text(".greet h1"))
+    check("greeting says what is running now", "Builder is working" in page.inner_text(".greet .sub"), page.inner_text(".greet .sub"))
+    rows = page.locator(".runs tbody tr").count()
+    check("runs table is shown", rows >= 1 and page.locator(".runs thead th").count() == 6, f"{rows} rows")
+    check("the current run is highlighted in the table", page.locator(".runs tbody tr.cur[aria-current=true]").count() == 1)
+    check("runs table shows the AI rule as an outlined pill", page.locator(".runs tbody tr .tag").count() >= 1)
+    drawn = page.evaluate("!!activity(current)")
+    has_line = page.locator(".chart svg path.ln").count() == 1
+    check("activity chart is drawn from real timed notes", drawn and has_line, f"data={drawn} line={has_line}")
+    hidden = page.evaluate("chartHtml({created: '', events: [], agents: []}) === '' && chartHtml({created: current.created, events: current.events.slice(0, 1), agents: []}) === ''")
+    check("activity chart is hidden when there is no data", hidden)
+    total = page.evaluate("activity(current).total"); n_ev = page.evaluate("current.events.length")
+    check("chart counts only real timed notes (no invented numbers)", total == n_ev, f"{total} plotted, {n_ev} timed notes in the data")
+    check("right column has the four agent cards", page.locator(".dash-side .acard").count() == 4)
+    orange = page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()")
+    check("accent is Claude orange", orange.lower() == "#d97757", orange)
+    btn = page.evaluate("(() => { const c = getComputedStyle(document.querySelector('#copyCmd')); return c.backgroundColor + '|' + c.color; })()")
+    def lum(rgb):
+        import re as _re
+        r, g, b = [int(x) / 255 for x in _re.findall(r"\d+", rgb)[:3]]
+        f = lambda v: v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+        return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+    bg_l, fg_l = [lum(x) for x in btn.split("|")]
+    ratio = (max(bg_l, fg_l) + 0.05) / (min(bg_l, fg_l) + 0.05)
+    check("orange pill button text has 4.5:1 contrast", ratio >= 4.5, f"{ratio:.2f}:1")
+
+    # --- the icon rail ---
+    rail = page.locator("#rail a")
+    check("rail has Office, Story and the four agents, all labelled", rail.count() == 6 and page.locator("#rail a[aria-label]").count() == 6)
+    check("rail marks the current section", page.locator("#rail a.on[aria-label=Office]").count() == 1)
+    page.click("#rail a[aria-label=Story]"); page.wait_for_timeout(700)
+    check("rail Story link opens the story", page.url.endswith("#/story") and page.locator(".story.full").count() == 1, page.url)
+    page.click("#rail a[aria-label=Evaluator]"); page.wait_for_timeout(900)
+    check("rail agent link opens that agent", page.url.endswith("#/evaluator") and page.locator("#rail a.on[aria-label=Evaluator]").count() == 1, page.url)
+    page.click("#rail a[aria-label=Office]"); page.wait_for_selector("#office3d canvas"); page.wait_for_timeout(1500)
+    check("rail Office link goes back to the dashboard", page.url.endswith("#/") and page.locator(".dash").count() == 1, page.url)
+    page.focus(".runs tbody tr"); page.keyboard.press("Enter"); page.wait_for_timeout(600)
+    check("a run row can be chosen with the keyboard", page.locator(".runs tbody tr.cur").count() == 1 and page.locator("#office3d canvas").count() == 1)
+    page.wait_for_timeout(800)
+
     upper = page.evaluate("""[...document.querySelectorAll('body *')].filter(e => getComputedStyle(e).textTransform === 'uppercase' && e.textContent.trim()).length""")
     check("no ALL-CAPS labels", upper == 0, f"{upper} uppercase elements")
 
@@ -59,25 +108,36 @@ with sync_playwright() as p:
     check("spin button turns the office", t1 - t0 > 0.1, f"theta {t0} -> {t1}")
     page.click("[data-3d=spin]")
 
-    box = page.locator("#office3d canvas").bounding_box()
+    box = office_box(page)
     cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
     r_before = view(page)["r"]
     page.mouse.move(cx, cy); page.mouse.wheel(0, 400); page.wait_for_timeout(800)
     check("plain scroll does not zoom (page can scroll)", abs(view(page)["r"] - r_before) < 0.5)
+    box = office_box(page)
+    cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+    page.mouse.move(cx, cy)
     page.keyboard.down("Control"); page.mouse.wheel(0, 200); page.keyboard.up("Control"); page.wait_for_timeout(1200)
     check("Ctrl + scroll zooms", abs(view(page)["r"] - r_before) > 1, f"{r_before} -> {view(page)['r']}")
     page.click("[data-3d=reset]"); page.wait_for_timeout(1500)
 
     th = view(page)["theta"]
+    box = office_box(page)
     dx, dy = box["x"] + box["width"] * 0.8, box["y"] + box["height"] * 0.85   # open floor, away from the room cards
     page.mouse.move(dx, dy); page.mouse.down(); page.mouse.move(dx - 220, dy, steps=8); page.mouse.up(); page.wait_for_timeout(800)
     check("dragging turns the office", abs(view(page)["theta"] - th) > 0.5, f"theta {th} -> {view(page)['theta']}")
     page.click("[data-3d=reset]"); page.wait_for_timeout(1500)
 
     # --- hover + click a room in 3D ---
-    x, y = page.evaluate("office3d.screenOf(12, 0.5, -10)")
-    page.mouse.move(x, y); page.wait_for_timeout(500)
-    hot = page.evaluate("(document.querySelector('.s3-room.hot') || {}).dataset?.go || null")
+    office_box(page)
+    # the camera may still be gliding back after the reset: re-aim until it has settled
+    hot = None
+    for _ in range(6):
+        page.wait_for_timeout(700)
+        x, y = page.evaluate("office3d.screenOf(12, 0.5, -10)")
+        page.mouse.move(x - 3, y); page.mouse.move(x, y); page.wait_for_timeout(400)
+        hot = page.evaluate("(document.querySelector('.s3-room.hot') || {}).dataset?.go || null")
+        if hot == "finder":
+            break
     check("hovering the blue room highlights its card", hot == "finder", f"hot={hot}")
     page.mouse.click(x, y); page.wait_for_timeout(1500)
     check("clicking the blue room opens the Source finder page", page.url.endswith("#/finder"), page.url)
@@ -111,10 +171,10 @@ with sync_playwright() as p:
     page.click("[data-mode=story]"); page.wait_for_timeout(300)
     page.click("#copyCmd")
     try:  # the clipboard answer can take a moment; wait for the button to report what happened
-        page.wait_for_function("document.querySelector('#copyCmd').textContent !== 'Copy command'", timeout=2000)
+        page.wait_for_function("document.querySelector('#copyCmd span').textContent !== 'Copy start command'", timeout=2000)
     except Exception:
         pass
-    label = page.inner_text("#copyCmd")
+    label = page.inner_text("#copyCmd").strip()
     check("copy button confirms", label in ("Copied", "Select it and copy"), label)
 
     # --- the full story page ---
@@ -133,8 +193,21 @@ with sync_playwright() as p:
     overflow = m.evaluate("document.documentElement.scrollWidth - window.innerWidth")
     check("no sideways scrolling on a phone", overflow <= 1, f"overflow {overflow}px")
     m.screenshot(path=os.path.join(SHOTS, "test-phone.png"))
+    check("runs table and rail are there on a phone", m.locator(".runs tbody tr").count() >= 1 and m.locator("#rail a").count() == 6)
     m.goto(BASE + "/#/analyst"); m.wait_for_timeout(1500)
     check("team page works on a phone", m.locator("#stage3d canvas").count() == 1)
+    check("team page has no sideways scrolling on a phone", m.evaluate("document.documentElement.scrollWidth - window.innerWidth") <= 1)
+    m.goto(BASE + "/#/story"); m.wait_for_timeout(800)
+    check("story page has no sideways scrolling on a phone", m.evaluate("document.documentElement.scrollWidth - window.innerWidth") <= 1)
+
+    # --- dark variant ---
+    d = browser.new_page(viewport={"width": 1440, "height": 900}, color_scheme="dark")
+    d.on("pageerror", lambda e: errors.append(str(e)))
+    d.goto(BASE + "/#/"); d.wait_for_load_state("networkidle"); d.wait_for_selector("#office3d canvas"); d.wait_for_timeout(1200)
+    dark = d.evaluate("(() => { const c = getComputedStyle(document.body); return c.backgroundColor + '|' + c.color; })()")
+    b_l, f_l = [lum(x) for x in dark.split("|")]
+    check("dark variant: charcoal surface with legible text", b_l < 0.05 and (f_l + 0.05) / (b_l + 0.05) >= 7, dark)
+    d.screenshot(path=os.path.join(SHOTS, "test-home-dark.png"))
 
     check("no JavaScript errors", not errors, "; ".join(errors[:3]))
     browser.close()

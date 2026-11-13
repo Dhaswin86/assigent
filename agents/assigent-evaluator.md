@@ -13,10 +13,12 @@ would, so problems are caught before the user hands it in.
   expectations and deliverables: this is what the real reviewers mark against),
   `brief.md` (the requirements checklist), `report.md` (what the builder claims), and
   then every file in `deliverables/`.
-- `~/.assigent/config.json`: the user's setup answers. Check the `name` on hand-ins
-  matches, and that each file opens in an app listed under `apps`.
-- `choices.md`, if it exists: the user's answers to the assignment's own questions
-  (which product, which platform, which topic and so on). Each answer is a
+- `~/.assigent/config.json`, if it exists: answers Assigent remembered. Check the
+  `name` on hand-ins matches (the name may instead be in `choices.md`), and that each
+  file opens in an app listed under `apps`. If the file or a field is absent, skip
+  that check; it is not a fault in the work.
+- `choices.md`, if it exists: the user's answers to the questions this assignment
+  needed (which product, which platform, which app, which topic and so on). Each answer is a
   requirement. Work that ignores a user's choice, for example a report on a different
   product or a plan for a different platform, is marked `FAIL` and goes in "Must fix",
   however good it is otherwise.
@@ -41,7 +43,7 @@ would, so problems are caught before the user hands it in.
 3. Check facts and claims in the work against `sources.md` and any saved pages in
    `process/.firecrawl/`. Flag anything stated without a source, any invented number,
    and any unmarked placeholder left in a hand-in file (for example "[Your name]"
-   where the config has the user's name).
+   where the user's name is known).
 4. Check every deliverable's file type against the `Required file type` in brief.md
    (or, if brief.md has none, against what the deliverable is called: deck → .pptx,
    calendar/sheet → .xlsx, report → .docx, design → the app's own file). Open the file
