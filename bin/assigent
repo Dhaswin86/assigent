@@ -1,0 +1,738 @@
+#!/usr/bin/env python3
+"""Assigent: a 4-agent assignment helper that runs inside Claude Code.
+
+  assigent setup       answer the setup questions (or pass them as flags)
+  assigent run         start Claude Code on your next assignment
+  assigent view        open the viewer that shows a run
+  assigent status      list your runs, each agent's state and the score
+  assigent doctor      check that everything is installed
+  assigent config      print your settings
+  assigent uninstall   remove Assigent (your assignment folders stay)
+
+Run "assigent <command> --help" for the options of one command.
+Python 3 standard library only.
+"""
+import argparse, json, os, re, shutil, signal, socket, subprocess, sys, time
+import urllib.request
+from datetime import datetime
+
+VERSION = "1.0.0"
+
+# Exit codes
+OK, FAILED, USAGE, NO_CLAUDE = 0, 1, 2, 3
+
+HOME = os.path.expanduser("~")
+CONFIG_DIR = os.path.join(HOME, ".assigent")
+CONFIG = os.path.join(CONFIG_DIR, "config.json")
+VIEWER_STATE = os.path.join(CONFIG_DIR, "viewer.json")
+AGENTS_DIR = os.path.join(HOME, ".claude", "agents")
+SKILL_DIR = os.path.join(HOME, ".claude", "skills", "assigent")
+CLI_PATH = os.path.join(HOME, ".local", "bin", "assigent")
+AGENT_FILES = ["assigent-analyst.md", "assigent-finder.md", "assigent-builder.md", "assigent-evaluator.md"]
+DEFAULT_FOLDER = "~/Documents/Assignments"
+FIRST_PORT = 8850
+
+PLATFORMS = [
+    ("zoho-schools", "Zoho Schools"),
+    ("google-classroom", "Google Classroom"),
+    ("canvas", "Canvas"),
+    ("moodle", "Moodle"),
+    ("microsoft-teams", "Microsoft Teams"),
+    ("other", "Other platform"),
+    ("paste", "I'll paste the brief myself"),
+]
+BROWSERS = [("chrome", "Chrome"), ("brave", "Brave"), ("edge", "Edge"), ("none", "None")]
+AI_HELP = [
+    ("full", "Full work: Assigent does the assignment"),
+    ("coach", "Coach only: a plan and feedback, you do the work"),
+    ("study", "Study sources only: a brief and reading list"),
+]
+APP_GROUPS = [
+    ("slides", "Slides", [("powerpoint", "PowerPoint"), ("keynote", "Keynote"), ("google-slides", "Google Slides")]),
+    ("sheets", "Sheets", [("excel", "Excel"), ("numbers", "Numbers"), ("google-sheets", "Google Sheets")]),
+    ("documents", "Documents", [("word", "Word"), ("pages", "Pages"), ("google-docs", "Google Docs")]),
+    ("design", "Design", [("photoshop", "Photoshop"), ("illustrator", "Illustrator"), ("figma", "Figma"), ("canva", "Canva")]),
+]
+APP_PERMISSION = [
+    ("ask", "Ask me for every assignment"),
+    ("auto", "Use the apps I listed without asking"),
+]
+ASK_CHOICES = [
+    ("always", "Ask me the assignment's own questions before starting (recommended)"),
+    ("never", "Pick defaults for me"),
+]
+ACCESS_NOTICE = ("Assigent will only read assignment pages in the browser you are signed in to. "
+                 "It never signs in, never submits.")
+AGENT_ORDER = ["analyst", "finder", "builder", "evaluator"]
+
+
+def say(msg=""):
+    print(msg)
+
+
+def fail(msg, code=FAILED):
+    print(msg, file=sys.stderr)
+    sys.exit(code)
+
+
+# ---------------------------------------------------------------- config
+
+def load_config():
+    """Return (config, problem). config is None when the file is missing or unreadable."""
+    if not os.path.isfile(CONFIG):
+        return None, "missing"
+    try:
+        with open(CONFIG) as f:
+            cfg = json.load(f)
+    except (OSError, ValueError) as e:
+        return None, f"not valid JSON ({e})"
+    if not isinstance(cfg, dict):
+        return None, "not a JSON object"
+    return cfg, None
+
+
+def config_problems(cfg):
+    """A list of plain-language problems with a config. Empty means valid."""
+    out = []
+    if not str(cfg.get("name", "")).strip():
+        out.append("name is empty")
+    if not str(cfg.get("save_folder", "")).strip():
+        out.append("save_folder is empty")
+    if cfg.get("platform") not in dict(PLATFORMS):
+        out.append("platform is not one of: " + ", ".join(k for k, _ in PLATFORMS))
+    if cfg.get("browser") not in dict(BROWSERS):
+        out.append("browser is not one of: chrome, brave, edge, none")
+    if not isinstance(cfg.get("browser_access"), bool):
+        out.append("browser_access must be true or false")
+    elif cfg["browser_access"] and cfg.get("browser") == "none":
+        out.append("browser_access is true but no browser is chosen")
+    if cfg.get("ai_help") not in dict(AI_HELP):
+        out.append("ai_help is not one of: full, coach, study")
+    if not isinstance(cfg.get("apps"), dict):
+        out.append("apps must be an object")
+    if cfg.get("app_permission") not in dict(APP_PERMISSION):
+        out.append("app_permission is not one of: ask, auto")
+    if cfg.get("ask_choices") not in dict(ASK_CHOICES):
+        out.append("ask_choices is not one of: always, never")
+    return out
+
+
+def save_config(cfg):
+    os.makedirs(CONFIG_DIR, exist_ok=True)
+    tmp = CONFIG + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(cfg, f, indent=2)
+        f.write("\n")
+    os.replace(tmp, CONFIG)
+
+
+def save_folder(cfg=None):
+    root = os.environ.get("ASSIGENT_ROOT")
+    if not root:
+        if cfg is None:
+            cfg, _ = load_config()
+        root = (cfg or {}).get("save_folder")
+    return os.path.abspath(os.path.expanduser(root or DEFAULT_FOLDER))
+
+
+def slug(text):
+    return re.sub(r"[^a-z0-9]+", "-", str(text).strip().lower()).strip("-")
+
+
+def parse_apps(text):
+    """Turn "powerpoint, Excel, word" into the grouped apps object. Unknown names go to "other"."""
+    apps = {key: [] for key, _, _ in APP_GROUPS}
+    apps["other"] = []
+    known = {name: key for key, _, items in APP_GROUPS for name, _ in items}
+    for raw in re.split(r"[,;]", text or ""):
+        name = slug(raw)
+        if not name or name == "none":
+            continue
+        group = known.get(name, "other")
+        if name not in apps[group]:
+            apps[group].append(name)
+    return apps
+
+
+def flat_apps(apps):
+    out = []
+    for key in [k for k, _, _ in APP_GROUPS] + ["other"]:
+        out += (apps or {}).get(key, []) or []
+    return out
+
+
+def yes_no(text):
+    t = str(text).strip().lower()
+    if t in ("y", "yes", "true", "1"):
+        return True
+    if t in ("n", "no", "false", "0"):
+        return False
+    return None
+
+
+# ---------------------------------------------------------------- setup
+
+def ask(prompt, default=""):
+    hint = f" [{default}]" if default else ""
+    try:
+        answer = input(f"{prompt}{hint}: ").strip()
+    except EOFError:
+        fail("\nSetup stopped: no more input. Nothing was saved.", USAGE)
+    return answer or default
+
+
+def choose(title, options, default):
+    say(title)
+    for i, (key, label) in enumerate(options, 1):
+        say(f"  {i}. {label}" + ("  (default)" if key == default else ""))
+    keys = [k for k, _ in options]
+    while True:
+        a = ask("Type a number", str(keys.index(default) + 1)).lower()
+        if a.isdigit() and 1 <= int(a) <= len(keys):
+            return keys[int(a) - 1]
+        if a in keys:
+            return a
+        say(f"Please type a number from 1 to {len(keys)}.")
+
+
+def clean_url(url):
+    url = (url or "").strip()
+    if url and not re.match(r"^https?://", url, re.I):
+        url = "https://" + url
+    return url
+
+
+def cmd_setup(a):
+    old, _ = load_config()
+    old = old or {}
+    prompt = not a.yes
+    if prompt:
+        say("Assigent setup. Eight short questions. Press Enter to keep the value in [brackets].")
+        say("Nothing leaves this computer; the answers are saved in ~/.assigent/config.json.\n")
+
+    # 1. name
+    name = a.name if a.name is not None else old.get("name", "")
+    if prompt and a.name is None:
+        say("1. Your name")
+        while True:
+            name = ask("Your name, as it should appear on hand-ins", name)
+            if name.strip():
+                break
+            say("A name is needed so hand-ins carry it.")
+    name = name.strip()
+    if not name:
+        fail("A name is needed. Add --name \"Your Name\".", USAGE)
+
+    # 2. save folder
+    folder = a.folder if a.folder is not None else old.get("save_folder", DEFAULT_FOLDER)
+    if prompt and a.folder is None:
+        say("\n2. Where to save assignment folders")
+        folder = ask("Folder", folder)
+    folder = os.path.abspath(os.path.expanduser(folder.strip() or DEFAULT_FOLDER))
+
+    # 3. platform and portal address
+    platform = a.platform or old.get("platform", "paste")
+    if prompt and not a.platform:
+        say("")
+        platform = choose("3. Your learning platform", PLATFORMS, platform if platform in dict(PLATFORMS) else "paste")
+    if platform not in dict(PLATFORMS):
+        fail("Unknown platform. Choose one of: " + ", ".join(k for k, _ in PLATFORMS), USAGE)
+    portal = ""
+    if platform != "paste":
+        portal = a.portal_url if a.portal_url is not None else old.get("portal_url", "")
+        if prompt and a.portal_url is None:
+            portal = ask("The web address of your portal's assignments page (leave empty to add later)", portal)
+        portal = clean_url(portal)
+
+    # 4. browser, and permission to read the portal through it
+    if platform == "paste":
+        browser, access = "none", False
+        if prompt:
+            say("\n4. Browser: not needed, because you paste the brief yourself.")
+    else:
+        browser = a.browser or old.get("browser", "none")
+        if prompt and not a.browser:
+            say("")
+            browser = choose("4. Browser to use (it needs the Claude browser extension)", BROWSERS,
+                             browser if browser in dict(BROWSERS) else "none")
+        if browser not in dict(BROWSERS):
+            fail("Unknown browser. Choose one of: chrome, brave, edge, none", USAGE)
+        access = False
+        if browser != "none":
+            if a.browser_access is not None:
+                access = yes_no(a.browser_access)
+                if access is None:
+                    fail("--browser-access takes yes or no.", USAGE)
+            elif prompt:
+                say("\n" + ACCESS_NOTICE)
+                while True:
+                    access = yes_no(ask("Allow Assigent to read your portal through this browser? (yes/no)", "no"))
+                    if access is not None:
+                        break
+                    say("Please type yes or no.")
+            else:
+                # Never assume permission. With --yes and no flag it stays off.
+                access = bool(old.get("browser_access", False)) and old.get("browser") == browser
+
+    # 5. default AI help
+    ai_help = a.ai_help or old.get("ai_help", "coach")
+    if prompt and not a.ai_help:
+        say("")
+        ai_help = choose("5. How much AI help when an assignment states no AI rule", AI_HELP,
+                         ai_help if ai_help in dict(AI_HELP) else "coach")
+    if ai_help not in dict(AI_HELP):
+        fail("Unknown --ai-help. Choose one of: full, coach, study", USAGE)
+
+    # 6. apps
+    if a.apps is not None:
+        apps = parse_apps(a.apps)
+    elif prompt:
+        say("\n6. Apps you have, so files come out in a type you can open")
+        old_apps = old.get("apps") if isinstance(old.get("apps"), dict) else {}
+        apps = {"other": list(old_apps.get("other", []))}
+        for key, label, items in APP_GROUPS:
+            names = ", ".join(n for n, _ in items)
+            got = ask(f"{label} ({names}). Type the ones you have, with commas, or leave empty",
+                      ", ".join(old_apps.get(key, [])))
+            picked = parse_apps(got)
+            apps[key] = picked[key]
+            apps["other"] += [x for k in picked for x in picked[k] if k != key and x not in apps["other"]]
+    else:
+        apps = old.get("apps") if isinstance(old.get("apps"), dict) else parse_apps("")
+    editor = a.code_editor if a.code_editor is not None else old.get("code_editor", "")
+    if prompt and a.code_editor is None:
+        editor = ask("Code editor (for example vscode), or leave empty", editor)
+    editor = slug(editor) if slug(editor) != "none" else ""
+
+    # 7. app permission mode
+    mode = a.app_permission or old.get("app_permission", "ask")
+    if prompt and not a.app_permission:
+        say("")
+        mode = choose("7. Before each assignment, should Assigent ask which apps it may use?", APP_PERMISSION,
+                      mode if mode in dict(APP_PERMISSION) else "ask")
+    if mode not in dict(APP_PERMISSION):
+        fail("Unknown --app-permission. Choose ask or auto.", USAGE)
+
+    # 8. the assignment's own questions
+    choices = a.ask_choices or old.get("ask_choices", "always")
+    if prompt and not a.ask_choices:
+        say("")
+        say("8. Many assignments leave a choice to you, such as which product to explore")
+        choices = choose("   or which social media platform to use. What should Assigent do?", ASK_CHOICES,
+                         choices if choices in dict(ASK_CHOICES) else "always")
+    if choices not in dict(ASK_CHOICES):
+        fail("Unknown --ask-choices. Choose always or never.", USAGE)
+
+    now = datetime.now().isoformat(timespec="seconds")
+    cfg = {"version": 1, "name": name, "save_folder": folder, "platform": platform, "portal_url": portal,
+           "browser": browser, "browser_access": bool(access), "ai_help": ai_help, "apps": apps,
+           "code_editor": editor, "app_permission": mode, "ask_choices": choices,
+           "created": old.get("created", now), "updated": now}
+    problems = config_problems(cfg)
+    if problems:
+        fail("Setup could not save: " + "; ".join(problems), USAGE)
+    save_config(cfg)
+    try:
+        os.makedirs(folder, exist_ok=True)
+    except OSError as e:
+        say(f"Note: could not create {folder} ({e.strerror}). Create it yourself, or run setup again.")
+
+    say("\nSaved your settings to ~/.assigent/config.json")
+    print_summary(cfg)
+    say("\nNext: run \"assigent run\" to start an assignment, or \"assigent doctor\" to check the install.")
+    return OK
+
+
+def print_summary(cfg):
+    label = lambda pairs, key: dict(pairs).get(key, key)
+    apps = flat_apps(cfg.get("apps")) + ([cfg["code_editor"]] if cfg.get("code_editor") else [])
+    rows = [
+        ("Name", cfg.get("name")),
+        ("Save folder", cfg.get("save_folder")),
+        ("Platform", label(PLATFORMS, cfg.get("platform"))),
+        ("Portal address", cfg.get("portal_url") or "none"),
+        ("Browser", label(BROWSERS, cfg.get("browser"))),
+        ("May read the portal", "yes" if cfg.get("browser_access") else "no"),
+        ("Default AI help", cfg.get("ai_help")),
+        ("Apps", ", ".join(apps) or "none listed"),
+        ("App permission", cfg.get("app_permission")),
+        ("Assignment questions", cfg.get("ask_choices")),
+    ]
+    for k, v in rows:
+        say(f"  {k + ':':<23}{v}")
+
+
+# ---------------------------------------------------------------- config
+
+def cmd_config(a):
+    cfg, problem = load_config()
+    if cfg is None:
+        fail(f"Settings file ~/.assigent/config.json is {problem}. Run: assigent setup", USAGE)
+    if a.json:
+        say(json.dumps(cfg, indent=2))
+    else:
+        say("Your Assigent settings (~/.assigent/config.json)")
+        print_summary(cfg)
+        problems = config_problems(cfg)
+        if problems:
+            say("\nProblems: " + "; ".join(problems) + ". Run: assigent setup")
+            return FAILED
+    return OK
+
+
+# ---------------------------------------------------------------- run
+
+def cmd_run(a):
+    cfg, problem = load_config()
+    if cfg is None:
+        fail(f"Assigent is not set up yet (settings file is {problem}). Run: assigent setup", USAGE)
+    problems = config_problems(cfg)
+    if problems:
+        fail("Your settings need fixing: " + "; ".join(problems) + ". Run: assigent setup", USAGE)
+    prompt = "/assigent"
+    if a.paste:
+        path = os.path.abspath(os.path.expanduser(a.paste))
+        if not os.path.isfile(path):
+            fail(f"No brief file at {path}", USAGE)
+        prompt = f"/assigent {path}"
+    claude = shutil.which("claude")
+    if not claude:
+        fail("Claude Code is not installed, so Assigent cannot start.\n"
+             "Get it from https://claude.com/claude-code (it needs a Claude plan that includes Claude Code),\n"
+             "then run: assigent run", NO_CLAUDE)
+    say(f"Starting Claude Code with {prompt}")
+    sys.stdout.flush()
+    os.execv(claude, [claude, prompt])
+
+
+# ---------------------------------------------------------------- runs / status
+
+def status_files(root, max_depth=4):
+    found = []
+    base = root.rstrip(os.sep).count(os.sep)
+    for cur, dirs, names in os.walk(root):
+        depth = cur.rstrip(os.sep).count(os.sep) - base
+        dirs[:] = [] if depth >= max_depth else sorted(d for d in dirs if not d.startswith("."))
+        if "status.json" in names:
+            found.append(os.path.join(cur, "status.json"))
+            dirs[:] = []
+    return found
+
+
+def read_score(folder):
+    """(score, verdict) from evaluation.md, or (None, None)."""
+    try:
+        with open(os.path.join(folder, "evaluation.md"), errors="replace") as f:
+            text = f.read(20000)
+    except OSError:
+        return None, None
+    s = re.search(r"^Score:\s*(\d{1,3})\s*/\s*100", text, re.M)
+    v = re.search(r"^Verdict:\s*(PASS|REVISE)\b", text, re.M)
+    return (int(s.group(1)) if s else None), (v.group(1) if v else None)
+
+
+def find_runs(root):
+    runs = []
+    for p in status_files(root):
+        try:
+            with open(p) as f:
+                s = json.load(f)
+            agents = {x["id"]: x.get("state", "?") for x in s.get("agents", [])}
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            continue
+        folder = os.path.dirname(p)
+        score, verdict = read_score(folder)
+        runs.append({"folder": folder, "title": s.get("title") or os.path.basename(folder),
+                     "aiPolicy": s.get("aiPolicy"), "updated": s.get("updated", ""),
+                     "agents": agents, "score": score, "verdict": verdict})
+    runs.sort(key=lambda r: r["updated"], reverse=True)
+    return runs
+
+
+def cmd_status(a):
+    root = save_folder()
+    runs = find_runs(root) if os.path.isdir(root) else []
+    if a.json:
+        say(json.dumps(runs, indent=2))
+        return OK
+    if not os.path.isdir(root):
+        say(f"Your save folder does not exist yet: {root}")
+        say("Run \"assigent setup\" to choose one, or \"assigent run\" to start your first assignment.")
+        return OK
+    if not runs:
+        say(f"No runs yet in {root}")
+        say("Start one with: assigent run")
+        return OK
+    say(f"{len(runs)} run{'s' if len(runs) != 1 else ''} in {root}\n")
+    for r in runs:
+        say(r["title"])
+        say("  " + "   ".join(f"{k}: {r['agents'].get(k, 'not started')}" for k in AGENT_ORDER))
+        if r["score"] is not None:
+            say(f"  score: {r['score']}/100" + (f", {r['verdict']}" if r["verdict"] else ""))
+        else:
+            say("  score: not marked yet")
+        say(f"  AI policy: {r['aiPolicy'] or 'unknown'}   updated: {r['updated'] or 'unknown'}")
+        say(f"  folder: {r['folder']}\n")
+    return OK
+
+
+# ---------------------------------------------------------------- view
+
+def ui_dir():
+    here = os.path.dirname(os.path.realpath(__file__))
+    for d in (os.path.join(SKILL_DIR, "ui"), os.path.join(here, "..", "skill", "assigent", "ui")):
+        if os.path.isfile(os.path.join(d, "server.py")):
+            return os.path.abspath(d)
+    return None
+
+
+def port_free(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        try:
+            s.bind(("127.0.0.1", port))
+            return True
+        except OSError:
+            return False
+
+
+def alive(pid):
+    try:
+        os.kill(pid, 0)
+        return True
+    except (OSError, TypeError):
+        return False
+
+
+def responds(port):
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/runs", timeout=2) as r:
+            return r.status == 200
+    except Exception:
+        return False
+
+
+def viewer_state():
+    try:
+        with open(VIEWER_STATE) as f:
+            st = json.load(f)
+        if alive(st.get("pid")) and responds(st.get("port")):
+            return st
+    except (OSError, ValueError, AttributeError):
+        pass
+    return None
+
+
+def stop_viewer():
+    st = viewer_state()
+    if os.path.exists(VIEWER_STATE):
+        os.remove(VIEWER_STATE)
+    if not st:
+        return False
+    try:
+        os.kill(st["pid"], signal.SIGTERM)
+    except OSError:
+        return False
+    for _ in range(30):
+        if not alive(st["pid"]):
+            break
+        time.sleep(0.1)
+    return True
+
+
+def cmd_view(a):
+    if a.stop:
+        say("Viewer stopped." if stop_viewer() else "The viewer was not running.")
+        return OK
+    ui = ui_dir()
+    if not ui:
+        fail("The viewer files are missing. Run the installer again, then: assigent doctor", FAILED)
+    st = viewer_state()
+    if st and not a.foreground:
+        url = f"http://127.0.0.1:{st['port']}/"
+        say(f"The viewer is already running at {url}")
+    else:
+        port = a.port or next((p for p in range(FIRST_PORT, FIRST_PORT + 100) if port_free(p)), None)
+        if not port or not port_free(port):
+            fail("Could not find a free port for the viewer. Close another viewer and try again.", FAILED)
+        env = dict(os.environ, PORT=str(port))
+        cmd = [sys.executable, os.path.join(ui, "server.py")]
+        url = f"http://127.0.0.1:{port}/"
+        if a.foreground:
+            say(f"Viewer running at {url}  (press Ctrl+C to stop)")
+            sys.stdout.flush()
+            try:
+                return subprocess.call(cmd, env=env)
+            except KeyboardInterrupt:
+                return OK
+        os.makedirs(CONFIG_DIR, exist_ok=True)
+        log = open(os.path.join(CONFIG_DIR, "viewer.log"), "ab")
+        proc = subprocess.Popen(cmd, env=env, stdin=subprocess.DEVNULL, stdout=log, stderr=log,
+                                start_new_session=True)
+        for _ in range(50):
+            if responds(port) or proc.poll() is not None:
+                break
+            time.sleep(0.1)
+        if proc.poll() is not None or not responds(port):
+            fail("The viewer did not start. See ~/.assigent/viewer.log", FAILED)
+        with open(VIEWER_STATE, "w") as f:
+            json.dump({"pid": proc.pid, "port": port, "started": datetime.now().isoformat(timespec="seconds")}, f)
+        say(f"Viewer running at {url}")
+        say(f"It shows the runs in {save_folder()}")
+        say("Stop it with: assigent view --stop")
+    if not a.no_open:
+        try:
+            import webbrowser
+            webbrowser.open(url)
+        except Exception:
+            say("Open that address in your browser.")
+    return OK
+
+
+# ---------------------------------------------------------------- doctor
+
+def cmd_doctor(a):
+    results = []
+
+    def check(name, ok, detail, fix=""):
+        results.append(ok)
+        say(f"{'ok   ' if ok else 'FIX  '}{name}: {detail}" + ("" if ok or not fix else f"\n       Fix: {fix}"))
+
+    v = sys.version_info
+    check("Python 3", v >= (3, 8), f"{v.major}.{v.minor}.{v.micro}", "Install Python 3.8 or newer from python.org")
+
+    claude = shutil.which("claude")
+    check("Claude Code", bool(claude), claude or "the claude command was not found",
+          "Install it from https://claude.com/claude-code and sign in with your Claude plan")
+
+    cfg, problem = load_config()
+    if cfg is None:
+        check("Settings", False, f"~/.assigent/config.json is {problem}", "Run: assigent setup")
+    else:
+        problems = config_problems(cfg)
+        check("Settings", not problems, "; ".join(problems) or "~/.assigent/config.json is valid", "Run: assigent setup")
+
+    missing = [f for f in AGENT_FILES if not os.path.isfile(os.path.join(AGENTS_DIR, f))]
+    check("Agents", not missing, "missing " + ", ".join(missing) if missing else "4 agents in ~/.claude/agents",
+          "Run the installer again (./install.sh)")
+
+    skill_ok = all(os.path.isfile(os.path.join(SKILL_DIR, p)) for p in
+                   ("SKILL.md", "setup-questions.md", os.path.join("ui", "server.py"), os.path.join("ui", "status.py")))
+    check("Skill", skill_ok, "~/.claude/skills/assigent is complete" if skill_ok else "files are missing from ~/.claude/skills/assigent",
+          "Run the installer again (./install.sh)")
+
+    root = save_folder(cfg)
+    check("Save folder", os.path.isdir(root), root if os.path.isdir(root) else f"{root} does not exist",
+          f"Run: mkdir -p \"{root}\"  (or choose another with: assigent setup)")
+
+    bad = results.count(False)
+    say("")
+    say("Everything is ready. Start with: assigent run" if not bad
+        else f"{bad} thing{'s' if bad != 1 else ''} to fix. Follow the Fix lines above, then run: assigent doctor")
+    return OK if not bad else FAILED
+
+
+# ---------------------------------------------------------------- uninstall
+
+def cmd_uninstall(a):
+    targets = [os.path.join(AGENTS_DIR, f) for f in AGENT_FILES] + [SKILL_DIR, CLI_PATH]
+    present = [t for t in targets if os.path.lexists(t)]
+    interactive = sys.stdin.isatty()
+    if not a.yes:
+        if not interactive:
+            fail("Uninstall needs a yes. Run it in a terminal, or add --yes.", USAGE)
+        say("This removes the Assigent agents, skill and command:")
+        for t in present:
+            say("  " + t)
+        say("Your assignment folders are not touched.")
+        if yes_no(ask("Remove them? (yes/no)", "no")) is not True:
+            say("Nothing was removed.")
+            return OK
+    stop_viewer()
+    for t in present:
+        if os.path.isdir(t) and not os.path.islink(t):
+            shutil.rmtree(t)
+        else:
+            os.remove(t)
+        say(f"Removed {t}")
+    if not present:
+        say("Assigent was not installed here. Nothing to remove.")
+
+    if os.path.isdir(CONFIG_DIR):
+        drop = a.delete_config
+        if not drop and interactive and not a.keep_config:
+            drop = yes_no(ask("Also delete your settings in ~/.assigent? (yes/no)", "no")) is True
+        if drop:
+            shutil.rmtree(CONFIG_DIR)
+            say("Removed ~/.assigent")
+        else:
+            say("Kept your settings in ~/.assigent (delete them with: assigent uninstall --delete-config, or remove the folder)")
+    say(f"Your assignment folders were left alone: {save_folder() if os.path.isfile(CONFIG) else 'wherever you saved them'}")
+    return OK
+
+
+# ---------------------------------------------------------------- main
+
+def main(argv=None):
+    p = argparse.ArgumentParser(prog="assigent", description=__doc__,
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--version", action="version", version=f"assigent {VERSION}")
+    sub = p.add_subparsers(dest="cmd", metavar="<command>")
+
+    s = sub.add_parser("setup", help="answer the setup questions",
+                       description="Answer the eight setup questions. Every answer can be a flag; add --yes to skip the prompts.")
+    s.add_argument("--name", help="your name, as it should appear on hand-ins")
+    s.add_argument("--folder", help=f"where to save assignment folders (default {DEFAULT_FOLDER})")
+    s.add_argument("--platform", type=slug, help="one of: " + ", ".join(k for k, _ in PLATFORMS))
+    s.add_argument("--portal-url", help="web address of your portal's assignments page")
+    s.add_argument("--browser", type=slug, help="chrome, brave, edge or none")
+    s.add_argument("--browser-access", metavar="yes|no", help="may Assigent read your portal through that browser")
+    s.add_argument("--ai-help", type=slug, help="full, coach or study: the default when an assignment states no AI rule")
+    s.add_argument("--apps", help='apps you have, with commas, e.g. "powerpoint,excel,word,figma"')
+    s.add_argument("--code-editor", help="your code editor, e.g. vscode")
+    s.add_argument("--app-permission", type=slug, help="ask (default) or auto")
+    s.add_argument("--ask-choices", type=slug, metavar="always|never",
+                   help="ask the assignment's own questions before starting (always, the default) or pick defaults (never)")
+    s.add_argument("--yes", "-y", action="store_true", help="do not prompt; use the flags, then saved values, then defaults")
+    s.set_defaults(fn=cmd_setup)
+
+    s = sub.add_parser("run", help="start Claude Code on your next assignment")
+    s.add_argument("--paste", metavar="FILE", help="a file that holds the assignment brief")
+    s.set_defaults(fn=cmd_run)
+
+    s = sub.add_parser("view", help="open the viewer that shows a run")
+    s.add_argument("--port", type=int, help=f"port to use (default: the first free one from {FIRST_PORT})")
+    s.add_argument("--no-open", action="store_true", help="do not open the browser")
+    s.add_argument("--foreground", action="store_true", help="keep running in this terminal until Ctrl+C")
+    s.add_argument("--stop", action="store_true", help="stop the viewer")
+    s.set_defaults(fn=cmd_view)
+
+    s = sub.add_parser("status", help="list your runs, each agent's state and the score")
+    s.add_argument("--json", action="store_true", help="print as JSON")
+    s.set_defaults(fn=cmd_status)
+
+    s = sub.add_parser("doctor", help="check that everything is installed")
+    s.set_defaults(fn=cmd_doctor)
+
+    s = sub.add_parser("config", help="print your settings")
+    s.add_argument("--json", action="store_true", help="print the raw file")
+    s.set_defaults(fn=cmd_config)
+
+    s = sub.add_parser("uninstall", help="remove Assigent (your assignment folders stay)")
+    s.add_argument("--yes", "-y", action="store_true", help="do not ask before removing the agents, skill and command")
+    s.add_argument("--delete-config", action="store_true", help="also delete ~/.assigent without asking")
+    s.add_argument("--keep-config", action="store_true", help="keep ~/.assigent without asking")
+    s.set_defaults(fn=cmd_uninstall)
+
+    a = p.parse_args(argv)
+    if not a.cmd:
+        p.print_help()
+        return OK
+    return a.fn(a) or OK
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        print("\nStopped.", file=sys.stderr)
+        sys.exit(130)

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assigent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/office3d.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="top">
+  <a class="brand" href="#/">Assigent</a>
+  <span class="conn"><i></i>Reading your assignment folders</span>
+  <span class="crumb" id="crumb"></span>
+  <div class="right">
+    <select id="runSel" aria-label="Assignment run"></select>
+    <span class="live" id="live"><i></i><span>live</span></span>
+    <span class="clock" id="clock">--:--:--</span>
+  </div>
+</div>
+<main id="main"><div class="none">Loading…</div></main>
+<script src="app.js"></script>
+</body>
+</html>

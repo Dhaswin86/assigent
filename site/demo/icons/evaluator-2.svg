@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="256" height="256" shape-rendering="crispEdges" role="img" aria-label="Fact checker comparing the work with its source">
+<title>Fact checker comparing the work with its source</title>
+<style>
+.fc-eyes { animation: fc-blink 4s steps(1) infinite; animation-delay: var(--d, 0s); transform-box: fill-box; transform-origin: center; }
+@keyframes fc-blink { 0%, 92%, 100% { transform: scaleY(1); } 94% { transform: scaleY(.2); } }
+
+.fc-mag { animation: fc-mag 4s ease-in-out infinite; animation-delay: var(--d, 0s); }
+@keyframes fc-mag { 0%, 15% { transform: translateX(0); } 40%, 65% { transform: translateX(11px); } 90%, 100% { transform: translateX(0); } }
+.fc-same { opacity: 0; animation: fc-same 4s steps(1) infinite; animation-delay: var(--d, 0s); }
+@keyframes fc-same { 0%, 44% { opacity: 0; } 45%, 92% { opacity: 1; } 93%, 100% { opacity: 0; } }
+.fc-bulb rect { animation: fc-bulb .7s steps(1) infinite; animation-delay: var(--d, 0s); }
+@keyframes fc-bulb { 50% { fill: #fff3c4; } }
+</style>
+<rect x="11" y="8" width="8" height="11" fill="#f4efe4"/><rect x="12" y="10" width="6" height="1" fill="#c9bfae"/><rect x="12" y="12" width="6" height="1" fill="#c9bfae"/><rect x="12" y="14" width="6" height="1" fill="#c9bfae"/><rect x="12" y="16" width="6" height="1" fill="#c9bfae"/><rect x="22" y="8" width="8" height="11" fill="#ffffff"/><rect x="23" y="10" width="6" height="1" fill="#8fb3ff"/><rect x="23" y="12" width="6" height="1" fill="#8fb3ff"/><rect x="23" y="14" width="6" height="1" fill="#8fb3ff"/><rect x="23" y="16" width="6" height="1" fill="#8fb3ff"/><g class="fc-same"><rect x="19" y="12" width="3" height="1" fill="#6fbf5f"/><rect x="19" y="14" width="3" height="1" fill="#6fbf5f"/></g><g class="fc-mag"><rect x="13" y="10" width="4" height="1" fill="#b8bec4"/><rect x="12" y="11" width="1" height="4" fill="#b8bec4"/><rect x="17" y="11" width="1" height="4" fill="#b8bec4"/><rect x="13" y="15" width="4" height="1" fill="#b8bec4"/><rect x="13" y="11" width="4" height="4" fill="#9fd3ff" opacity='.45'/><rect x="18" y="16" width="1" height="1" fill="#8a5a3b"/><rect x="19" y="17" width="1" height="1" fill="#8a5a3b"/></g><rect x="5" y="12" width="1" height="3" fill="#8d939a"/><g class="fc-bulb"><rect x="4" y="10" width="3" height="2" fill="#ffd166"/></g><rect x="2" y="15" width="8" height="6" fill="#d97757"/><rect x="0" y="17" width="2" height="2" fill="#d97757"/><rect x="10" y="17" width="2" height="2" fill="#d97757"/><g class="fc-eyes"><rect x="7" y="16" width="1" height="1" fill="#1d1b18"/><rect x="9" y="16" width="1" height="1" fill="#1d1b18"/></g><rect x="1" y="21" width="30" height="2" fill="#a06b47"/><rect x="2" y="23" width="28" height="7" fill="#8a5a3b"/><rect x="13" y="25" width="6" height="1" fill="#6e4a31"/><rect x="2" y="29" width="28" height="1" fill="#6e4a31"/>
+</svg>
