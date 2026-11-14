@@ -116,8 +116,10 @@ No browser? Paste the brief into Claude Code after typing `/assigent`.
 5. The Builder does the work into `deliverables/` and writes `report.md`.
 6. The Evaluator marks it out of 100 and writes `evaluation.md`. If it says revise,
    the Builder gets one round to fix the list.
-7. The Evaluator then checks that you understood the concept: Claude asks one open
-   question per concept, follows up where an answer is thin, and says what to revisit.
+7. The Evaluator then checks how well you understood the concept: a few opening
+   questions to hear your own idea, then 15 to 20 questions in all, easier or harder
+   depending on your answers. It remembers what each person understood in
+   `~/.assigent/learners/`, on your computer only, so the next check starts from there.
    Your answers never change the score or the files.
 
 Everything lands in one folder per assignment, inside `~/Documents/Assignments`

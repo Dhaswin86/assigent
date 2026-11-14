@@ -275,9 +275,9 @@ function learnBlock(s, compact) {
   const f = learnFacts(s.learningText);
   if (!f || !f.qs.length) return '';
   return `<div class="learn" data-learn="${f.done ? 'done' : 'waiting'}">
-    <div class="chips"><span class="lab">What you learned</span>${f.done ? `<span class="tag ${f.got === f.total ? 'ok' : 'go'}">Understood ${f.got} of ${f.total}</span>` : `<span class="tag go">${f.total} questions waiting for you</span>`}</div>
+    <div class="chips"><span class="lab">What you learned</span>${f.done ? `<span class="tag ${f.got === f.total ? 'ok' : 'go'}">Understood ${f.got} of ${f.total}</span>` : `<span class="tag go">Concept check waiting for you</span>`}</div>
     ${compact ? '' : `<ol>${f.qs.slice(0, 5).map(x => `<li${x.ok === null ? '' : ` class="${x.ok ? 'got' : 'miss'}"`}>${esc(clip(x.q, 120))}${x.ok === null ? '' : `<i>${x.ok ? 'Got it' : 'Not yet'}</i>`}</li>`).join('')}</ol>
-    ${f.done ? '' : '<p class="hint">To answer them, say <code>ask me the questions</code> in Claude Code.</p>'}`}</div>`;
+    ${f.done ? '' : '<p class="hint">These open the check. 15 to 20 questions follow, chosen from your answers. To start, say <code>ask me the questions</code> in Claude Code.</p>'}`}</div>`;
 }
 function resultCard(s, a, compact) {
   const has = !!a.outputText;

@@ -350,49 +350,67 @@ Must fix). If its Write was blocked, save the evaluation.md text from its reply.
 - The evaluator never edits deliverables; only the builder does.
 Finish with `status.py done "<folder>" evaluator "<score>/100, <verdict>, <n> left to fix"`.
 
-## Step 8b: find out whether the user understood the concept (the Evaluator's main job, user's requests 2026-11-14)
+## Step 8b: find out how well the user understood the concept (the Evaluator's main job, user's requests 2026-11-14)
 The user said: "the job of evaluator is to ask question to the user what they learned in that
-assignment", then: "like an evaluator asking the question i need you to ask question when you get to
-know I understood the concept needed to learn for that assignment". So you hold a short spoken-style
-check, like a real evaluator, until you know for each concept whether the user understood it.
-The Evaluator prepares it: `learning-check.md` (one opening question per concept) and
-`process/learning-key.md` (what a good answer shows, follow-ups, a short explanation).
+assignment"; then "ask questions initially and get to know about their idea and how well they know
+that concept. According to that, ask about 15 to 20 questions. Based on each person's understanding.
+Update your memory according to who uses it." So you hold an adaptive, spoken-style check, like a
+real evaluator. The Evaluator prepares it: `learning-check.md` (the opening questions) and
+`process/learning-key.md` (a bank of questions at three levels, with what a good answer shows).
 - `preferred`: the check is prepared with the last marking round. If `learning-check.md` is missing,
   run `assigent-evaluator` in mode `questions`.
 - `not_preferred` and `banned`: run `assigent-evaluator` in mode `questions` after the sources are found.
-- **The user is here.** Read the key yourself; never show it. Then, in plain chat (not a choice box):
-  1. Ask ONE question and wait for the answer. Say how many there are: "Question 1 of 3".
-  2. Judge the answer against "Understood when the answer shows". Meaning counts; wording, grammar
-     and length do not.
-  3. Understood → say so in one line with what was right, and go to the next concept.
-  4. A point is missing → do not give the answer. Ask the follow-up; if needed, the second one. Two
-     follow-ups at most per concept.
-  5. Still missing → give the 2-line explanation, name what to revisit, mark it "Not yet", move on.
-  6. "I don't know" is a fair answer: go straight to the follow-up, kindly.
-  7. Stop when every concept is settled. If the user wants to stop early, stop and keep the rest waiting.
-  Then save the user's exact words to `learning-answers.md` and rewrite `learning-check.md` as:
+- **The user is here.** Read the key and the learner profile (`~/.assigent/learners/<name>.md`, where `<name>` is the saved name in `~/.assigent/config.json` in lower case with dashes (`learner.md` when no name is saved)) yourself; never show
+  the key. Ask in plain chat (not a choice box), ONE question at a time, and wait for each answer.
+  1. **Opening (get to know their idea).** Ask the opening question of each concept. From each
+     answer, place the person on that concept: `new`, `getting there` or `solid`. Meaning counts;
+     wording, grammar and length do not. Say one short line back, never the answer.
+  2. **The rest, chosen from their answers.** 15 to 20 questions in total, openers included:
+     - `new` → start at Basic. `getting there` → start at Applied. `solid` → start at Deep.
+     - a good answer → go one level up, or move to another concept; a miss → go one level down
+       on the same idea, in simpler words
+     - two misses in a row on one point → give the 2-line explanation, then ask it again later
+       in different words
+     - spend more questions where the person is weaker, fewer where they are solid
+     - weave in the `Earlier` questions when the profile lists old weak spots
+     - if the bank runs out, write a new question in the same style at the level needed
+  3. **When to stop.** Never before 15. Stop at 15 when every concept is settled (two good answers
+     in a row at Applied or Deep, or clearly not yet). Otherwise go on, to 20 at most.
+  4. Show progress: "Question 7 of about 18". "I don't know" is a fair answer: go easier, kindly.
+     If the user wants to stop early, stop, save what was asked, and keep `Status: WAITING`.
+  Then save every question with the user's exact answer to `learning-answers.md`, and rewrite
+  `learning-check.md` as:
 
   ```
   # What did you learn: <assignment title>
 
   Status: DONE
-  Understood: <n>/<number of concepts>
+  Understood: <concepts that ended solid>/<number of concepts>
+  Asked: <number of questions>
 
   ## Answers
-  - [x] 1. <opening question> Got it. <what the user showed, 12 words at most>
-  - [ ] 2. <opening question> Not yet. <the idea in one line>
+  - [x] 1. <concept>: Solid. <what the user showed, 12 words at most>
+  - [ ] 2. <concept>: Getting there. <the one idea still missing>
+  - [ ] 3. <concept>: Not yet. <the idea in one line>
 
   ## Revisit
-  - <a playground activity or a source>, 3 at most; "Nothing" when every concept is understood
+  - <a playground activity or a source>, 3 at most; "Nothing" when every concept is solid
   ```
 
   Finish with 4 lines at most: understood n of m, what to revisit, the playground link.
+- **Remember the person** ("update your memory according to who uses it"). Each person gets their own profile: `~/.assigent/learners/<name>.md`, where `<name>` is the saved name in `~/.assigent/config.json` in lower case with dashes (`learner.md` when no name is saved). If the saved name is missing or someone else may be at the computer, ask "Who is answering?" once before the check, and use that person's file. Create the folder and file on first use. The file stays on this computer and is never uploaded or shared.
+  After every check, update it: per concept the level reached, the date and assignment, what they
+  explained well, the exact idea they missed, and how they learn best if it showed (examples before
+  definitions, short answers, a language they prefer). Keep one line per concept and replace old
+  lines when a level changes. Before the next check, read it: do not re-test basics the person is
+  solid in, and come back to old weak spots. Never store answers word for word, marks, or anything
+  about the person beyond how they learn.
 - **Nobody is here** (the hourly watcher, a background run): do not ask and do not guess answers.
   Leave `Status: WAITING` and report "A concept check is waiting for you: say `ask me the questions`".
 - When the user later says "ask me the questions" (or "quiz me on <assignment>"), do the
   "user is here" steps for the newest run with `Status: WAITING`.
 - The answers never change the score, the verdict or any deliverable.
-Record it: `status.py event "<folder>" evaluator "Concept check: <n>/<m> understood"` (or `"Concept check waiting"`).
+Record it: `status.py event "<folder>" evaluator "Concept check: <n>/<m> understood, <k> questions"` (or `"Concept check waiting"`).
 
 ## Finish
 Tell the user: the folder path, deliverables done X/Y with their file types, the
