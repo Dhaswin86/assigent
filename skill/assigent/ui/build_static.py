@@ -258,6 +258,22 @@ Round: 1
 - Fill in the team name.
 """
 
+LEARN2 = """# What did you learn: Plan a Class Bake Sale
+
+Status: DONE
+Understood: 4/5
+
+## Answers
+- [x] 1. What does the break-even number tell the team? Got it. It is the sales that cover the costs.
+- [x] 2. The ingredients cost more than planned. What happens to break-even? Got it. It goes up.
+- [ ] 3. Why are the totals formulas and not typed numbers? Not yet. A formula updates when a price changes.
+- [x] 4. Which price follows the "whole or half amounts" rule? Got it. 1.50 is a half amount.
+- [x] 5. In your own words: how did you choose the prices? Got it. Cost plus a markup, then rounded.
+
+## Revisit
+- Microsoft Support "Create a simple formula"
+"""
+
 LOGS2 = {
     "analyst": ["Started: reading the assignment text", "Read assignment-source.md: 3 deliverables, AI policy preferred",
                 "Two things are left open: what to sell, and the team name", "brief.md written: 3 deliverables, 8 checklist items. Done."],
@@ -298,11 +314,11 @@ def demo_run_done():
     files = [{"path": p, "size": z, "mtime": ts - age} for p, z, age in [
         ("assignment-source.md", 2210, 5800), ("brief.md", len(BRIEF2), 5600), ("choices.md", 410, 5500), ("sources.md", len(SOURCES2), 5300),
         ("deliverables/bake-sale-budget.xlsx", 18432, 4900), ("deliverables/bake-sale-pitch.pptx", 412672, 4700),
-        ("deliverables/bake-sale-plan.docx", 24576, 4600), ("report.md", len(REPORT2), 4560), ("evaluation.md", len(EVAL2), 4320),
+        ("deliverables/bake-sale-plan.docx", 24576, 4600), ("report.md", len(REPORT2), 4560), ("evaluation.md", len(EVAL2), 4320), ("learning-check.md", len(LEARN2), 4200),
         ("process/analyst-log.md", 380, 5600), ("process/finder-log.md", 720, 5300), ("process/builder-log.md", 690, 4560),
         ("process/evaluator-log.md", 540, 4320), ("status.json", 2400, 4320)]]
     return {"title": "DEMO · Plan a Class Bake Sale", "aiPolicy": "preferred", "folder": "~/Documents/Assignments/Bake Sale (demo)",
-            "created": t(96), "updated": t(72), "agents": agents, "events": events, "files": files,
+            "created": t(96), "updated": t(72), "agents": agents, "events": events, "files": files, "learningText": LEARN2,
             "demoNow": now.isoformat(timespec="seconds")}
 
 

@@ -172,6 +172,7 @@ def run_detail(idx):
         a["logText"] = read_text(folder, a["log"])
         a["outputText"] = read_text(folder, a["output"])
     s["files"] = file_tree(folder)
+    s["learningText"] = read_text(folder, "learning-check.md")   # the Evaluator's questions on what the user learned
     s["playground"] = playground_info(folder, s)
     return s
 

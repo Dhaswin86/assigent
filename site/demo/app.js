@@ -263,6 +263,22 @@ function disclosure(key, closed, open) {
   const on = openDisc.has(key);
   return `<button class="disc" type="button" data-disc="${esc(key)}" aria-expanded="${on}" aria-controls="d-${esc(key)}"><i aria-hidden="true"></i><span>${on ? open : closed}</span></button>`;
 }
+// What the user learned: the Evaluator's questions (learning-check.md). They are asked and answered in Claude Code.
+function learnFacts(t) {
+  if (!t) return null;
+  const done = /^Status:\s*DONE/im.test(t), u = /^Understood:\s*(\d+)\s*\/\s*(\d+)/im.exec(t);
+  const qs = (sect(t, done ? 'Answers' : 'Questions') || '').split('\n').map(l => /^(?:- \[([ xX])\]\s*)?\d+\.\s+(.+)$/.exec(l)).filter(Boolean)
+    .map(m => { const q = bare(m[2]), cut = q.indexOf('?'); return { ok: m[1] ? m[1] !== ' ' : null, q: cut > 0 ? q.slice(0, cut + 1) : q }; });
+  return { done, got: u ? +u[1] : null, total: u ? +u[2] : qs.length, qs };
+}
+function learnBlock(s, compact) {
+  const f = learnFacts(s.learningText);
+  if (!f || !f.qs.length) return '';
+  return `<div class="learn" data-learn="${f.done ? 'done' : 'waiting'}">
+    <div class="chips"><span class="lab">What you learned</span>${f.done ? `<span class="tag ${f.got === f.total ? 'ok' : 'go'}">Understood ${f.got} of ${f.total}</span>` : `<span class="tag go">${f.total} questions waiting for you</span>`}</div>
+    ${compact ? '' : `<ol>${f.qs.slice(0, 5).map(x => `<li${x.ok === null ? '' : ` class="${x.ok ? 'got' : 'miss'}"`}>${esc(clip(x.q, 120))}${x.ok === null ? '' : `<i>${x.ok ? 'Got it' : 'Not yet'}</i>`}</li>`).join('')}</ol>
+    ${f.done ? '' : '<p class="hint">To answer them, say <code>ask me the questions</code> in Claude Code.</p>'}`}</div>`;
+}
 function resultCard(s, a, compact) {
   const has = !!a.outputText;
   let body = '';
@@ -292,6 +308,7 @@ function resultCard(s, a, compact) {
           <div class="legend"><span><i class="pass"></i>${f.pass} pass</span><span><i class="partial"></i>${f.partial} partial</span><span><i class="fail"></i>${f.fail} fail</span></div>` : ''}</div></div>
       ${!compact && f.must.length ? `<div class="left"><span class="lab">Must fix</span><ol>${f.must.slice(0, 3).map(x => `<li>${esc(clip(x, 110))}</li>`).join('')}</ol>${more(f.must.length, 3)}</div>` : ''}` : '';
   }
+  if (a.id === 'evaluator') body += learnBlock(s, compact);
   const key = 'full-' + a.id;
   return `<section class="rcard${compact ? ' compact' : ''}" data-result="${a.id}">
     ${compact ? '' : `<div class="rhead"><b>Result</b><code>${esc(a.output)}</code></div>`}

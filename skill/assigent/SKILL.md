@@ -12,7 +12,7 @@ Four subagents, run one after another, each handing a file to the next:
 | 1 | `assigent-analyst` | assignment-source.md, inputs/ | brief.md |
 | 2 | `assigent-finder` | brief.md, choices.md | sources.md |
 | 3 | `assigent-builder` | brief.md, choices.md, sources.md, inputs/, process/app-permissions.md | deliverables/, process/, report.md |
-| 4 | `assigent-evaluator` | assignment-source.md, brief.md, choices.md, report.md, deliverables/ | evaluation.md |
+| 4 | `assigent-evaluator` | assignment-source.md, brief.md, choices.md, report.md, deliverables/ | evaluation.md, learning-check.md |
 
 Beside those four, the **Tutor** (`assigent-tutor`) builds a learning playground:
 
@@ -139,9 +139,9 @@ answers.
 
 | aiPolicy | Steps run | Builder does | Evaluator does |
 |---|---|---|---|
-| `preferred` | analyse, ask, sources, build, evaluate | the full assignment; keeps the chat transcript if the deliverables ask for one | marks the deliverables; one fix round |
-| `not_preferred` | analyse, ask, sources, build in **coach mode**; evaluate only if the user's own draft exists | no finished deliverables: a step-by-step plan, a starter skeleton, and feedback on the user's own draft | feedback on the user's draft, no rewriting |
-| `banned` | analyse, ask (choices only), sources, Tutor | nothing. Tell the user this one must be their own work; offer only the brief and study sources | nothing (skip, with the reason) |
+| `preferred` | analyse, ask, sources, build, evaluate | the full assignment; keeps the chat transcript if the deliverables ask for one | marks the deliverables; one fix round; 5 learning questions |
+| `not_preferred` | analyse, ask, sources, build in **coach mode**; evaluate only if the user's own draft exists | no finished deliverables: a step-by-step plan, a starter skeleton, and feedback on the user's own draft | feedback on the user's draft, no rewriting; 5 learning questions |
+| `banned` | analyse, ask (choices only), sources, Tutor | nothing. Tell the user this one must be their own work; offer only the brief and study sources | marks nothing; 5 learning questions on the concepts |
 
 Never get around the policy, even if asked: say what it is and why the step is skipped.
 
@@ -331,9 +331,30 @@ Must fix). If its Write was blocked, save the evaluation.md text from its reply.
 - The evaluator never edits deliverables; only the builder does.
 Finish with `status.py done "<folder>" evaluator "<score>/100, <verdict>, <n> left to fix"`.
 
+## Step 8b: ask the user what they learned (the Evaluator's main job, user's request 2026-11-14)
+The user said: "the job of evaluator is to ask question to the user what they learned in that
+assignment". The Evaluator writes 5 questions in `learning-check.md` (key in
+`process/learning-key.md`); you ask them; the Evaluator marks the answers.
+- `preferred`: the questions come with the last marking round. If `learning-check.md` is missing,
+  run `assigent-evaluator` in mode `questions`.
+- `not_preferred` and `banned`: run `assigent-evaluator` in mode `questions` after the sources are found.
+  It marks nothing under `banned`; it only asks about the concepts.
+- **The user is here**: ask questions 1 to 4 in ONE AskUserQuestion call (header `Q1` to `Q4`, the
+  three options word for word, in the same order, nothing marked as recommended). Then ask
+  question 5 in plain chat and wait for the answer. Never read or show `process/learning-key.md`
+  before the user has answered. Save the user's exact words to `learning-answers.md`, run
+  `assigent-evaluator` in mode `learning`, then tell the user in 5 lines at most: understood n/5, what to
+  revisit, and the playground link.
+- **Nobody is here** (the hourly watcher, a background run): do not ask and do not guess answers.
+  Leave `Status: WAITING` and report "5 questions are waiting for you: say `ask me the questions`".
+- When the user later says "ask me the questions" (or "quiz me on <assignment>"), do the
+  "user is here" steps for the newest run with `Status: WAITING`.
+- The answers never change the score, the verdict or any deliverable.
+Record it: `status.py event "<folder>" "Learning check: <n>/5 understood"` (or `"5 questions waiting"`).
+
 ## Finish
 Tell the user: the folder path, deliverables done X/Y with their file types, the
-answers the work was built on (and which of them were defaults), the apps used, the evaluator's score and verdict, anything still on its "Must fix" list, unmet
+answers the work was built on (and which of them were defaults), the apps used, the evaluator's score and verdict, the learning check (understood n/5), anything still on its "Must fix" list, unmet
 requirements, the placeholders they must fill in their own words, and the manual
 steps left. Add one line for the playground: "Playground: open it with `assigent play`,
 or the file `<folder>/playground/index.html`." Handing in on the portal is always the user's step.

@@ -462,3 +462,9 @@ body.playpage .top { margin-left: 0; }
 @media (prefers-reduced-motion: reduce) {
   .cursor, .log li.last .ic, .steps li.live .say::after, .tl-ic svg * { animation: none !important; }
 }
+
+/* what the user learned (the Evaluator's questions) */
+.learn { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.learn ol { margin: 8px 0 0; padding-left: 20px; font-size: 13.5px; } .learn li { margin-top: 4px; } .learn li::marker { color: var(--accent-strong); font-weight: 700; }
+.learn li i { font-style: normal; font-weight: 600; font-size: 12px; margin-left: 8px; white-space: nowrap; } .learn li.got i { color: var(--ok); } .learn li.miss i { color: var(--err); }
+.learn .hint { margin: 10px 0 0; font-size: 12.5px; color: var(--muted); }

@@ -188,6 +188,11 @@
    "mtime": 1767239280.0
   },
   {
+   "path": "learning-check.md",
+   "size": 648,
+   "mtime": 1767239400.0
+  },
+  {
    "path": "process/analyst-log.md",
    "size": 380,
    "mtime": 1767238000.0
@@ -213,6 +218,7 @@
    "mtime": 1767239280.0
   }
  ],
+ "learningText": "# What did you learn: Plan a Class Bake Sale\n\nStatus: DONE\nUnderstood: 4/5\n\n## Answers\n- [x] 1. What does the break-even number tell the team? Got it. It is the sales that cover the costs.\n- [x] 2. The ingredients cost more than planned. What happens to break-even? Got it. It goes up.\n- [ ] 3. Why are the totals formulas and not typed numbers? Not yet. A formula updates when a price changes.\n- [x] 4. Which price follows the \"whole or half amounts\" rule? Got it. 1.50 is a half amount.\n- [x] 5. In your own words: how did you choose the prices? Got it. Cost plus a markup, then rounded.\n\n## Revisit\n- Microsoft Support \"Create a simple formula\"\n",
  "demoNow": "2026-01-01T10:30:00",
  "playground": {
   "state": "none",
