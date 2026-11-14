@@ -232,6 +232,12 @@ with sync_playwright() as p:
     check("the five learning questions are listed, one marked not yet", page.locator(".rcard .learn ol li").count() == 5 and page.locator(".rcard .learn li.miss").count() == 1)
     check("learning questions are shown without their feedback text", "A formula updates" not in page.inner_text(".rcard .learn ol"))
     page.screenshot(path=os.path.join(SHOTS, "test-evaluator-result.png"), full_page=True)
+    page.goto(BASE + "/#/"); page.wait_for_selector(".where"); page.wait_for_timeout(400)
+    check("home says where the files are: the folder path", page.locator(".where .path code").inner_text().strip() != "")
+    rows = page.locator(".where tbody tr")
+    check("each file row gives name, format and folder", rows.count() >= 4 and page.locator(".where thead th").count() == 4, f"{rows.count()} rows")
+    first = [x.strip() for x in rows.nth(0).locator("td").all_inner_texts()]
+    check("hand-in files come first, with their format spelled out", first[0] == "bake-sale-budget.xlsx" and "Excel workbook" in first[1] and ".xlsx" in first[1] and first[2] == "deliverables/" and first[3] == "Hand in", str(first))
     page.goto(BASE + "/#/builder"); page.wait_for_selector(".rcard"); page.wait_for_timeout(600)
     b_tiles = page.locator(".rcard .tile b").all_inner_texts()
     check("builder tiles: files made, checks ticked, left for you", b_tiles == ["3", "7/8", "4"], str(b_tiles))

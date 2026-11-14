@@ -350,6 +350,28 @@ function sidebar(s) {
   </aside>`;
 }
 
+/* ---------- home: where the results are (folder, file name, format) ---------- */
+const FORMATS = { xlsx: 'Excel workbook', xls: 'Excel workbook', csv: 'CSV table', pptx: 'PowerPoint deck', docx: 'Word document', pdf: 'PDF', md: 'Markdown text', txt: 'Plain text',
+  html: 'Web page', css: 'Style sheet', js: 'JavaScript', json: 'JSON data', py: 'Python code', java: 'Java code', png: 'PNG image', jpg: 'JPEG image', jpeg: 'JPEG image', svg: 'SVG image',
+  gif: 'GIF image', psd: 'Photoshop file', ai: 'Illustrator file', fig: 'Figma file', mp4: 'MP4 video', zip: 'Zip archive' };
+const RESULT_FILES = { 'brief.md': 'The plan', 'choices.md': 'Your answers', 'sources.md': 'The sources', 'report.md': 'What was made', 'evaluation.md': 'The marks',
+  'learning-check.md': 'Questions for you', 'playground/index.html': 'The playground' };
+function whereCard(s) {
+  const files = s.files || [], base = p => p.slice(p.lastIndexOf('/') + 1), dir = p => p.includes('/') ? p.slice(0, p.lastIndexOf('/') + 1) : 'top of the folder';
+  const ext = p => { const m = /\.([a-z0-9]+)$/i.exec(p); return m ? m[1].toLowerCase() : ''; };
+  const hand = files.filter(f => f.path.startsWith('deliverables/')), res = Object.keys(RESULT_FILES).map(k => files.find(f => f.path === k)).filter(Boolean);
+  if (!s.folder && !hand.length && !res.length) return '';
+  const row = (f, what, cls) => `<tr><td class="fn"><b>${esc(base(f.path))}</b></td><td class="fmt">${esc(FORMATS[ext(f.path)] || 'File')}${ext(f.path) ? ` <code>.${esc(ext(f.path))}</code>` : ''}</td><td class="in"><code>${esc(dir(f.path))}</code></td><td><span class="tag ${cls}">${esc(what)}</span></td></tr>`;
+  const rest = files.length - hand.length - res.length;
+  return `<section class="dcard where" aria-label="Where your files are">
+    <div class="hd"><h2>Where your files are</h2><small>${hand.length} to hand in, ${res.length} to read</small></div>
+    ${s.folder ? `<p class="path"><span class="lab">Folder</span><code>${esc(s.folder)}</code></p>` : ''}
+    ${hand.length || res.length ? `<div class="wrap"><table><thead><tr><th>File name</th><th>Format</th><th>Inside the folder</th><th>What it is</th></tr></thead>
+      <tbody>${hand.map(f => row(f, 'Hand in', 'ok')).join('')}${res.map(f => row(f, RESULT_FILES[f.path], 'idle')).join('')}</tbody></table></div>` : '<p class="empty">No files yet.</p>'}
+    ${rest > 0 ? `<p class="rest">Plus ${rest} working file${rest === 1 ? '' : 's'} (logs, saved pages, scripts), mostly in <code>process/</code>.</p>` : ''}
+  </section>`;
+}
+
 /* ---------- dashboard pieces: greeting, activity chart, runs table ---------- */
 let runsList = [], meName = '';
 const firstName = n => String(n || '').trim().split(/\s+/)[0] || '';
@@ -710,6 +732,7 @@ function draw(s) {
       <div class="hint">Drag to move. Click a team to open it.</div>
       <div class="zoom"><button data-zoom="in" aria-label="Zoom in">+</button><button data-zoom="out" aria-label="Zoom out">−</button><button data-zoom="reset" aria-label="Reset view">⌂</button></div>
     </div>`}</section>
+    ${whereCard(s)}
     </div>${sidebar(s)}</div>`;
   if (has3d) mountOffice3d(s); else applyCam();
 }

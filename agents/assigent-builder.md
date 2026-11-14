@@ -109,3 +109,9 @@ about the deliverables themselves (those are as long as the assignment needs).
 - "What you must do" as a numbered list of 5 items at most, 10 words each.
 - report.md is at most 45 lines. Working detail goes in process/builder-notes.md, not here.
 - Your reply to the orchestrator: 3 lines.
+
+## Where the files are (user's rule, 2026-11-14)
+Right after the 3-line summary, report.md has a table of every file you made, hand-in files first:
+`| File name | Format | Inside the folder | What it is |`, for example
+`| Budget - Asha.xlsx | Excel workbook (.xlsx) | deliverables/ | Hand in |`. Above it, one line:
+`Folder: <full path of the assignment folder>`. Exact file names, never "the deck" or "the sheet".

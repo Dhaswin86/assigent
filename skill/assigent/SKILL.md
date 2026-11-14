@@ -254,6 +254,25 @@ Asked: <date and time>
 - Every answer that fell back to a default is named in report.md (tell the Builder).
 - Record it: `status.py event "<folder>" pipeline "Answers: <short summary>"`.
 
+## Apps the assignment needs: ask first, then use the user's own browser (user's rule, 2026-11-14)
+The user said: "if some need to access another app access just ask permission and access it through
+the browser they use". So when the work needs another app or website (Canva, Figma, a Zoho product,
+Google Sheets, a social platform, any web tool):
+1. **Ask first**, once per app per assignment, before opening it: "This assignment needs <app> for
+   <what>. May I open it in <browser>?" with the answers "Yes, open it" and "No, make it another
+   way". A yes for one app is not a yes for another, or for the next assignment.
+2. **On yes, open it in the browser the user uses**: through the Claude browser extension, on the browser saved in the answers (`browser`), or the one connected; if more than one is connected, ask which one. Open it in a new tab, in their
+   signed-in session. Never use the built-in browser or a headless one for this: the user's account
+   is not there.
+3. **Signed out?** Ask the user to sign in themselves and wait. Never type a password or a code.
+4. **Still the user's steps, even with permission**: creating an account, accepting terms, paying,
+   and anything that posts, publishes, sends, shares or submits. Stop and ask them to do it.
+5. **On no**: never open the app. The Builder makes the file with a library instead; say so.
+6. **Nobody can answer** (a run started with defaults only): do not open the app. Build what a library can build and put "Needs your OK to open <app>" at the top of the report.
+7. You do the browser work, not the Builder (subagents do not drive the browser). Record each
+   answer in `<folder>/process/app-permissions.md` as
+   `- <App>: allowed | not allowed (<what for>). Opened in: <browser>`.
+
 ## Step 5: find sources
 Run `assigent-finder` with the folder path and the answers in `choices.md`. It uses WebSearch and WebFetch, and the
 Firecrawl CLI only if that is already installed and signed in. If this session's
@@ -358,3 +377,24 @@ answers the work was built on (and which of them were defaults), the apps used, 
 requirements, the placeholders they must fill in their own words, and the manual
 steps left. Add one line for the playground: "Playground: open it with `assigent play`,
 or the file `<folder>/playground/index.html`." Handing in on the portal is always the user's step.
+
+**Say clearly where the results are.** End every report with
+this block, hand-in files first, then the files to read. Full path, exact file names, the format in
+words and as the extension:
+
+```
+Folder: <full path of the assignment folder>
+
+| File name | Format | Inside the folder | What it is |
+|---|---|---|---|
+| <name>.xlsx | Excel workbook (.xlsx) | deliverables/ | Hand in |
+| <name>.pptx | PowerPoint deck (.pptx) | deliverables/ | Hand in |
+| report.md | Markdown text (.md) | top of the folder | What was made |
+| evaluation.md | Markdown text (.md) | top of the folder | The marks |
+| learning-check.md | Markdown text (.md) | top of the folder | Questions for you |
+| index.html | Web page (.html) | playground/ | The playground |
+```
+
+List only files that exist: check with `ls` first. The viewer shows the same table on its home
+screen ("Where your files are").
+
