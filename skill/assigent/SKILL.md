@@ -392,7 +392,7 @@ The Evaluator prepares it: `learning-check.md` (one opening question per concept
 - When the user later says "ask me the questions" (or "quiz me on <assignment>"), do the
   "user is here" steps for the newest run with `Status: WAITING`.
 - The answers never change the score, the verdict or any deliverable.
-Record it: `status.py event "<folder>" "Concept check: <n>/<m> understood"` (or `"Concept check waiting"`).
+Record it: `status.py event "<folder>" evaluator "Concept check: <n>/<m> understood"` (or `"Concept check waiting"`).
 
 ## Finish
 Tell the user: the folder path, deliverables done X/Y with their file types, the
