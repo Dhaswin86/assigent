@@ -113,7 +113,9 @@ No browser? Paste the brief into Claude Code after typing `/assigent`.
 3. Assigent asks you those questions, once. If there are none, it says so and goes on.
 4. The Source finder gathers docs and tutorials into `sources.md`.
    The Tutor then starts on your playground while the work goes on.
-5. The Builder does the work into `deliverables/` and writes `report.md`.
+5. The Builder does the work into `deliverables/` and writes `report.md`. The work is
+   short on words, with pictures that fit, at high quality. It asks before adding
+   pictures or videos.
 6. The Evaluator marks it out of 100 and writes `evaluation.md`. If it says revise,
    the Builder gets one round to fix the list.
 7. The Evaluator then checks how well you understood the concept: a few opening

@@ -201,3 +201,16 @@ The user said the agents' results are "too texty". Keep the exact evaluation.md 
   beyond one line "Score split: ..." under the Round line.
 - evaluation.md is at most 50 lines.
 - Your reply to the orchestrator: 4 lines (score, verdict, must-fix count, the first must-fix).
+
+## Text, pictures and quality (user's rule, 2026-11-15)
+The user wants the hand-in work with as little text as possible, pictures that fit, at high quality,
+and pictures or videos only with their permission. Read `process/media-permissions.md`, then render
+every slide or page to an image and look at each one.
+- Too much text is a "Must fix": a slide over 3 bullets or 25 words, a paragraph on a slide, a page
+  that is a wall of text where a table, steps or a picture would do. Text the brief requires is fine.
+- A picture or video used when the answer was `not allowed`, or with no answer, is a FAIL.
+- With `Pictures: allowed`: a picture that does not show what its text is about, a blurred, stretched
+  or watermarked picture, or an outside picture missing from `process/image-credits.md` is a "Must fix".
+  So is an explaining slide or section with no picture at all.
+- Uneven fonts, colours or margins, text cut off or hard to read: "Must fix" when it shows at a glance.
+- These count inside "quality and clarity" and "format and hand-in readiness".

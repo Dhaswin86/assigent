@@ -102,8 +102,8 @@ End your reply with: deliverables done X/Y, unmet requirements, and the user's
 remaining manual steps.
 
 ## Keep it short: results are read at a glance
-The user said the agents' results are "too texty". This is about report.md and your reply, never
-about the deliverables themselves (those are as long as the assignment needs).
+The user said the agents' results are "too texty". This part is about report.md and your reply.
+The deliverables have their own rule, below: least text, fitting pictures, best quality.
 - Start report.md with a 3-line summary: what was made, checks passed X of Y, what is left for the user.
 - Deliverables as a table (file | type | how it was checked). The checklist as one line per item.
 - "What you must do" as a numbered list of 5 items at most, 10 words each.
@@ -115,3 +115,38 @@ Right after the 3-line summary, report.md has a table of every file you made, ha
 `| File name | Format | Inside the folder | What it is |`, for example
 `| Budget - Asha.xlsx | Excel workbook (.xlsx) | deliverables/ | Hand in |`. Above it, one line:
 `Folder: <full path of the assignment folder>`. Exact file names, never "the deck" or "the sheet".
+
+## The hand-in work: least text, fitting pictures, best quality (user's rule, 2026-11-15)
+The user said: "the output it gave contains more texts i need to give it with less text as possible with image
+that suits the content if they want ask permission for images and videos as well i need it to be
+on high quality as possible". This is about the deliverables themselves.
+
+**Least text.** Say each thing once, in the fewest words that still meet the brief.
+- Deck: one idea per slide, a title of 8 words at most, 3 bullets and 25 words at most on a slide,
+  never a paragraph. The detail goes in the speaker notes.
+- Document: a heading, then 2 or 3 short lines; tables, numbered steps and callouts instead of
+  paragraphs. Sheet: short cell text, a legend instead of repeated notes.
+- The brief wins: a required word count, section or answer is never cut to save words.
+
+**Pictures and videos only with permission.** Read `process/media-permissions.md` and your prompt.
+- `Pictures: allowed`: every slide or section that explains something gets one picture that shows
+  that very thing (the product, the step, the number as a chart). No picture that only decorates.
+- Sources, in this order: made for this work (charts from its own numbers, diagrams, icons,
+  screenshots of the user's own work); free-to-use photos and clips whose licence allows reuse, each
+  credited; an image-making tool, only when the AI policy is `preferred`.
+- Never a watermarked picture, one copied from a site that does not allow reuse, or a photo of a
+  private person. List every outside picture in `process/image-credits.md`
+  (`file | where it is used | source link | licence`) and on a last "Picture credits" slide or page.
+- `Videos: allowed`: only where the file can hold or link one. Under 50 MB goes in the file,
+  otherwise a still frame with the link under it.
+- `not allowed`, or no answer anywhere: no pictures or videos from anywhere. Use layout, tables,
+  shapes and charts built in the file itself, and say in report.md that pictures were not allowed.
+
+**Best quality.**
+- Pictures at least 1920 px on the long side, or twice the size they are shown at; never stretched,
+  blurred or cropped through the subject. Charts and diagrams as vector or native objects.
+- One look through the whole work: 2 fonts and one small colour set at most, the same margins,
+  nothing touching an edge, text readable against what is behind it.
+- Videos at 1080p or better. PDF copies exported at full quality, never screen quality.
+- Before you finish, render every slide or page to an image and look at each one. Fix anything
+  crowded, cut off, blurred or out of line, then look again.

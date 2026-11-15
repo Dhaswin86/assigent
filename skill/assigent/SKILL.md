@@ -172,6 +172,8 @@ Run `assigent-analyst` with the folder path. It writes brief.md, including the s
 the defaults.
 
 ## Step 4: ask only what this assignment needs (one round, before any research or building)
+In this same round, also ask the pictures and videos question (see "Pictures and videos: ask first" below).
+
 This is the only round of questions about the assignment. It is built from brief.md,
 not from a fixed list.
 
@@ -272,6 +274,32 @@ Google Sheets, a social platform, any web tool):
 7. You do the browser work, not the Builder (subagents do not drive the browser). Record each
    answer in `<folder>/process/app-permissions.md` as
    `- <App>: allowed | not allowed (<what for>). Opened in: <browser>`.
+
+## Pictures and videos: ask first, then keep the work light on text (user's rule, 2026-11-15)
+The user said: "the output it gave contains more texts i need to give it with less text as possible with image
+that suits the content if they want ask permission for images and videos as well i need it to be
+on high quality as possible". So the hand-in work itself is short on words, carried by pictures that fit,
+and made at the best quality the file type allows.
+1. **Ask once per assignment**, in the same round as the assignment's own questions and before any
+   building: "May I add pictures and videos to this work?" with the answers "Pictures and videos",
+   "Pictures only" and "No, keep it plain". Skip the question when no deliverable can hold a picture
+   (code only), and when the AI policy means nothing is built.
+2. **Where pictures come from, in this order**: (a) made for this work: charts from its own numbers,
+   diagrams, icons, screenshots of the user's own work; (b) free-to-use photos and clips whose licence
+   allows reuse (Unsplash, Pexels, Pixabay, Wikimedia Commons), each one credited; (c) an image-making
+   tool the session has, only when the AI policy is `preferred`.
+3. **Never**: a watermarked picture, a picture copied from a site that does not allow reuse, a photo
+   of a private person, or a picture that only decorates.
+4. **Videos** only on a yes for videos, and only where the file can hold or link one: placed in the
+   file when it is under 50 MB, otherwise a still frame with the link under it.
+5. Record the answer in `<folder>/process/media-permissions.md` as two lines,
+   `- Pictures: allowed | not allowed` and `- Videos: allowed | not allowed`, and pass it to the
+   Builder and the Evaluator in their prompts.
+6. **On no**: no pictures or videos from anywhere. The work is still short on words: layout, tables,
+   shapes and charts built in the file itself.
+7. **Nobody can answer** (a run started with defaults only): the same as no, and put "Needs your OK to
+   add pictures and videos" at the top of the report.
+8. A yes covers this assignment only. Ask again for the next one.
 
 ## Step 5: find sources
 Run `assigent-finder` with the folder path and the answers in `choices.md`. It uses WebSearch and WebFetch, and the
