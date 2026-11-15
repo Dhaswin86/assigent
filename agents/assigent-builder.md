@@ -132,10 +132,10 @@ on high quality as possible". This is about the deliverables themselves.
 - `Pictures: allowed`: every slide or section that explains something gets one picture that shows
   that very thing (the product, the step, the number as a chart). No picture that only decorates.
 - Sources, in this order: made for this work (charts from its own numbers, diagrams, icons,
-  screenshots of the user's own work); free-to-use photos and clips whose licence allows reuse, each
-  credited; an image-making tool, only when the AI policy is `preferred`.
-- Never a watermarked picture, one copied from a site that does not allow reuse, or a photo of a
-  private person. List every outside picture in `process/image-credits.md`
+  screenshots of the user's own work); pictures and clips from anywhere on the web, whichever shows the
+  subject best, each credited (the user's rule: this is school work, so any source is fine); an image-making tool, only when the AI policy is `preferred`.
+- Never a watermarked picture or a photo of a private person. If your prompt says the work will
+  be published or sold, use only pictures whose licence allows reuse. List every outside picture in `process/image-credits.md`
   (`file | where it is used | source link | licence`) and on a last "Picture credits" slide or page.
 - `Videos: allowed`: only where the file can hold or link one. Under 50 MB goes in the file,
   otherwise a still frame with the link under it.

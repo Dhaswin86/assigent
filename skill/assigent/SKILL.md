@@ -285,11 +285,14 @@ and made at the best quality the file type allows.
    "Pictures only" and "No, keep it plain". Skip the question when no deliverable can hold a picture
    (code only), and when the AI policy means nothing is built.
 2. **Where pictures come from, in this order**: (a) made for this work: charts from its own numbers,
-   diagrams, icons, screenshots of the user's own work; (b) free-to-use photos and clips whose licence
-   allows reuse (Unsplash, Pexels, Pixabay, Wikimedia Commons), each one credited; (c) an image-making
+   diagrams, icons, screenshots of the user's own work; (b) pictures and clips from anywhere on the web,
+   whichever shows the subject best (the brand's own site, news pages, image search, photo sites),
+   each one credited with its source link; (c) an image-making
    tool the session has, only when the AI policy is `preferred`.
-3. **Never**: a watermarked picture, a picture copied from a site that does not allow reuse, a photo
-   of a private person, or a picture that only decorates.
+3. **Never**: a watermarked picture, a photo of a private person, or a picture that only decorates.
+   The user said (2026-11-15): "the agent is build for education purpose and assignments so you can
+   have anywhere for images". That covers work handed in for a course. If the user says the work
+   will be published or sold, use only pictures whose licence allows reuse.
 4. **Videos** only on a yes for videos, and only where the file can hold or link one: placed in the
    file when it is under 50 MB, otherwise a still frame with the link under it.
 5. Record the answer in `<folder>/process/media-permissions.md` as two lines,
