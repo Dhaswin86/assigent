@@ -78,6 +78,9 @@ the answer, so it is made even when AI help is not allowed.
 
 Open it with `assigent play`, or the Playground icon in the viewer.
 
+Every assignment gets one, earlier ones too: any run without a playground has one built
+the next time you start Assigent, or right away with `/assigent make the playgrounds`.
+
 ## Two ways to use it
 
 ### In the terminal

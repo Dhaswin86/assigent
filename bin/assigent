@@ -502,7 +502,7 @@ def cmd_play(a):
     run = runs[idx]
     if run["playground"] != "ready":
         why = {"being made": "is still being made. Try again in a minute.", "skipped": "was skipped for this run."}.get(
-            run["playground"], "has not been made yet. The Tutor makes it after the Source finder.")
+            run["playground"], "has not been made yet. In Claude Code, say: /assigent make the playgrounds")
         fail(f"The playground for \"{run['title']}\" {why}", FAILED)
     path = os.path.join(run["folder"], "playground", "index.html")
     st = viewer_state()

@@ -54,7 +54,7 @@ async function tick() {
     } else if (p.state === 'error') {
       show('error', empty('The playground could not be made', p.summary || 'Run the Tutor again from Claude Code.'));
     } else {
-      show('none', empty('No playground yet', 'The Tutor makes one after the Source finder has finished.'));
+      show('none', empty('No playground yet', 'In Claude Code, say: /assigent make the playgrounds. Every assignment gets one.'));
     }
     done(true);
   } catch (e) { done(false); }

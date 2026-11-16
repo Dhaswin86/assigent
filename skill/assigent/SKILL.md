@@ -344,6 +344,9 @@ python3 ~/.claude/skills/assigent/ui/status.py playground error "<folder>" "<wha
   `status.json` but no `playground/index.html`. Run the Tutor for each one, in the background and
   without asking, with that folder's own AI policy. A folder with no sources.md is built from its
   brief and assignment-source.md. When all are done, say which playgrounds were added.
+  This is for every person who uses the skill, not one user's folders: it runs on whatever
+  assignment folders are under that person's save folder. "make the playgrounds" asks for the
+  same thing directly: do only this step, for every folder that has none.
 
 ## Deliverable file types
 Every deliverable is handed in as the file type the assignment requires: the stated
