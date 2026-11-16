@@ -215,6 +215,57 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   .way, .demo { padding: 22px; }
   .run-head { flex-wrap: wrap; }
 }
+
+/* Motion. Everything is visible without JS; .motion is added only when motion is allowed. */
+:root { --ease-out: cubic-bezier(.16, 1, .3, 1); }
+.progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--accent); transform-origin: 0 50%; transform: scaleX(0); pointer-events: none; }
+.top { transition: box-shadow .3s; }
+.top.scrolled { box-shadow: 0 6px 20px -12px rgba(0,0,0,.35); }
+.nav a { position: relative; transition: color .2s; }
+.nav a::after { content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 2px; border-radius: 2px; background: var(--accent); transform: scaleX(0); transition: transform .35s var(--ease-out); }
+.nav a[aria-current="true"] { color: var(--text); }
+.nav a[aria-current="true"]::after { transform: scaleX(1); }
+.btn, .copy { transition: background-color .15s, border-color .15s, color .15s, transform .2s var(--ease-out); }
+.btn:active, .copy:active { transform: scale(.97); }
+.btn svg[aria-hidden] { transition: transform .25s var(--ease-out); }
+.btn:hover svg[aria-hidden] { transform: translateX(3px); }
+.gh:hover svg[aria-hidden] { transform: none; }
+.way, .demo, .mock, .run { transition: transform .35s var(--ease-out), box-shadow .35s var(--ease-out), border-color .35s; }
+.way:hover, .demo:hover { transform: translateY(-4px); border-color: var(--line-strong); box-shadow: 0 18px 40px -18px rgba(0,0,0,.28); }
+.asks tbody tr { transition: background-color .2s; }
+.asks tbody tr:hover { background: var(--bg-soft); }
+
+/* Hero run: the one authored moment. The Builder step pulses and its bar fills. */
+.run .now .dot { position: relative; }
+.run .now .dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; }
+.motion .run .now .dot::after { animation: ping 1.8s var(--ease-out) infinite; }
+@keyframes ping { 0% { transform: scale(.8); opacity: .7; } 100% { transform: scale(1.6); opacity: 0; } }
+.run .bar { grid-column: 2 / 4; height: 4px; border-radius: 99px; background: var(--line); overflow: hidden; margin-top: -4px; }
+.run .bar i { display: block; height: 100%; width: 62%; border-radius: inherit; background: var(--accent); }
+.motion .run .bar i { animation: build 4.5s var(--ease-out) infinite; }
+@keyframes build { 0% { width: 8%; } 70%, 100% { width: 88%; } }
+
+/* Scroll reveals, a different entrance per kind of content */
+.motion [data-reveal] { transition: opacity .8s var(--ease-out), transform .8s var(--ease-out), filter .8s var(--ease-out), clip-path .9s var(--ease-out); transition-delay: calc(var(--i, 0) * 70ms); }
+.motion [data-reveal="up"]:not(.in) { opacity: 0; transform: translateY(28px); }
+.motion [data-reveal="blur"]:not(.in) { opacity: 0; filter: blur(8px); transform: scale(.98); }
+.motion [data-reveal="left"]:not(.in) { opacity: 0; transform: translateX(-24px); }
+.motion [data-reveal="wipe"]:not(.in) { clip-path: inset(0 100% 0 0); }
+.motion [data-reveal="pop"]:not(.in) { opacity: 0; transform: scale(.6); }
+.motion [data-reveal="pop"] { transition-timing-function: cubic-bezier(.34, 1.56, .64, 1); }
+.motion .steps .num::after { transform-origin: 0 50%; transition: transform .7s var(--ease-out); transition-delay: calc(var(--i, 0) * 140ms + 150ms); }
+.motion .steps:not(.in) .num::after { transform: scaleX(0); }
+.motion .steps li { transition: opacity .6s var(--ease-out), transform .6s var(--ease-out); transition-delay: calc(var(--i, 0) * 140ms); }
+.motion .steps:not(.in) li { opacity: 0; transform: translateY(16px); }
+.motion .rules svg { transition: transform .5s cubic-bezier(.34, 1.56, .64, 1); transition-delay: calc(var(--i, 0) * 70ms + 200ms); }
+.motion .rules li:not(.in) svg { transform: scale(0) rotate(-30deg); }
+.motion .mock .meter i { transition: width 1.4s var(--ease-out) .3s; }
+.motion .mock:not(.in) .meter i { width: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .progress { display: none; }
+  .way:hover, .demo:hover, .btn:hover svg[aria-hidden] { transform: none; }
+}
 </style>
 </head>
 <body>
@@ -230,6 +281,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 <a class="skip" href="#install">Skip to the install line</a>
 
 <header class="top">
+  <div class="progress" aria-hidden="true"></div>
   <div class="wrap">
     <a class="logo" href="#top" aria-label="Assigent home">
       <svg viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="7" fill="#c2410c"/><path d="M8 19l5-12 5 12M9.8 15h6.4" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -268,12 +320,12 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       </div>
     </div>
 
-    <figure class="run" aria-label="A made-up example run">
+    <figure class="run" data-reveal="blur" aria-label="A made-up example run">
       <div class="run-head"><strong>Plan a week of social media posts</strong><span>Example run</span></div>
       <ol>
         <li class="done"><span class="dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span><div><b>Analyst</b><small>Checklist of what the brief asks</small></div><span class="st">Done</span></li>
         <li class="done"><span class="dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span><div><b>Source finder</b><small>Guides and docs for each part</small></div><span class="st">Done</span></li>
-        <li class="now"><span class="dot">3</span><div><b>Builder</b><small>Making the calendar as an .xlsx file</small></div><span class="st">Working</span></li>
+        <li class="now"><span class="dot">3</span><div><b>Builder</b><small>Making the calendar as an .xlsx file</small></div><span class="st">Working</span><span class="bar" aria-hidden="true"><i></i></span></li>
         <li><span class="dot">4</span><div><b>Evaluator</b><small>Will mark it out of 100</small></div><span class="st">Next</span></li>
         <li><span class="dot">5</span><div><b>Tutor</b><small>A playground to learn the idea</small></div><span class="st">Next</span></li>
       </ol>
@@ -283,11 +335,11 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 
   <section class="block soft" id="how" aria-labelledby="h-how">
     <div class="wrap">
-      <div class="head">
+      <div class="head" data-reveal="up">
         <h2 id="h-how">How it works</h2>
         <p>Five helpers, one after another. Each does one job and hands over to the next.</p>
       </div>
-      <ol class="steps">
+      <ol class="steps" data-group>
         <li><div class="num"><span>1</span></div><div><h3>Analyst</h3><p>Reads the brief and writes a checklist of what is asked.</p></div></li>
         <li><div class="num"><span>2</span></div><div><h3>Source finder</h3><p>Gathers the docs and tutorials each part needs.</p></div></li>
         <li><div class="num"><span>3</span></div><div><h3>Builder</h3><p>Does the work in the right file type, within the AI rule.</p></div></li>
@@ -299,59 +351,59 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 
   <section class="block" id="asks" aria-labelledby="h-asks">
     <div class="wrap">
-      <div class="head">
+      <div class="head" data-reveal="up">
         <h2 id="h-asks">It asks only what your assignment needs</h2>
         <p>No setup and no fixed questions. It reads the brief first, then asks you once, only what the brief leaves open.</p>
       </div>
-      <table class="asks">
+      <table class="asks" data-reveal="up">
         <thead><tr><th scope="col">The brief says</th><th scope="col">Assigent asks</th></tr></thead>
         <tbody>
-          <tr><td>Explore a Zoho product and write a short review.</td><td>Which product do you want?<small>"A product" has many answers. That choice is yours.</small></td></tr>
-          <tr><td>Plan a week of posts for social media.</td><td>Which platform or platforms?<small>Instagram, LinkedIn, X, or your own answer.</small></td></tr>
-          <tr><td>Make a poster with a design tool.</td><td>Which tool, and may Assigent use it?<small>Figma, Photoshop, Illustrator or Canva. Apps you said you have come first.</small></td></tr>
-          <tr><td>Hand in a deck with your name on the first slide. It says nothing about AI.</td><td>What name goes on it? How much help do you want?<small>Your name is asked once, then remembered.</small></td></tr>
-          <tr><td>Write 500 words on the water cycle for Instagram readers. AI is allowed.</td><td>Nothing.<small>Topic, platform and AI rule are all fixed. It says so and starts.</small></td></tr>
+          <tr data-reveal="left"><td>Explore a Zoho product and write a short review.</td><td>Which product do you want?<small>"A product" has many answers. That choice is yours.</small></td></tr>
+          <tr data-reveal="left"><td>Plan a week of posts for social media.</td><td>Which platform or platforms?<small>Instagram, LinkedIn, X, or your own answer.</small></td></tr>
+          <tr data-reveal="left"><td>Make a poster with a design tool.</td><td>Which tool, and may Assigent use it?<small>Figma, Photoshop, Illustrator or Canva. Apps you said you have come first.</small></td></tr>
+          <tr data-reveal="left"><td>Hand in a deck with your name on the first slide. It says nothing about AI.</td><td>What name goes on it? How much help do you want?<small>Your name is asked once, then remembered.</small></td></tr>
+          <tr data-reveal="left"><td>Write 500 words on the water cycle for Instagram readers. AI is allowed.</td><td>Nothing.<small>Topic, platform and AI rule are all fixed. It says so and starts.</small></td></tr>
         </tbody>
       </table>
-      <div class="trio">
-        <div><h3>Never picks silently</h3><p>If the brief leaves an app, product, platform or topic open, you choose. The work follows your answer.</p></div>
-        <div><h3>Never asks what it does not need</h3><p>No app question for an essay. No platform question when the brief names the platform.</p></div>
-        <div><h3>Never asks twice</h3><p>Answers it can reuse, like your name and the apps you have, are remembered on your computer.</p></div>
+      <div class="trio" data-stagger>
+        <div data-reveal="up"><h3>Never picks silently</h3><p>If the brief leaves an app, product, platform or topic open, you choose. The work follows your answer.</p></div>
+        <div data-reveal="up"><h3>Never asks what it does not need</h3><p>No app question for an essay. No platform question when the brief names the platform.</p></div>
+        <div data-reveal="up"><h3>Never asks twice</h3><p>Answers it can reuse, like your name and the apps you have, are remembered on your computer.</p></div>
       </div>
     </div>
   </section>
 
   <section class="block soft" id="rules" aria-labelledby="h-rules">
     <div class="wrap">
-      <div class="head">
+      <div class="head" data-reveal="up">
         <h2 id="h-rules">Rules it always keeps</h2>
         <p>Your school's AI rule comes first. Assigent works inside it, and the last step is always yours.</p>
       </div>
-      <ul class="rules">
-        <li><svg aria-hidden="true"><use href="#i-shield"/></svg><span>It never gets around an assignment's AI rule. If AI is not allowed, you get the brief and a reading list, nothing more.</span></li>
-        <li><svg aria-hidden="true"><use href="#i-shield"/></svg><span>It never submits, uploads or hands in anything. That step is yours.</span></li>
-        <li><svg aria-hidden="true"><use href="#i-shield"/></svg><span>It never signs in for you and never types a password.</span></li>
-        <li><svg aria-hidden="true"><use href="#i-shield"/></svg><span>It never sends messages or posts for you.</span></li>
-        <li><svg aria-hidden="true"><use href="#i-shield"/></svg><span>Parts that must come from your own life or in your own voice stay as marked gaps for you to fill.</span></li>
-        <li><svg aria-hidden="true"><use href="#i-shield"/></svg><span>It opens an app on your computer only after you allowed it for that assignment.</span></li>
-        <li><svg aria-hidden="true"><use href="#i-shield"/></svg><span>It runs only when you start it. Nothing watches your portal in the background.</span></li>
+      <ul class="rules" data-stagger>
+        <li data-reveal="up"><svg aria-hidden="true"><use href="#i-shield"/></svg><span>It never gets around an assignment's AI rule. If AI is not allowed, you get the brief and a reading list, nothing more.</span></li>
+        <li data-reveal="up"><svg aria-hidden="true"><use href="#i-shield"/></svg><span>It never submits, uploads or hands in anything. That step is yours.</span></li>
+        <li data-reveal="up"><svg aria-hidden="true"><use href="#i-shield"/></svg><span>It never signs in for you and never types a password.</span></li>
+        <li data-reveal="up"><svg aria-hidden="true"><use href="#i-shield"/></svg><span>It never sends messages or posts for you.</span></li>
+        <li data-reveal="up"><svg aria-hidden="true"><use href="#i-shield"/></svg><span>Parts that must come from your own life or in your own voice stay as marked gaps for you to fill.</span></li>
+        <li data-reveal="up"><svg aria-hidden="true"><use href="#i-shield"/></svg><span>It opens an app on your computer only after you allowed it for that assignment.</span></li>
+        <li data-reveal="up"><svg aria-hidden="true"><use href="#i-shield"/></svg><span>It runs only when you start it. Nothing watches your portal in the background.</span></li>
       </ul>
-      <p class="note"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg><span>Check your school's rules on AI help too. You are responsible for what you hand in.</span></p>
+      <p class="note" data-reveal="up"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg><span>Check your school's rules on AI help too. You are responsible for what you hand in.</span></p>
     </div>
   </section>
 
   <section class="block" id="learn" aria-labelledby="h-learn">
     <div class="wrap split">
       <div>
-        <h2 id="h-learn">Learn it first</h2>
+        <h2 id="h-learn" data-reveal="up">Learn it first</h2>
         <p class="muted" style="margin-top:12px">For each assignment, the Tutor builds a small interactive page that teaches the idea behind it. It never holds the answer, so you get it even when AI help is not allowed.</p>
         <p class="muted">Writing an SEO title and description? Type them and watch a live search preview, with a meter that shows when each one is too long.</p>
         <p style="margin-top:22px"><a class="btn btn-primary" href="demo/playground.html">Try a demo playground <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></p>
       </div>
-      <div class="mock" aria-hidden="true">
+      <div class="mock" aria-hidden="true" data-reveal="blur">
         <div class="lbl">Your title</div>
         <div class="field">Handmade notebooks for school | Inkpatang</div>
-        <div class="meter"><div><i></i></div>42 of 60</div>
+        <div class="meter"><div><i></i></div><span data-count="42">42</span>&nbsp;of 60</div>
         <div class="serp"><span>inkpatang.example</span><b>Handmade notebooks for school | Inkpatang</b><p>Ruled, plain and grid notebooks made by hand, sized for school bags.</p></div>
       </div>
     </div>
@@ -359,12 +411,12 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 
   <section class="block soft" id="use" aria-labelledby="h-use">
     <div class="wrap">
-      <div class="head">
+      <div class="head" data-reveal="up">
         <h2 id="h-use">Two ways to use it</h2>
         <p>It starts with one question: where is the assignment? Paste it, give a file, or let it read the portal tab open in your browser.</p>
       </div>
-      <div class="ways">
-        <div class="way">
+      <div class="ways" data-stagger>
+        <div class="way" data-reveal="up">
           <h3>In the terminal</h3>
           <ul class="cmds">
             <li><code>assigent run</code><p>Starts Claude Code on your next assignment. It asks where the assignment is.</p></li>
@@ -372,7 +424,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
             <li><code>assigent status</code><p>Lists your runs and the evaluator's score for each.</p></li>
           </ul>
         </div>
-        <div class="way">
+        <div class="way" data-reveal="up">
           <h3>With your browser</h3>
           <ol class="ol">
             <li>Install the Claude extension in Chrome, Brave or Edge.</li>
@@ -389,15 +441,15 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   <section class="block" id="demo" aria-labelledby="h-need">
     <div class="wrap split" style="align-items:start">
       <div>
-        <h2 id="h-need">What you need</h2>
-        <ul class="req">
-          <li><svg class="i" aria-hidden="true"><use href="#i-dot"/></svg><span>A Claude plan that includes Claude Code, with Claude Code installed. New to it? Claude Code is Anthropic's assistant that works in your terminal, and Assigent runs inside it.</span></li>
-          <li><svg class="i" aria-hidden="true"><use href="#i-dot"/></svg><span>Python 3. Most Macs and Linux computers already have it.</span></li>
-          <li><svg class="i" aria-hidden="true"><use href="#i-dot"/></svg><span>Optional: the Claude browser extension, if you want Assigent to read the assignment from your portal tab.</span></li>
+        <h2 id="h-need" data-reveal="up">What you need</h2>
+        <ul class="req" data-stagger>
+          <li data-reveal="up"><svg class="i" aria-hidden="true"><use href="#i-dot"/></svg><span>A Claude plan that includes Claude Code, with Claude Code installed. New to it? Claude Code is Anthropic's assistant that works in your terminal, and Assigent runs inside it.</span></li>
+          <li data-reveal="up"><svg class="i" aria-hidden="true"><use href="#i-dot"/></svg><span>Python 3. Most Macs and Linux computers already have it.</span></li>
+          <li data-reveal="up"><svg class="i" aria-hidden="true"><use href="#i-dot"/></svg><span>Optional: the Claude browser extension, if you want Assigent to read the assignment from your portal tab.</span></li>
         </ul>
         <p class="muted" style="margin-top:18px">The installer copies files into your home folder only. It never uses sudo.</p>
       </div>
-      <div class="demo">
+      <div class="demo" data-reveal="blur">
         <h3>Watch one made-up run</h3>
         <p>The demo shows the viewer on a pretend assignment, a small to-do app. No real assignment is in it.</p>
         <a class="btn btn-ghost" href="demo/index.html">See a demo run <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
@@ -407,9 +459,9 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 
   <section class="cta" aria-labelledby="h-cta">
     <div class="wrap">
-      <h2 id="h-cta">Install Assigent</h2>
+      <h2 id="h-cta" data-reveal="up">Install Assigent</h2>
       <p>One line in your terminal, then type <code>assigent run</code>. There is nothing to set up first.</p>
-      <div class="cmd"><span class="p" aria-hidden="true">$</span><pre id="line-install-2">curl -fsSL https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh | bash</pre><button class="copy" type="button" data-copy="line-install-2" aria-label="Copy the install line"><svg aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+      <div class="cmd" data-reveal="wipe"><span class="p" aria-hidden="true">$</span><pre id="line-install-2">curl -fsSL https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh | bash</pre><button class="copy" type="button" data-copy="line-install-2" aria-label="Copy the install line"><svg aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span></button></div>
     </div>
   </section>
 </main>
@@ -440,6 +492,60 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       else done(false);
     });
   });
+
+  // Header: shadow once scrolled, reading-progress bar, current section in the nav
+  var top = document.querySelector('.top'), bar = document.querySelector('.progress'), ticking = false;
+  function onScroll() {
+    var y = window.scrollY, max = document.documentElement.scrollHeight - innerHeight;
+    top.classList.toggle('scrolled', y > 4);
+    bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(y / max, 1) : 0) + ')';
+    ticking = false;
+  }
+  addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  onScroll();
+
+  if (!('IntersectionObserver' in window)) return;
+  var links = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.nav a'), function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  var spy = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        Object.keys(links).forEach(function (k) { links[k].removeAttribute('aria-current'); });
+        if (links[e.target.id]) links[e.target.id].setAttribute('aria-current', 'true');
+      } else if (links[e.target.id] && e.boundingClientRect.top > 0) {
+        links[e.target.id].removeAttribute('aria-current');
+      }
+    });
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  Array.prototype.forEach.call(document.querySelectorAll('main section[id]'), function (s) { spy.observe(s); });
+
+  // Scroll reveals, only when the visitor allows motion
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.documentElement.classList.add('motion');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-stagger], .asks tbody, .steps'), function (g) {
+    Array.prototype.forEach.call(g.children, function (c, i) { c.style.setProperty('--i', i); });
+  });
+  function countUp(el) {
+    var end = +el.dataset.count, t0 = performance.now();
+    (function step(t) {
+      var k = Math.min((t - t0) / 1400, 1), e = 1 - Math.pow(1 - k, 4);
+      el.textContent = Math.round(end * e);
+      if (k < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+  var seen = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('in');
+      // a clipped element never counts as visible, so its parent starts the wipe
+      Array.prototype.forEach.call(e.target.querySelectorAll(':scope > [data-reveal="wipe"]'), function (w) { w.classList.add('in'); });
+      var n = e.target.querySelector('[data-count]');
+      if (n) countUp(n);
+      seen.unobserve(e.target);
+    });
+  }, { rootMargin: '0px 0px -8% 0px', threshold: .12 });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-reveal]:not([data-reveal="wipe"]), .steps, .mock'), function (el) { seen.observe(el); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-reveal="wipe"]'), function (w) { seen.observe(w.parentNode); });
 })();
 </script>
 </body>
