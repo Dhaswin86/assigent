@@ -2,7 +2,7 @@
  "title": "DEMO \u00b7 Plan a Class Bake Sale",
  "aiPolicy": "preferred",
  "folder": "~/Documents/Assignments/Bake Sale (demo)",
- "created": "2026-01-01T08:54:00",
+ "created": "2026-01-01T08:50:00",
  "updated": "2026-01-01T09:18:00",
  "agents": [
   {
@@ -17,8 +17,8 @@
    "output": "brief.md",
    "log": "process/analyst-log.md",
    "state": "done",
-   "started": "2026-01-01T08:55:00",
-   "finished": "2026-01-01T08:57:00",
+   "started": "2026-01-01T08:51:00",
+   "finished": "2026-01-01T08:53:00",
    "summary": "3 deliverables, 8 checklist items, 2 questions, not blocking.",
    "outputText": "# Brief: Plan a Class Bake Sale\n\n## 1. Title and course\nPlan a Class Bake Sale \u00b7 Business basics \u00b7 AI policy: **preferred**\n\n## 2. Goal in one sentence\nShow you can plan a small sale: cost it, price it and pitch it.\n\n## 3. Deliverables\n1. Budget sheet with costs, prices and profit\n   Required file type: .xlsx (chosen from the deliverable's name)\n2. Pitch deck for the class, 5 slides\n   Required file type: .pptx (chosen from the deliverable's name)\n3. One-page plan for the day\n   Required file type: .docx (chosen from the deliverable's name)\n\n## 4. Requirements checklist\n- [ ] The budget lists every ingredient with its cost\n- [ ] Each item has a price and a profit per item\n- [ ] The sheet totals costs, sales and profit with formulas\n- [ ] The deck has 5 slides: idea, items, prices, plan, ask\n- [ ] The plan names who does what on the day\n- [ ] A break-even number of items is stated\n- [ ] All three files carry the team name\n- [ ] Prices are whole or half amounts\n\n## 7. Questions this assignment needs\n### What to sell\n- Kind: choice\n- Question: Which three items do you want to sell?\n- Needed because: the brief says \"choose three baked items\"\n- Options: cookies, brownies, banana bread | cupcakes, cookies, flapjacks | your own three\n- Default: cookies, brownies, banana bread\n\n### Team name\n- Kind: name\n- Question: What team name goes on the files?\n- Needed because: all three files carry the team name\n- Default: leave a marked placeholder\n\n## 8. Ambiguities / questions for the user\nBLOCKING: no\n",
    "logText": "# Analyst log\n\n- **step 1** Started: reading the assignment text\n- **step 2** Read assignment-source.md: 3 deliverables, AI policy preferred\n- **step 3** Two things are left open: what to sell, and the team name\n- **step 4** brief.md written: 3 deliverables, 8 checklist items. Done.\n"
@@ -34,11 +34,29 @@
    "output": "sources.md",
    "log": "process/finder-log.md",
    "state": "done",
-   "started": "2026-01-01T08:57:00",
-   "finished": "2026-01-01T09:02:00",
+   "started": "2026-01-01T08:53:00",
+   "finished": "2026-01-01T08:58:00",
    "summary": "6 sources on 4 websites, no gaps.",
    "outputText": "# Sources\n\n## Costing and pricing\n- Khan Academy \"Break-even point\": https://www.khanacademy.org/economics-finance-domain/core-finance\n- Investopedia \"Break-even analysis\": https://www.investopedia.com/terms/b/breakevenanalysis.asp\n- Investopedia \"Markup\": https://www.investopedia.com/terms/m/markup.asp\n\n## Spreadsheet formulas\n- Microsoft Support \"SUM function\": https://support.microsoft.com/en-us/office/sum-function\n- Microsoft Support \"Create a simple formula\": https://support.microsoft.com/en-us/office/create-a-simple-formula\n\n## Pitching\n- Canva \"How to design a presentation\": https://www.canva.com/learn/presentation-design\n\n## Gaps\n- None; every requirement has a source.\n",
    "logText": "# Source finder log\n\n- **step 1** Started: reading brief.md\n- **step 2** Searched for break-even point for a small sale\n- **step 3** Opened Khan Academy \"Break-even point\"\n- **step 4** Opened Investopedia \"Break-even analysis\"\n- **step 5** Opened Investopedia \"Markup\"\n- **step 6** Searched for spreadsheet sum formula\n- **step 7** Opened Microsoft Support \"SUM function\"\n- **step 8** Opened Microsoft Support \"Create a simple formula\"\n- **step 9** Opened Canva \"How to design a presentation\"\n- **step 10** sources.md written: 6 sources, no gaps. Done.\n"
+  },
+  {
+   "id": "researcher",
+   "name": "assigent-researcher",
+   "label": "Researcher",
+   "role": "Reads the sources in depth and writes the checked facts and the build plan",
+   "reads": [
+    "brief.md",
+    "sources.md"
+   ],
+   "output": "research.md",
+   "log": "process/researcher-log.md",
+   "state": "done",
+   "started": "2026-01-01T08:58:00",
+   "finished": "2026-01-01T09:02:00",
+   "summary": "10 checked facts, 8 cross-checked, 2 not confirmed. Plan for 3 files.",
+   "outputText": "# Research: Plan a Class Bake Sale\n\nSummary: Price each item at cost plus a markup, total everything with formulas, and state break-even as fixed costs divided by profit per item.\nFacts: 10 checked \u00b7 Cross-checked: 8 \u00b7 Not confirmed: 2\n\n## Facts\n| # | Fact | Source | Checked against | Sure? |\n|---|---|---|---|---|\n| F1 | Break-even is the point where sales cover all the costs | S1 | S2 | Yes |\n| F2 | Break-even items = fixed costs divided by profit per item | S2 | S1 | Yes |\n| F3 | Profit per item = price minus the cost to make one | S3 | S2 | Yes |\n| F4 | Markup is added on top of the cost; margin is a share of the price | S3 | S2 | Yes |\n| F5 | A higher cost per item pushes break-even up | S2 | S1 | Yes |\n| F6 | SUM adds a whole range, so totals follow when a number changes | S4 | S5 | Yes |\n| F7 | A formula starts with = and can point at other cells | S5 | S4 | Yes |\n| F8 | A typed number does not update; a formula does | S5 | S4 | Yes |\n| F9 | One idea per slide, with a short title, reads best | S6 | - | Yes |\n| F10 | Big numbers on a slide are easier to take in than a table | S6 | - | Yes |\n\n## What top marks look like\n- Every total in the sheet is a formula, and changing one price changes the profit.\n- The break-even number is the same in the sheet and on the slide.\n- The plan names a person, or a marked placeholder, for every job on the day.\n\n## Build plan\n### bake-sale-budget.xlsx\n1. Costs sheet: every ingredient with its cost, totalled (F6, F7)\n2. Prices sheet: cost, price and profit per item (F3, F4)\n3. Break-even cell from costs and profit per item (F1, F2, F8)\n\n### bake-sale-pitch.pptx\n1. Idea: what the sale is for (F9) \u00b7 Picture: the three items on a table\n2. Items: the three bakes (F9) \u00b7 Picture: one photo per item\n3. Prices: price, profit and break-even (F2, F3, F10) \u00b7 Picture: three big numbers\n4. Plan: who does what on the day (F9) \u00b7 Picture: a simple timeline\n5. Ask: what the class needs to bring (F9) \u00b7 Picture: a short checklist\n\n### bake-sale-plan.docx\n1. Roles table for the day \u00b7 Picture: none\n2. Break-even and the target, in one line (F1, F2)\n\n## Not confirmed (do not use)\n- A typical markup for a school bake sale: no source gives a number.\n- Local ingredient prices: the sources give no prices, so the sheet uses round example costs.\n",
+   "logText": "# Researcher log\n\n- **step 1** Started: reading brief.md, sources.md and the answers\n- **step 2** Read Khan Academy \"Break-even point\" in full\n- **step 3** Checked the break-even formula against Investopedia: same formula\n- **step 4** Read Investopedia \"Markup\": markup and margin are not the same\n- **step 5** Read Microsoft Support \"SUM function\" and \"Create a simple formula\"\n- **step 6** No source gives a usual bake sale markup: marked not confirmed\n- **step 7** Wrote the build plan: 3 files, 10 steps\n- **step 8** research.md written: 10 facts, 8 cross-checked, 2 not confirmed. Done.\n"
   },
   {
    "id": "builder",
@@ -82,39 +100,51 @@
  ],
  "events": [
   {
-   "t": "2026-01-01T08:54:00",
+   "t": "2026-01-01T08:50:00",
    "agent": "pipeline",
    "msg": "Pipeline created (AI policy: preferred)"
   },
   {
-   "t": "2026-01-01T08:55:00",
+   "t": "2026-01-01T08:51:00",
    "agent": "analyst",
    "kind": "start",
    "msg": "Started"
   },
   {
-   "t": "2026-01-01T08:57:30",
+   "t": "2026-01-01T08:53:30",
    "agent": "pipeline",
    "kind": "event",
    "msg": "Answers: cookies, brownies, banana bread; team name skipped"
   },
   {
-   "t": "2026-01-01T08:57:00",
+   "t": "2026-01-01T08:53:00",
    "agent": "analyst",
    "kind": "done",
    "msg": "3 deliverables, 8 checklist items, 2 questions, not blocking."
   },
   {
-   "t": "2026-01-01T08:57:00",
+   "t": "2026-01-01T08:53:00",
    "agent": "finder",
    "kind": "start",
    "msg": "Started"
   },
   {
-   "t": "2026-01-01T09:02:00",
+   "t": "2026-01-01T08:58:00",
    "agent": "finder",
    "kind": "done",
    "msg": "6 sources on 4 websites, no gaps."
+  },
+  {
+   "t": "2026-01-01T08:58:00",
+   "agent": "researcher",
+   "kind": "start",
+   "msg": "Started"
+  },
+  {
+   "t": "2026-01-01T09:02:00",
+   "agent": "researcher",
+   "kind": "done",
+   "msg": "10 checked facts, 8 cross-checked, 2 not confirmed. Plan for 3 files."
   },
   {
    "t": "2026-01-01T09:02:00",
@@ -145,22 +175,27 @@
   {
    "path": "assignment-source.md",
    "size": 2210,
-   "mtime": 1767237800.0
+   "mtime": 1767237560.0
   },
   {
    "path": "brief.md",
    "size": 1513,
-   "mtime": 1767238000.0
+   "mtime": 1767237760.0
   },
   {
    "path": "choices.md",
    "size": 410,
-   "mtime": 1767238100.0
+   "mtime": 1767237860.0
   },
   {
    "path": "sources.md",
    "size": 686,
-   "mtime": 1767238300.0
+   "mtime": 1767238060.0
+  },
+  {
+   "path": "research.md",
+   "size": 2295,
+   "mtime": 1767238310.0
   },
   {
    "path": "deliverables/bake-sale-budget.xlsx",
@@ -195,12 +230,17 @@
   {
    "path": "process/analyst-log.md",
    "size": 380,
-   "mtime": 1767238000.0
+   "mtime": 1767237760.0
   },
   {
    "path": "process/finder-log.md",
    "size": 720,
-   "mtime": 1767238300.0
+   "mtime": 1767238060.0
+  },
+  {
+   "path": "process/researcher-log.md",
+   "size": 610,
+   "mtime": 1767238310.0
   },
   {
    "path": "process/builder-log.md",

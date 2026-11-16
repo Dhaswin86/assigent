@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Draw the twelve worker icons as animated pixel-art SVGs (32x32 grid) into ui/icons/.
+"""Draw the fifteen worker icons as animated pixel-art SVGs (32x32 grid) into ui/icons/.
 
 Three workers per team, each busy with one part of that agent's job:
   analyst.svg    brief reader: magnifier over the brief, lines getting ticked
@@ -8,6 +8,9 @@ Three workers per team, each busy with one part of that agent's job:
   finder.svg     web searcher: typing a search, results appearing
   finder-2.svg   doc reader: book from the shelf, pages flipping
   finder-3.svg   source filer: folders going into a cabinet drawer
+  researcher.svg    deep reader: highlighting lines in an open book
+  researcher-2.svg  cross-checker: linking source cards that agree, then a tick
+  researcher-3.svg  plan writer: numbered steps and pictures going onto a plan
   builder.svg    maker: hammering while a wall of blocks goes up
   builder-2.svg  coder: code lines on a laptop, then a green tick
   builder-3.svg  tester: ticking a clipboard, packing and taping a box
@@ -334,10 +337,65 @@ def scorer():
     return svg("sc-", "Scorer filling the scoreboard and stamping the sheet", style, body)
 
 
+ROSE = "#c9697a"
+
+
+def deepreader():
+    """Deep reader: an open book, lines getting highlighted one after another."""
+    book = (r(12, 19, 18, 2, "#a8515f") + r(13, 6, 8, 14, PAPER) + r(21, 6, 8, 14, "#ffffff") + r(21, 6, 1, 14, "#c9bfae"))
+    rows = [(14, 8, 6), (14, 10, 5), (14, 12, 6), (14, 14, 4), (14, 16, 6), (23, 8, 5), (23, 10, 5), (23, 12, 4), (23, 14, 5), (23, 16, 3)]
+    lines = "".join(r(x, y, w, 1, "#c9bfae") for x, y, w in rows)
+    marks = "".join(seq(i, 1.0, r(x, y, w, 1, "#f2c230")) for i, (x, y, w) in enumerate([rows[0], rows[2], rows[6], rows[8]]))
+    pen = f'<g class="{{p}}pen">{r(12, 15, 1, 3, "#f2c230")}{r(12, 18, 1, 1, "#2a2f38")}</g>'
+    style = APPEAR + """
+.{p}pen { animation: {p}pen 5s steps(1) infinite; }
+@keyframes {p}pen { 0% { transform: translate(3px, -11px); } 20% { transform: translate(4px, -7px); } 40% { transform: translate(12px, -9px); }
+  60% { transform: translate(13px, -5px); } 88%, 100% { transform: translate(0, 0); } }"""
+    body = book + lines + marks + critter(2, 15, eyes=(5, 7), legs=False) + desk() + pen
+    return svg("rs-", "Researcher reading a source closely", style, body)
+
+
+def crosschecker():
+    """Cross-checker: two source cards get linked to the fact card they both back up, then a tick."""
+    def card(x, y, w, col):
+        return r(x, y, w, 6, PAPER) + r(x, y, w, 1, col) + r(x + 1, y + 2, w - 2, 1, "#c9bfae") + r(x + 1, y + 4, w - 4, 1, "#c9bfae")
+    cards = card(13, 3, 7, "#8fb3ff") + card(23, 3, 7, "#8fb3ff") + card(17, 13, 10, ROSE)
+    link_a = r(16, 9, 1, 3, ROSE) + r(17, 11, 2, 1, ROSE) + r(18, 12, 1, 1, ROSE)
+    link_b = r(26, 9, 1, 3, ROSE) + r(24, 11, 2, 1, ROSE) + r(24, 12, 1, 1, ROSE)
+    tick = r(23, 16, 1, 1, GREEN) + r(24, 17, 1, 1, GREEN) + r(25, 15, 1, 2, GREEN)
+    steps = "".join(seq(i, 1.1, x) for i, x in enumerate([link_a, link_b, tick]))
+    arm = f'<g class="{{p}}arm">{r(10, 17, 3, 2, ORANGE)}</g>'
+    style = APPEAR.replace("5s", "4.4s") + """
+.{p}arm { animation: {p}arm 1.1s steps(2) infinite; }
+@keyframes {p}arm { 50% { transform: translate(2px, -2px); } }"""
+    body = cards + steps + critter(2, 15, eyes=(5, 7), legs=False) + arm + desk()
+    return svg("rx-", "Cross-checker linking sources that agree", style, body)
+
+
+def planwriter():
+    """Plan writer: numbered steps go down the plan, some with a small picture beside them."""
+    sheet = r(15, 3, 14, 20, PAPER) + r(15, 22, 14, 1, "#d8d0c0") + r(17, 5, 8, 1, "#8d939a")
+    ys = [8, 12, 16, 20]
+
+    def step(i, y):
+        pic = (r(25, y - 1, 3, 3, "#8fb3ff") + r(26, y, 1, 1, "#ffffff")) if i % 2 == 0 else ""
+        return r(16, y - 1, 2, 2, ROSE) + r(19, y - 1, 5, 1, "#c9bfae") + r(19, y + 1, 3 + i % 2, 1, "#c9bfae") + pic
+    steps = "".join(seq(i, 1.0, step(i, y)) for i, y in enumerate(ys))
+    pen = f'<g class="{{p}}pen">{r(12, 15, 1, 4, "#2a2f38")}{r(12, 14, 1, 1, ROSE)}</g>'
+    style = APPEAR + """
+.{p}pen { animation: {p}pen .5s steps(2) infinite; }
+@keyframes {p}pen { 50% { transform: translate(1px, -1px); } }
+.{p}bob { animation: {p}bob .9s steps(2) infinite; }
+@keyframes {p}bob { 50% { transform: translateY(-.5px); } }"""
+    body = sheet + steps + f'<g class="{{p}}bob">{critter(2, 17, eyes=(5, 7))}{pen}</g>'
+    return svg("rp-", "Plan writer listing the build steps", style, body)
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for name, fn in (("analyst", analyst), ("analyst-2", planner), ("analyst-3", sorter),
                      ("finder", finder), ("finder-2", bookworm), ("finder-3", filer),
+                     ("researcher", deepreader), ("researcher-2", crosschecker), ("researcher-3", planwriter),
                      ("builder", builder), ("builder-2", coder), ("builder-3", tester),
                      ("evaluator", checker), ("evaluator-2", factchecker), ("evaluator-3", scorer)):
         with open(os.path.join(OUT, name + ".svg"), "w") as f:

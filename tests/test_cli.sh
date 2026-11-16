@@ -49,8 +49,9 @@ check "install exits 0" code_is $rc 0
 for a in analyst finder builder evaluator tutor; do
   check "agent assigent-$a.md installed" test -f "$HOME/.claude/agents/assigent-$a.md"
 done
-check "install says it installed five agents" has "$OUT" "Installed 5 agents"
-check "exactly five assigent agents are installed" sh -c "[ \$(ls '$HOME/.claude/agents' | grep -c '^assigent-') = 5 ]"
+check "install says it installed six agents" has "$OUT" "Installed 6 agents"
+check "exactly six assigent agents are installed" sh -c "[ \$(ls '$HOME/.claude/agents' | grep -c '^assigent-') = 6 ]"
+check "the researcher agent is installed" test -f "$HOME/.claude/agents/assigent-researcher.md"
 check "the separate playground page is installed with the viewer" sh -c "[ -f '$HOME/.claude/skills/assigent/ui/playground.html' ] && [ -f '$HOME/.claude/skills/assigent/ui/playground.js' ]"
 check "skill SKILL.md installed" test -f "$HOME/.claude/skills/assigent/SKILL.md"
 check "skill preferences.md installed" test -f "$HOME/.claude/skills/assigent/preferences.md"
@@ -264,7 +265,7 @@ mkdir -p "$RUN/playground"
 printf '<!doctype html><title>Fake playground</title><button id="b">go</button>' > "$RUN/playground/index.html"
 printf '{"title": "Fake concept lab", "concepts": ["One", "Two"], "activities": [{"title": "Try it", "kind": "toggle"}], "minutes": 5}' > "$RUN/playground/playground.json"
 python3 "$STATUS" playground done "$RUN" "1 activity, about 5 minutes"
-check "status.py records the playground beside the four agents" python3 -c "import json; s=json.load(open('$RUN/status.json')); assert s['playground']['state']=='done' and s['playground']['title']=='Fake concept lab' and len(s['agents'])==4"
+check "status.py records the playground beside the five agents" python3 -c "import json; s=json.load(open('$RUN/status.json')); assert s['playground']['state']=='done' and s['playground']['title']=='Fake concept lab' and len(s['agents'])==5 and s['agents'][2]['id']=='researcher'"
 assigent status > "$OUT" 2>&1
 check "status shows the playground as ready" has "$OUT" "playground: ready"
 assigent play --no-open > "$OUT" 2>&1; rc=$?

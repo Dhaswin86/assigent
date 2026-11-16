@@ -11,6 +11,7 @@
   const TEAMS = {
     analyst: { floor: 0x86ab90, wall: 0x73977d, roles: ['brief reader', 'planner', 'question sorter'] },
     finder: { floor: 0x7d9fc6, wall: 0x688bb2, roles: ['web searcher', 'doc reader', 'source filer'] },
+    researcher: { floor: 0xd49aa3, wall: 0xbd838d, roles: ['deep reader', 'cross-checker', 'plan writer'] },
     builder: { floor: 0xd9b46c, wall: 0xc29f58, roles: ['maker', 'coder', 'tester'] },
     evaluator: { floor: 0xb096c6, wall: 0x9b81b2, roles: ['rubric checker', 'fact checker', 'scorer'] },
   };
@@ -101,7 +102,7 @@
   }
   const typing = (c, t) => { c.armL.rotation.x = -1.15 + 0.18 * Math.sin(t * 22); c.armR.rotation.x = -1.15 + 0.18 * Math.sin(t * 22 + Math.PI); };
 
-  /* ---------- the twelve jobs: each builds into g and returns update(t) ---------- */
+  /* ---------- the fifteen jobs: each builds into g and returns update(t) ---------- */
   const JOBS = {
     reader(K, g) {
       const c = critter(K); g.add(c.g); desk(K, g);
@@ -243,6 +244,65 @@
         folder.visible = p < 0.5 || p > 0.85;
         folder.position.set(-0.1 + 1.2 * f, 1.0 + 0.45 * Math.sin(Math.PI * f) - 0.1 * f, 0.6 + 0.4 * f);
         c.armR.rotation.x = -0.9 - 0.4 * Math.sin(Math.PI * f);
+        return c;
+      };
+    },
+    highlighter(K, g) {
+      // deep reader: an open book on the desk, lines getting highlighted one after another
+      const c = critter(K); c.g.position.x = -0.55; g.add(c.g); desk(K, g);
+      K.box(1.5, 0.06, 0.95, 0xa8515f, 0.4, 0.88, 1.0, g);
+      K.box(0.68, 0.05, 0.85, C.paper, 0.04, 0.94, 1.0, g); K.box(0.68, 0.05, 0.85, C.white, 0.76, 0.94, 1.0, g);
+      const zs = [0.72, 0.9, 1.08, 1.26];
+      zs.forEach((z, i) => { K.box(i === 3 ? 0.35 : 0.5, 0.02, 0.06, 0xc9bfae, 0.04, 0.99, z, g); K.box(i === 1 ? 0.35 : 0.5, 0.02, 0.06, 0xc9bfae, 0.76, 0.99, z, g); });
+      const marks = [[0.04, 0.72], [0.04, 1.08], [0.76, 0.9], [0.76, 1.26]].map(([x, z]) => K.box(0.54, 0.03, 0.1, 0xf2c230, x, 0.99, z, g));
+      const pen = K.box(0.09, 0.09, 0.34, 0xf2c230, 0, -0.5, 0.15, c.armR);
+      return t => {
+        const p = phase(t, 5.2);
+        marks.forEach((m, i) => pop(m, p, 0.1 + i * 0.2, 0.95));
+        c.armR.rotation.x = -1.0 - 0.12 * Math.sin(t * 6);
+        c.armR.rotation.y = -0.25 + 0.2 * Math.sin(t * 1.2);
+        return c;
+      };
+    },
+    crosscheck(K, g) {
+      // cross-checker: two source cards on a board get linked to the fact they both back up, then a tick
+      const c = critter(K, { antenna: true }); c.g.position.x = -0.6; c.g.rotation.y = 0.55; g.add(c.g);
+      const b = new THREE.Group(); b.position.set(1.3, 0, 0.4); b.rotation.y = -0.55; g.add(b);
+      K.box(0.08, 0.8, 0.08, C.metal, -1.0, 0, 0, b); K.box(0.08, 0.8, 0.08, C.metal, 1.0, 0, 0, b);
+      K.box(2.3, 1.5, 0.1, C.wood, 0, 0.75, 0, b); K.box(2.15, 1.36, 0.04, 0xd9b98f, 0, 0.82, 0.06, b);
+      const card = (x, y, top) => { K.box(0.62, 0.42, 0.02, C.paper, x, y, 0.09, b); K.box(0.62, 0.1, 0.02, top, x, y + 0.32, 0.1, b); K.box(0.42, 0.05, 0.02, 0xc9bfae, x - 0.06, y + 0.12, 0.1, b); };
+      card(-0.62, 1.6, 0x8fb3ff); card(0.62, 1.6, 0x8fb3ff); card(0, 0.95, 0xc9697a);
+      const linkA = K.box(0.07, 0.36, 0.02, 0xc9697a, -0.36, 1.3, 0.09, b); linkA.rotation.z = -0.75;
+      const linkB = K.box(0.07, 0.36, 0.02, 0xc9697a, 0.36, 1.3, 0.09, b); linkB.rotation.z = 0.75;
+      const tick = K.box(0.16, 0.16, 0.03, C.green, 0.2, 1.0, 0.11, b);
+      return t => {
+        const p = phase(t, 4.6);
+        pop(linkA, p, 0.15, 0.95); pop(linkB, p, 0.4, 0.95); pop(tick, p, 0.62, 0.95);
+        if (c.bulb) c.bulb.material.emissiveIntensity = p > 0.62 && p < 0.78 ? 1.6 : 0.4;
+        c.armR.rotation.z = 1.15 + 0.2 * Math.sin(t * 3.4);
+        c.armR.rotation.y = -0.4 + 0.2 * Math.sin(t * 1.7);
+        return c;
+      };
+    },
+    outliner(K, g) {
+      // plan writer: numbered steps go down a tall plan, some with a small picture beside them
+      const c = critter(K); c.g.position.x = -0.7; c.g.rotation.y = 0.5; g.add(c.g);
+      const b = new THREE.Group(); b.position.set(1.2, 0, 0.3); b.rotation.y = -0.5; g.add(b);
+      K.box(0.1, 0.5, 0.1, C.metal, 0, 0, 0, b); K.box(1.0, 0.08, 0.6, C.metalDark, 0, 0, 0, b);
+      K.box(1.5, 1.9, 0.1, C.wood, 0, 0.5, 0, b); K.box(1.32, 1.7, 0.04, C.paper, 0, 0.6, 0.06, b);
+      K.box(0.7, 0.07, 0.02, 0x8d939a, -0.2, 2.12, 0.09, b);
+      const steps = [1.82, 1.48, 1.14, 0.8].map((y, i) => {
+        const s = new THREE.Group(); s.position.set(0, y, 0.09); b.add(s);
+        K.box(0.16, 0.16, 0.03, 0xc9697a, -0.5, 0, 0, s); K.box(0.55, 0.06, 0.02, 0xc9bfae, -0.06, 0.08, 0, s); K.box(0.4, 0.06, 0.02, 0xc9bfae, -0.13, -0.04, 0, s);
+        if (i % 2 === 0) K.box(0.24, 0.2, 0.03, 0x8fb3ff, 0.46, -0.02, 0, s);
+        return s;
+      });
+      const pen = K.box(0.08, 0.08, 0.3, 0x2a2f38, 0, -0.5, 0.15, c.armR);
+      return t => {
+        const p = phase(t, 5.5);
+        steps.forEach((m, i) => pop(m, p, 0.08 + i * 0.18, 0.95));
+        c.armR.rotation.z = 1.15 + 0.2 * Math.sin(t * 5);
+        c.armR.rotation.y = -0.4 + 0.15 * Math.sin(t * 2.2);
         return c;
       };
     },
@@ -389,7 +449,8 @@
       };
     },
   };
-  const TEAM_JOBS = { analyst: ['reader', 'planner', 'sorter'], finder: ['searcher', 'bookworm', 'filer'], builder: ['maker', 'coder', 'tester'], evaluator: ['checker', 'factcheck', 'scorer'] };
+  const TEAM_JOBS = { analyst: ['reader', 'planner', 'sorter'], finder: ['searcher', 'bookworm', 'filer'],
+    researcher: ['highlighter', 'crosscheck', 'outliner'], builder: ['maker', 'coder', 'tester'], evaluator: ['checker', 'factcheck', 'scorer'] };
 
 
   /* ---------- one team room (used by both the team page and the whole office) ---------- */
@@ -596,7 +657,9 @@
       if (hostEl) labels.forEach(l => {
         l.at(v); v.project(camera);
         const behind = v.z > 1;
-        l.el.style.transform = `translate(${(v.x * 0.5 + 0.5) * hostEl.clientWidth}px, ${(-v.y * 0.5 + 0.5) * hostEl.clientHeight}px) translate(-50%, -100%)`;
+        // a label that asks for it (keep) stays whole inside the view instead of being cut off at the sides
+        const w = hostEl.clientWidth, x = (v.x * 0.5 + 0.5) * w, half = l.keep ? l.el.offsetWidth / 2 + 4 : 0;
+        l.el.style.transform = `translate(${half && w > half * 2 ? Math.min(w - half, Math.max(half, x)) : x}px, ${(-v.y * 0.5 + 0.5) * hostEl.clientHeight}px) translate(-50%, -100%)`;
         l.el.style.visibility = behind ? 'hidden' : '';
       });
       renderer.render(scene, camera);
@@ -638,12 +701,28 @@
     });
   }
 
-  /* ---------- the whole office: four rooms around The Brain, work handed on clockwise ---------- */
-  const OFFICE_SPOTS = { analyst: [-12, -10], finder: [12, -10], builder: [12, 10], evaluator: [-12, 10] };
+  /* ---------- the whole office: the rooms around The Brain, work handed on clockwise ---------- */
+  // Older runs keep the four corners. A run with a Researcher has five rooms in a ring, each turned to face The Brain,
+  // one of them nearest the camera, so the five cards above them never cover each other (even on a phone).
+  const HOME_THETA = 0.35, RING = 17.5;
+  const SPOTS4 = { analyst: [-12, -10], finder: [12, -10], builder: [12, 10], evaluator: [-12, 10] };
+  const SPOTS5 = {};
+  ['builder', 'evaluator', 'analyst', 'finder', 'researcher'].forEach((team, i) => {
+    const ang = HOME_THETA - i * Math.PI * 0.4;      // 72° apart, the Builder in front
+    // turned square to the ring, by whichever quarter turn keeps the workers facing the camera
+    SPOTS5[team] = [RING * Math.sin(ang), RING * Math.cos(ang), ang - Math.round((ang - HOME_THETA) / (Math.PI / 2)) * (Math.PI / 2)];
+  });
   function mountOffice(host, agents, onPick) {
     let hovered = null;
+    const five = agents.some(a => a.id === 'researcher'), OFFICE_SPOTS = five ? SPOTS5 : SPOTS4;
+    const order = ['analyst', 'finder', 'researcher', 'builder', 'evaluator'].filter(t => OFFICE_SPOTS[t]);
+    // on a tall, narrow screen the five rooms are seen from higher up and a fifth of a turn round: two rooms in front, one at the back
+    const tall = five && host.clientWidth < host.clientHeight * 1.1;
+    const home = tall ? { theta: HOME_THETA + Math.PI / 5, phi: 0.6, r: 78 } : { theta: HOME_THETA, phi: 0.9, r: five ? 80 : 74 };
+    // the ring reaches further forward than the four corners did: look at a point a little in front of The Brain
+    const ahead = five && !tall ? 3 : 0;
     const view = createViewer(host, {
-      home: { theta: 0.35, phi: 0.9, r: 74 }, limits: { phi: [0.25, 1.42], r: [24, 140] }, fov: 30, target: [0, 0, 0],
+      home, limits: { phi: [0.25, 1.42], r: [24, 140] }, fov: 30, target: [ahead * Math.sin(home.theta), 0, ahead * Math.cos(home.theta)],
       shadowSize: 34, shadowMap: 2048, spin: 0.12, background: SCENE.bg, fog: [110, 220],
       build(K, scene) {
         const ground = K.box(400, 0.2, 400, SCENE.ground, 0, -1.05, 0, scene); ground.castShadow = false;
@@ -663,8 +742,9 @@
         hub.add(new THREE.LineSegments(lineGeo, lineMat));
         // rooms + roads
         const rooms = {}, roads = {};
-        Object.entries(OFFICE_SPOTS).forEach(([team, [x, z]]) => {
-          const r = buildRoom(K, scene, team, { low: true }); r.room.position.set(x, 0, z); rooms[team] = r;
+        order.forEach(team => {
+          const [x, z, turn] = OFFICE_SPOTS[team];
+          const r = buildRoom(K, scene, team, { low: true }); r.room.position.set(x, 0, z); r.room.rotation.y = turn || 0; rooms[team] = r;
           const len = Math.hypot(x, z), ang = Math.atan2(x, z);
           const road = new THREE.Group(); road.rotation.y = ang; scene.add(road);
           const from = 4.2, to = len - 6.6, mid = (from + to) / 2;
@@ -688,10 +768,8 @@
         }
         const brain = new THREE.Vector3(0, 1.2, 0);
         const top = team => { const [x, z] = OFFICE_SPOTS[team]; return new THREE.Vector3(x, 5.2, z); };
-        Object.keys(OFFICE_SPOTS).forEach(team => dotted(brain, top(team), 7, 22, team));
-        dotted(top('analyst'), top('finder'), 9, 34, 'finder');
-        dotted(top('finder'), top('builder'), 9, 34, 'builder');
-        dotted(top('builder'), top('evaluator'), 9, 34, 'evaluator');
+        order.forEach(team => dotted(brain, top(team), 7, 22, team));
+        order.slice(1).forEach((team, i) => dotted(top(order[i]), top(team), 9, 34, team));
         // faint network lines fanning out from The Brain into the distance
         [0.35, 1.25, 2.2, 3.0, 3.9, 4.7, 5.6].forEach((ang, i) => {
           dotted(brain, new THREE.Vector3(Math.sin(ang) * 46, 0, Math.cos(ang) * 46), 5 + (i % 3) * 3, 40, null);
@@ -736,7 +814,7 @@
           const r = b.rooms[el.dataset.go]; if (!r) return null;
           el.onmouseenter = () => this_hover(el.dataset.go);
           el.onmouseleave = () => this_hover(null);
-          return { el, at: v => { v.set(0, 6.5, 0); r.room.localToWorld(v); } };
+          return { el, keep: five, at: v => { v.set(0, 6.5, 0); r.room.localToWorld(v); } };
         }).filter(Boolean);
         const brain = box.querySelector('.s3-brain');
         if (brain) out.push({ el: brain, at: v => v.set(0, 2.4, 0) });
@@ -760,7 +838,7 @@
       });
     }
     setAgents(agents);
-    return Object.assign(view, { kind: 'office', setAgents });
+    return Object.assign(view, { kind: 'office', five, setAgents });
   }
 
   window.Office3D = { mount, mountOffice };

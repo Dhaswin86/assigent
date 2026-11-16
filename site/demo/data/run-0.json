@@ -2,7 +2,7 @@
  "title": "DEMO \u00b7 Build a Simple To-Do App",
  "aiPolicy": "preferred",
  "folder": "~/Documents/Assignments/To-Do App (demo)",
- "created": "2026-01-01T10:20:00",
+ "created": "2026-01-01T10:16:00",
  "updated": "2026-01-01T10:29:00",
  "agents": [
   {
@@ -17,8 +17,8 @@
    "output": "brief.md",
    "log": "process/analyst-log.md",
    "state": "done",
-   "started": "2026-01-01T10:21:00",
-   "finished": "2026-01-01T10:22:00",
+   "started": "2026-01-01T10:17:00",
+   "finished": "2026-01-01T10:18:00",
    "summary": "2 deliverables, 6 checklist items, not blocking, small effort.",
    "outputText": "# Brief: Build a Simple To-Do App\n\n## 1. Title and course\nBuild a Simple To-Do App \u00b7 Web basics / JavaScript \u00b7 AI policy: **preferred**\n\n## 2. Goal in one sentence\nShow you can build a small web page that adds, ticks off and removes tasks, and remembers them.\n\n## 3. Deliverables\n1. A working web page: index.html, style.css, app.js\n   Required file type: .html (stated)\n2. A short write-up explaining how it works\n   Required file type: .docx (chosen from the deliverable's name)\n\n## 4. Requirements checklist\n- [ ] A text box and an Add button create a new task\n- [ ] Clicking a task ticks it off (strike-through)\n- [ ] Each task has a delete button\n- [ ] Tasks are saved in localStorage and come back after a refresh\n- [ ] Empty tasks are not allowed\n- [ ] The page works on a phone screen\n\n## 7. Questions this assignment needs\n### Name on the write-up\n- Kind: name\n- Question: What name should go on the write-up?\n- Needed because: the write-up has a cover line with the author's name\n- Default: leave a marked placeholder\n\n## 8. Ambiguities / questions for the user\nBLOCKING: no\n- Should finished tasks move to the bottom? Default: keep them in place.\n",
    "logText": "# Analyst log\n\n- **step 1** Started: reading the homework text\n- **step 2** Read assignment-source.md: one web page, 2 deliverables, AI policy preferred\n- **step 3** Looking for related past work in the save folder\n- **step 4** Found an earlier Bill Splitter page that also uses buttons and lists\n- **step 5** Writing brief.md (1 ambiguity, BLOCKING: no)\n- **step 6** brief.md written: 2 deliverables, 6 checklist items. Done.\n"
@@ -34,11 +34,29 @@
    "output": "sources.md",
    "log": "process/finder-log.md",
    "state": "done",
-   "started": "2026-01-01T10:22:00",
-   "finished": "2026-01-01T10:25:00",
+   "started": "2026-01-01T10:18:00",
+   "finished": "2026-01-01T10:21:00",
    "summary": "7 sources (mostly MDN), every requirement covered.",
    "outputText": "# Sources\n\n## Making the page react to clicks\n- MDN \"Introduction to events\": https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events\n- MDN \"addEventListener\": https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener\n\n## Remembering tasks\n- MDN \"Window.localStorage\": https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage\n- web.dev \"Storage for the web\": https://web.dev/articles/storage-for-the-web\n\n## Building the list\n- W3Schools \"How to create a to-do list\": https://www.w3schools.com/howto/howto_js_todolist.asp\n- javascript.info \"Modifying the document\": https://javascript.info/modifying-document\n\n## Phone screens\n- MDN \"Responsive design\": https://developer.mozilla.org/en-US/docs/Learn/CSS/CSS_layout/Responsive_Design\n\n## Gaps\n- None; every requirement has a source.\n",
    "logText": "# Source finder log\n\n- **step 1** Started: reading brief.md\n- **step 2** Searched for how to add tasks with JavaScript buttons\n- **step 3** Opened MDN \"Introduction to events\": how a click runs code\n- **step 4** Opened MDN \"addEventListener\": the exact way to listen for clicks\n- **step 5** Opened MDN \"Window.localStorage\": saving tasks so they survive a refresh\n- **step 6** Tried a blog post about to-do apps: blocked (403). Skipped\n- **step 7** Opened W3Schools to-do list guide: a simple full example\n- **step 8** Opened javascript.info \"Modifying the document\": adding and removing list items\n- **step 9** Opened MDN \"Responsive design\": making it fit a phone\n- **step 10** Writing sources.md\n"
+  },
+  {
+   "id": "researcher",
+   "name": "assigent-researcher",
+   "label": "Researcher",
+   "role": "Reads the sources in depth and writes the checked facts and the build plan",
+   "reads": [
+    "brief.md",
+    "sources.md"
+   ],
+   "output": "research.md",
+   "log": "process/researcher-log.md",
+   "state": "done",
+   "started": "2026-01-01T10:21:00",
+   "finished": "2026-01-01T10:25:00",
+   "summary": "9 checked facts, 7 cross-checked, 1 not confirmed. Plan for 3 files.",
+   "outputText": "# Research: Build a Simple To-Do App\n\nSummary: The page needs one click listener per button, a list built with createElement, and tasks saved as JSON in localStorage.\nFacts: 9 checked \u00b7 Cross-checked: 7 \u00b7 Not confirmed: 1\n\n## Facts\n| # | Fact | Source | Checked against | Sure? |\n|---|---|---|---|---|\n| F1 | addEventListener(\"click\", fn) runs fn each time the button is clicked | S2 | S1 | Yes |\n| F2 | The text typed in a box is read from its value property | S5 | S6 | Yes |\n| F3 | createElement and append add a new list item to the page | S6 | S5 | Yes |\n| F4 | classList.toggle switches a class on and off, which suits ticking a task | S6 | S5 | Yes |\n| F5 | remove() takes an element off the page | S6 | S5 | Yes |\n| F6 | localStorage only stores text, so the task list is saved with JSON.stringify | S3 | S4 | Yes |\n| F7 | Saved data is still there after a refresh and is read back with JSON.parse | S3 | S4 | Yes |\n| F8 | trim() removes spaces, so an empty task can be refused | S5 | - | Yes |\n| F9 | A viewport meta tag and a max-width make the page fit a phone | S7 | - | Yes |\n\n## What top marks look like\n- Every checklist item can be shown working in under a minute.\n- Tasks come back after a refresh, ticked ones still ticked.\n- The write-up explains events, the DOM and saved state in the student's own words.\n\n## Build plan\n### index.html\n1. Head: title and the viewport meta tag (F9)\n2. Form: text box and Add button (F2)\n3. Empty list that app.js fills (F3)\n\n### app.js\n1. Add: read the box, refuse empty text, make the list item (F1, F2, F3, F8)\n2. Tick off and delete: one click listener on the list (F1, F4, F5)\n3. Save after every change and load on start (F6, F7)\n\n### write-up.docx\n1. How a click becomes a task (F1, F3) \u00b7 Picture: the page with one task added\n2. How the tasks are remembered (F6, F7) \u00b7 Picture: the saved text in the browser's storage panel\n3. What was tested (F8, F9) \u00b7 Picture: the page at phone width\n\n## Not confirmed (do not use)\n- How much localStorage can hold: the two sources give different limits.\n",
+   "logText": "# Researcher log\n\n- **step 1** Started: reading brief.md and sources.md\n- **step 2** Read MDN \"addEventListener\" in full: how a click runs a function\n- **step 3** Read MDN \"Window.localStorage\": it stores text only\n- **step 4** Checked that against web.dev \"Storage for the web\": same answer\n- **step 5** Read javascript.info \"Modifying the document\": createElement, append, remove\n- **step 6** Checked the W3Schools example against it: same steps\n- **step 7** Storage size limit: the two sources differ, marked not confirmed\n- **step 8** Wrote the build plan: 3 files, 9 steps\n- **step 9** research.md written: 9 facts, 7 cross-checked, 1 not confirmed. Done.\n"
   },
   {
    "id": "builder",
@@ -82,33 +100,45 @@
  ],
  "events": [
   {
-   "t": "2026-01-01T10:20:00",
+   "t": "2026-01-01T10:16:00",
    "agent": "pipeline",
    "msg": "Pipeline created (AI policy: preferred)"
   },
   {
-   "t": "2026-01-01T10:21:00",
+   "t": "2026-01-01T10:17:00",
    "agent": "analyst",
    "kind": "start",
    "msg": "Reading the brief and inputs"
   },
   {
-   "t": "2026-01-01T10:22:00",
+   "t": "2026-01-01T10:18:00",
    "agent": "analyst",
    "kind": "done",
    "msg": "2 deliverables, 6 checklist items, not blocking, small effort."
   },
   {
-   "t": "2026-01-01T10:22:00",
+   "t": "2026-01-01T10:18:00",
    "agent": "finder",
    "kind": "start",
    "msg": "Finding sources for each requirement"
   },
   {
-   "t": "2026-01-01T10:25:00",
+   "t": "2026-01-01T10:21:00",
    "agent": "finder",
    "kind": "done",
    "msg": "7 sources (mostly MDN), every requirement covered."
+  },
+  {
+   "t": "2026-01-01T10:21:00",
+   "agent": "researcher",
+   "kind": "start",
+   "msg": "Reading the sources in depth"
+  },
+  {
+   "t": "2026-01-01T10:25:00",
+   "agent": "researcher",
+   "kind": "done",
+   "msg": "9 checked facts, 7 cross-checked, 1 not confirmed. Plan for 3 files."
   },
   {
    "t": "2026-01-01T10:26:00",
@@ -127,16 +157,21 @@
   {
    "path": "assignment-source.md",
    "size": 1840,
-   "mtime": 1767243000.0
+   "mtime": 1767242760.0
   },
   {
    "path": "brief.md",
    "size": 1158,
-   "mtime": 1767243120.0
+   "mtime": 1767242880.0
   },
   {
    "path": "sources.md",
    "size": 840,
+   "mtime": 1767243060.0
+  },
+  {
+   "path": "research.md",
+   "size": 2051,
    "mtime": 1767243300.0
   },
   {
@@ -152,11 +187,16 @@
   {
    "path": "process/analyst-log.md",
    "size": 420,
-   "mtime": 1767243120.0
+   "mtime": 1767242880.0
   },
   {
    "path": "process/finder-log.md",
    "size": 760,
+   "mtime": 1767243060.0
+  },
+  {
+   "path": "process/researcher-log.md",
+   "size": 640,
    "mtime": 1767243300.0
   },
   {
@@ -204,7 +244,7 @@
   ],
   "minutes": 10,
   "summary": "5 activities, about 10 minutes.",
-  "started": "2026-01-01T10:25:00",
+  "started": "2026-01-01T10:21:00",
   "finished": "2026-01-01T10:26:00"
  }
 }

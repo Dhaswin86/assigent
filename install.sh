@@ -4,7 +4,7 @@
 #   From a clone:   ./install.sh
 #   In one line:    curl -fsSL https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh | bash
 #
-# It copies the five agents to ~/.claude/agents/, the skill to ~/.claude/skills/assigent/
+# It copies the six agents to ~/.claude/agents/, the skill to ~/.claude/skills/assigent/
 # and the command to ~/.local/bin/assigent. Files of the same name are backed up first.
 # It never uses sudo. The only network call is the download of the repo in one-line mode.
 set -euo pipefail

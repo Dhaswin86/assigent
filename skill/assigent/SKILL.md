@@ -1,28 +1,29 @@
 ---
 name: assigent
-description: Run the 4-agent Assigent pipeline on a school or course assignment. It analyses the brief, finds sources, does the work within the assignment's AI policy, then has an evaluator mark it. Use when the user runs /assigent, says a new assignment is out, asks to check their learning platform, or pastes a brief.
+description: Run the 5-agent Assigent pipeline on a school or course assignment. It analyses the brief, finds sources, researches and checks the facts, does the work within the assignment's AI policy, then has an evaluator mark it. Use when the user runs /assigent, says a new assignment is out, asks to check their learning platform, or pastes a brief.
 ---
 
 # Assigent pipeline
 
-Four subagents, run one after another, each handing a file to the next:
+Five subagents, run one after another, each handing a file to the next:
 
 | Step | Agent | Reads | Writes |
 |---|---|---|---|
 | 1 | `assigent-analyst` | assignment-source.md, inputs/ | brief.md |
 | 2 | `assigent-finder` | brief.md, choices.md | sources.md |
-| 3 | `assigent-builder` | brief.md, choices.md, sources.md, inputs/, process/app-permissions.md | deliverables/, process/, report.md |
-| 4 | `assigent-evaluator` | assignment-source.md, brief.md, choices.md, report.md, deliverables/ | evaluation.md, learning-check.md |
+| 3 | `assigent-researcher` | assignment-source.md, brief.md, choices.md, sources.md | research.md |
+| 4 | `assigent-builder` | brief.md, choices.md, research.md, sources.md, inputs/, process/app-permissions.md | deliverables/, process/, report.md |
+| 5 | `assigent-evaluator` | assignment-source.md, brief.md, choices.md, research.md, report.md, deliverables/ | evaluation.md, learning-check.md |
 
-Beside those four, the **Tutor** (`assigent-tutor`) builds a learning playground:
+Beside those five, the **Tutor** (`assigent-tutor`) builds a learning playground:
 
 | When | Agent | Reads | Writes |
 |---|---|---|---|
-| after step 2, while step 3 runs | `assigent-tutor` | assignment-source.md, brief.md, sources.md, choices.md | playground/index.html, playground/playground.json |
+| after step 2, while steps 3 and 4 run | `assigent-tutor` | assignment-source.md, brief.md, sources.md, choices.md | playground/index.html, playground/playground.json |
 
 The order of a run:
 ask where the assignment is → get it → make the folder → analyse →
-**ask only what this assignment needs** (one round) → find sources → start the Tutor →
+**ask only what this assignment needs** (one round) → find sources → research (and start the Tutor) →
 build → evaluate (one fix round) → finish.
 
 **There is no setup and no fixed list of questions.** Every question comes from the
@@ -139,14 +140,14 @@ answers.
 
 | aiPolicy | Steps run | Builder does | Evaluator does |
 |---|---|---|---|
-| `preferred` | analyse, ask, sources, build, evaluate | the full assignment; keeps the chat transcript if the deliverables ask for one | marks the deliverables; one fix round; concept check |
-| `not_preferred` | analyse, ask, sources, build in **coach mode**; evaluate only if the user's own draft exists | no finished deliverables: a step-by-step plan, a starter skeleton, and feedback on the user's own draft | feedback on the user's draft, no rewriting; concept check |
+| `preferred` | analyse, ask, sources, research, build, evaluate | the full assignment; keeps the chat transcript if the deliverables ask for one | marks the deliverables; one fix round; concept check |
+| `not_preferred` | analyse, ask, sources, research (facts only), build in **coach mode**; evaluate only if the user's own draft exists | no finished deliverables: a step-by-step plan, a starter skeleton, and feedback on the user's own draft | feedback on the user's draft, no rewriting; concept check |
 | `banned` | analyse, ask (choices only), sources, Tutor | nothing. Tell the user this one must be their own work; offer only the brief and study sources | marks nothing; concept check |
 
 Never get around the policy, even if asked: say what it is and why the step is skipped.
 
 ## Live viewer
-`ui/` (next to this file) is a local viewer that shows the four agents, their live
+`ui/` (next to this file) is a local viewer that shows the five agents, their live
 logs, outputs, a timeline and the folder's files. Start it at the beginning of a run
 with `assigent view` and give the user the address it prints. It reads
 `<folder>/status.json`, which you keep current with `ui/status.py`:
@@ -311,6 +312,29 @@ Firecrawl CLI only if that is already installed and signed in. If this session's
 `~/.claude/agents/assigent-finder.md`. Show its summary; ask for any Gaps only the
 user can fill.
 
+## Step 5b: research (the Researcher, user's request 2026-11-16)
+The user said: "the results are so random make the agents do a proper research add an agent for
+research i need the result to be perfect". So nothing is built from a guess. Run `assigent-researcher` after the Source finder,
+with the folder path, the aiPolicy and the answers in `choices.md`. It reads the sources in full,
+checks every fact against a second independent source, and writes `research.md`: the checked facts,
+what top marks look like, and a fixed build plan.
+- Track it: `status.py start|done "<folder>" researcher "<text>"`; finish with
+  `status.py done "<folder>" researcher "<n> facts checked, <m> cross-checked, <k> not confirmed"`.
+- If this session has no `assigent-researcher` agent type (added 2026-11-16; agent types load when a session
+  starts), run a general-purpose agent told to follow `~/.claude/agents/assigent-researcher.md`.
+- When it returns, check that `research.md` exists and has its `Facts:` line. If its Write was
+  blocked, save the research.md text from its reply yourself.
+- If something the brief requires is under "Not confirmed", tell the user which fact is missing
+  and ask whether they can supply it (a file in `inputs/`, a link). Nobody to ask: build without
+  it and put "Fact not confirmed: <what>" at the top of the report.
+- The Builder builds only from research.md. If its report lists "Facts I still needed", run the
+  Researcher once more for just those facts, then the Builder once more for just those parts.
+  Once only: never loop.
+- AI policy: `preferred` → full research and build plan. `not_preferred` → facts and "what top
+  marks look like", no build plan. `banned` → skip it: `status.py skip "<folder>" researcher
+  "Own-work assignment"`.
+- Start the Tutor when the Researcher starts, not after it: never make the playground wait.
+
 ## Step 6: start the Tutor (a playground for learning the concept)
 Run `assigent-tutor` with the folder path, the aiPolicy and the answers from Step 4.
 It builds `playground/index.html`: one self-contained page with 3 to 5 hands-on
@@ -322,7 +346,7 @@ activities and a short quiz on the concept behind this assignment.
   Run it in the background where the session allows; otherwise run it after the
   Builder has been started, or right after the Builder if agents can only run one at
   a time. Under `banned` there is no Builder, so simply run it.
-- Keep the viewer current. The playground is tracked beside the four agents:
+- Keep the viewer current. The playground is tracked beside the five agents:
 
 ```
 python3 ~/.claude/skills/assigent/ui/status.py playground start "<folder>" "Building the playground"

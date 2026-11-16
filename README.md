@@ -1,8 +1,9 @@
 # Assigent
 
-Assigent helps you with school and course assignments inside Claude Code. Four agents
-work one after another: one reads the brief, one finds sources, one does the work as
-far as the assignment's AI rule allows, and one marks it before you hand it in.
+Assigent helps you with school and course assignments inside Claude Code. Five agents
+work one after another: one reads the brief, one finds sources, one researches and checks
+the facts, one does the work as far as the assignment's AI rule allows, and one marks it
+before you hand it in.
 
 It runs on your own computer, on your own Claude plan. You hand in the work yourself.
 
@@ -24,7 +25,7 @@ Or from a copy of this folder: `./install.sh`, then `assigent run`.
 
 That is all. There is no setup and no list of questions to get through first.
 
-The installer copies five agents to `~/.claude/agents/`, the skill to
+The installer copies six agents to `~/.claude/agents/`, the skill to
 `~/.claude/skills/assigent/` and the command to `~/.local/bin/assigent`. It backs up
 any file of the same name first and never uses sudo.
 
@@ -67,7 +68,7 @@ them, and the Evaluator fails work that ignores a choice you made.
 
 ## Learn it first: a playground made for your assignment
 
-Beside the four agents, a Tutor builds one small interactive page for each assignment.
+Beside the five agents, a Tutor builds one small interactive page for each assignment.
 It teaches the idea behind the assignment by letting you try things. It never contains
 the answer, so it is made even when AI help is not allowed.
 
@@ -117,7 +118,10 @@ No browser? Paste the brief into Claude Code after typing `/assigent`.
 3. Assigent asks you those questions, once. If there are none, it says so and goes on.
 4. The Source finder gathers docs and tutorials into `sources.md`.
    The Tutor then starts on your playground while the work goes on.
-5. The Builder does the work into `deliverables/` and writes `report.md`. The work is
+   The Researcher then reads those sources in full, checks every fact against a second
+   source, and writes `research.md`: the checked facts and a fixed plan for the work.
+5. The Builder does the work into `deliverables/` and writes `report.md`, using only the
+   checked facts and following the plan. The work is
    short on words, with pictures that fit, at high quality. It asks before adding
    pictures or videos.
 6. The Evaluator marks it out of 100 and writes `evaluation.md`. If it says revise,

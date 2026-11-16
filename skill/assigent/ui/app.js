@@ -19,6 +19,7 @@ setInterval(() => {
 const WORKERS = {
   analyst: [['analyst', 'brief reader'], ['analyst-2', 'planner'], ['analyst-3', 'question sorter']],
   finder:  [['finder', 'web searcher'], ['finder-2', 'doc reader'], ['finder-3', 'source filer']],
+  researcher: [['researcher', 'deep reader'], ['researcher-2', 'cross-checker'], ['researcher-3', 'plan writer']],
   builder: [['builder', 'maker'], ['builder-2', 'coder'], ['builder-3', 'tester']],
   evaluator: [['evaluator', 'rubric checker'], ['evaluator-2', 'fact checker'], ['evaluator-3', 'scorer']],
 };
@@ -32,6 +33,7 @@ const iconsReady = Promise.all(Object.values(WORKERS).flat().map(([file]) =>
 const TEAM = {
   analyst: { top: '#8fb59a', left: '#6b9478', right: '#7aa086', dot: '#5fa377', verb: 'Analysing' },
   finder:  { top: '#86a8cf', left: '#6283ab', right: '#7093bb', dot: '#5b8fc9', verb: 'Searching' },
+  researcher: { top: '#d9a0a8', left: '#b07a83', right: '#c38993', dot: '#c9697a', verb: 'Researching' },
   builder: { top: '#e0bd77', left: '#b99752', right: '#caa862', dot: '#d9a531', verb: 'Building' },
   evaluator: { top: '#b9a0cf', left: '#927aab', right: '#a48bbb', dot: '#a17bc4', verb: 'Marking' },
 };
@@ -58,6 +60,10 @@ function metrics(s, a) {
     const urls = new Set(out.match(/https?:\/\/[^\s)>\]]+/g) || []);
     const gaps = (out.split(/^##\s*Gaps.*$/im)[1] || '').split(/^##\s/m)[0];
     return [['sources found', urls.size || '–'], ['gaps', out ? (gaps.match(/^\s*[-*]\s+/gm) || []).length : '–']];
+  }
+  if (a.id === 'researcher') {
+    const f = researchFacts(out);
+    return [['checked facts', dash(f.checked)], ['not confirmed', dash(f.unsure)]];
   }
   if (a.id === 'evaluator') {
     const v = verdict(out);
@@ -91,13 +97,22 @@ const critterSym = `<symbol id="crit" viewBox="-2 0 12 8" shape-rendering="crisp
   <rect x="2" y="1" width="1" height="1" fill="#111522"/><rect x="5" y="1" width="1" height="1" fill="#111522"/></symbol>`;
 
 // Scene layout (viewBox 1000 x 640)
-const HUB = { x: 500, y: 350, s: 66 };
-const SPOTS = {
+let HUB = { x: 500, y: 350, s: 66 };
+const SPOTS4 = {
   analyst:   { x: 215, y: 250, s: 140, card: [36, 6, 190, 150] },
   finder:    { x: 785, y: 250, s: 140, card: [774, 6, 190, 150] },
   builder:   { x: 785, y: 560, s: 140, card: [503, 470, 160, 150] },
   evaluator: { x: 215, y: 560, s: 140, card: [337, 470, 160, 150] },
 };
+// With the Researcher: three islands along the top, two below, The Brain a little lower
+const SPOTS5 = {
+  analyst:    { x: 170, y: 262, s: 132, card: [75, 6, 190, 150] },
+  finder:     { x: 500, y: 262, s: 132, card: [405, 6, 190, 150] },
+  researcher: { x: 830, y: 262, s: 132, card: [735, 6, 190, 150] },
+  builder:    { x: 800, y: 610, s: 132, card: [503, 540, 160, 150] },
+  evaluator:  { x: 200, y: 610, s: 132, card: [337, 540, 160, 150] },
+};
+let SPOTS = SPOTS4;
 
 function props(id, cx, cy, t) {
   if (id === 'analyst') return isoBox(cx + 30, cy + 4, 16, 14, 5, '#f4efe4', '#cfc6b4', '#e2dace', 'paper-flip')
@@ -106,6 +121,10 @@ function props(id, cx, cy, t) {
   if (id === 'finder') return isoBox(cx + 2, cy - 8, 4, 22, 20, '#3a3f48', '#2a2e35', '#30353d')
     + `<polygon class="screen-glow" points="${pts([P(cx + 4, cy - 8, 0, -10), P(cx + 4, cy - 8, 0, 10), [P(cx + 4, cy - 8, 0, 10)[0], P(cx + 4, cy - 8, 0, 10)[1] - 17], [P(cx + 4, cy - 8, 0, -10)[0], P(cx + 4, cy - 8, 0, -10)[1] - 17]])}" fill="#7fb2ff"/>`
     + isoBox(cx + 34, cy + 12, 12, 12, 26, '#566278', '#3c4556', '#485366');
+  if (id === 'researcher') return isoBox(cx + 30, cy + 8, 18, 14, 4, '#a8515f', '#7e3c47', '#934653')
+    + isoBox(cx + 30, cy + 4, 16, 12, 3, '#ffffff', '#d8d0c0', '#ece6da')
+    + `<path d="M${cx + 23} ${cy + 1} l12 -6" stroke="#f2c230" stroke-width="2.4" fill="none"/>`
+    + isoBox(cx - 36, cy + 14, 10, 12, 20, '#e8a3ad', '#a8515f', '#bd6a77');
   if (id === 'evaluator') return isoBox(cx + 32, cy + 6, 18, 14, 5, '#f4efe4', '#cfc6b4', '#e2dace')
     + `<path d="M${cx + 26} ${cy - 1} l4 4 l8 -9" stroke="#3f8f5a" stroke-width="2.4" fill="none"/>`
     + isoBox(cx - 36, cy + 14, 10, 10, 16, '#c59cf0', '#845a9c', '#9a6fb5');
@@ -163,7 +182,10 @@ function cardBody(s, a) {
 }
 
 function office(s) {
-  const ag = s.agents, busy = ag.some(a => a.state === 'running');
+  // older runs have no Researcher: they keep the four-island layout
+  const five = s.agents.some(a => a.id === 'researcher');
+  SPOTS = five ? SPOTS5 : SPOTS4; HUB = { x: 500, y: five ? 436 : 350, s: 66 };
+  const ag = s.agents.filter(a => SPOTS[a.id]), busy = ag.some(a => a.state === 'running');
   const roads = ag.map(a => {
     const sp = SPOTS[a.id], d = `M${HUB.x} ${HUB.y} L${sp.x} ${sp.y}`;
     return `<path class="road" d="${d}" stroke-width="26"/><path class="road-line" d="${d}" stroke-width="1.5"/>
@@ -228,6 +250,21 @@ function finderFacts(s, a) {
   const gaps = g === null ? null : (g.match(/^\s*[-*]\s+(?!none\b)\S/gim) || []).length;
   return { sources: out ? u.sites.reduce((x, y) => x + y.pages.length, 0) : null, sites: out ? u.sites.length : null, top: u.sites, gaps, searches: u.searches };
 }
+// The Researcher's numbers: its own "Facts: n checked · Cross-checked: m · Not confirmed: k" line, else counted from the file
+function researchFacts(out) {
+  if (!out) return { checked: null, cross: null, unsure: null, plan: [] };
+  const num = re => { const m = re.exec(out); return m ? +m[1] : null; };
+  const rows = out.split('\n').map(l => /^\s*\|\s*F\d+\s*\|(.*)$/i.exec(l)).filter(Boolean).map(m => m[1].split('|').map(c => c.trim()));
+  const no = sect(out, 'Not confirmed'), plan = [];
+  (sect(out, 'Build plan') || '').split('\n').forEach(l => {
+    const h = /^\s*###\s+(.+)$/.exec(l);
+    if (h) plan.push({ name: clip(bare(h[1]), 40), ext: extOf(h[1]), steps: 0 });
+    else if (plan.length && /^\s*\d+\.\s+\S/.test(l)) plan[plan.length - 1].steps++;
+  });
+  return { checked: num(/^Facts:\s*(\d+)\s*checked/im) ?? rows.length,
+    cross: num(/Cross-checked:\s*(\d+)/i) ?? rows.filter(c => c[2] && !/^(-|–|none|no)$/i.test(c[2])).length,
+    unsure: num(/Not confirmed:\s*(\d+)/i) ?? (no === null ? null : (no.match(/^\s*[-*]\s+(?!none\b)\S/gim) || []).length), plan };
+}
 function builderFacts(s, a) {
   const out = a.outputText || '', files = s.files.filter(f => f.path.startsWith('deliverables/'));
   const all = (out.match(/^\s*- \[[ xX]\]/gm) || []).length, ticked = (out.match(/^\s*- \[[xX]\]/gm) || []).length;
@@ -244,6 +281,7 @@ function evalFacts(out) {
 function tilesFor(s, a) {
   if (a.id === 'analyst') { const f = analystFacts(a.outputText); return [[f.deliverables, 'things to hand in'], [a.outputText ? f.checks : null, 'checklist items'], [f.questions, 'questions for you']]; }
   if (a.id === 'finder') { const f = finderFacts(s, a); return [[f.sources, 'sources'], [f.sites, 'websites'], [f.gaps, 'gaps']]; }
+  if (a.id === 'researcher') { const f = researchFacts(a.outputText); return [[f.checked, 'checked facts'], [f.cross, 'cross-checked'], [f.unsure, 'not confirmed']]; }
   if (a.id === 'builder') { const f = builderFacts(s, a); return [[f.files.length || null, 'files made'], [f.all ? `${f.ticked}/${f.all}` : null, 'checks ticked'], [a.outputText ? f.left.length : null, 'left for you']]; }
   const f = evalFacts(a.outputText);
   return [[f.score === null ? null : f.score, 'out of 100'], [a.outputText ? f.must.length : null, 'must fix'], [f.pass, 'passed']];
@@ -254,6 +292,7 @@ function resultChip(s, a) {
   if (!a.outputText && a.id !== 'builder') return '';
   if (a.id === 'analyst') { const f = analystFacts(a.outputText); return f.checks ? `${f.checks} checks` : ''; }
   if (a.id === 'finder') { const f = finderFacts(s, a); return f.sources ? `${f.sources} sources` : ''; }
+  if (a.id === 'researcher') { const f = researchFacts(a.outputText); return f.checked ? `${f.checked} fact${f.checked === 1 ? '' : 's'}` : ''; }
   if (a.id === 'builder') { const n = builderFacts(s, a).files.length; return n ? `${n} file${n === 1 ? '' : 's'}` : ''; }
   const f = evalFacts(a.outputText); return f.score === null ? '' : `${f.score}/100${f.verdict ? ' ' + f.verdict : ''}`;
 }
@@ -291,6 +330,10 @@ function resultCard(s, a, compact) {
     body = `${f.top.length ? `<div class="chips" aria-label="Websites used">${f.top.slice(0, compact ? 3 : 6).map(x => `<span class="chipx site">${esc(x.host)}<i class="n">${x.pages.length}</i></span>`).join('')}${more(f.top.length, compact ? 3 : 6)}</div>` : ''}
       ${!compact && f.searches.length ? `<div class="chips searches" aria-label="Searches"><span class="lab">Searched</span>${f.searches.slice(0, 5).map(q => `<span class="chipx q">${esc(clip(plain(q), 38))}</span>`).join('')}${more(f.searches.length, 5)}</div>` : ''}
       ${f.gaps !== null ? `<div class="chips"><span class="tag ${f.gaps ? 'go' : 'ok'}">${f.gaps ? f.gaps + ' gap' + (f.gaps === 1 ? '' : 's') : 'No gaps'}</span></div>` : ''}`;
+  } else if (a.id === 'researcher') {
+    const f = researchFacts(a.outputText);
+    body = `${f.plan.length ? `<div class="chips" aria-label="Build plan"><span class="lab">Plan for</span>${f.plan.slice(0, compact ? 3 : 6).map(d => `<span class="chipx file">${badge(d.ext)}${esc(d.name)}${d.steps ? `<i class="n">${d.steps}</i>` : ''}</span>`).join('')}${more(f.plan.length, compact ? 3 : 6)}</div>` : ''}
+      ${f.unsure !== null ? `<div class="chips"><span class="tag ${f.unsure ? 'go' : 'ok'}">${f.unsure ? f.unsure + ' not to use' : 'Every fact confirmed'}</span></div>` : ''}`;
   } else if (a.id === 'builder') {
     const f = builderFacts(s, a), pct = f.all ? Math.round(f.ticked / f.all * 100) : 0;
     body = `${f.all ? `<div class="prog" role="img" aria-label="${f.ticked} of ${f.all} checks ticked"><i style="width:${pct}%"></i></div>` : ''}
@@ -319,7 +362,7 @@ function resultCard(s, a, compact) {
   </section>`;
 }
 
-/* ---------- home: what happened, as four rows (plus the Tutor, which has no room) ---------- */
+/* ---------- home: what happened, one row per agent (plus the Tutor, which has no room) ---------- */
 const PLAY_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.500h6a1.500 1.500 0 0 1 1.500 1.500v1.500h1.500a2.500 2.500 0 0 1 0 5H16.500V18a1.500 1.500 0 0 1-1.500 1.500h-2v-1.500a1.500 1.500 0 0 0-3 0v1.500H9A1.500 1.500 0 0 1 7.500 18v-4H6a2 2 0 0 1 0-4h1.500V6A1.500 1.500 0 0 1 9 4.500z"/></svg>';
 function tutorRow(s) {
   const p = s.playground || { state: 'none' }, n = (p.activities || []).length;
@@ -354,7 +397,7 @@ function sidebar(s) {
 const FORMATS = { xlsx: 'Excel workbook', xls: 'Excel workbook', csv: 'CSV table', pptx: 'PowerPoint deck', docx: 'Word document', pdf: 'PDF', md: 'Markdown text', txt: 'Plain text',
   html: 'Web page', css: 'Style sheet', js: 'JavaScript', json: 'JSON data', py: 'Python code', java: 'Java code', png: 'PNG image', jpg: 'JPEG image', jpeg: 'JPEG image', svg: 'SVG image',
   gif: 'GIF image', psd: 'Photoshop file', ai: 'Illustrator file', fig: 'Figma file', mp4: 'MP4 video', zip: 'Zip archive' };
-const RESULT_FILES = { 'brief.md': 'The plan', 'choices.md': 'Your answers', 'sources.md': 'The sources', 'report.md': 'What was made', 'evaluation.md': 'The marks',
+const RESULT_FILES = { 'brief.md': 'The plan', 'choices.md': 'Your answers', 'sources.md': 'The sources', 'research.md': 'Checked facts and build plan', 'report.md': 'What was made', 'evaluation.md': 'The marks',
   'learning-check.md': 'Questions for you', 'playground/index.html': 'The playground' };
 function whereCard(s) {
   const files = s.files || [], base = p => p.slice(p.lastIndexOf('/') + 1), dir = p => p.includes('/') ? p.slice(0, p.lastIndexOf('/') + 1) : 'top of the folder';
@@ -419,10 +462,12 @@ function chartHtml(s) {
     <div class="ax"><span>${clock(a.t0)}</span><span>${clock((a.t0 + a.t1) / 2)}</span><span>${clock(a.t1)}</span></div>
   </figure>`;
 }
-const RUN_LABELS = ['Analyst', 'Source finder', 'Builder', 'Evaluator'];
+const RUN_LABELS = ['Analyst', 'Source finder', 'Researcher', 'Builder', 'Evaluator'];
 function runState(r) {
   const st = r.states || [], i = st.indexOf('running');
-  if (i >= 0) return ['run', (RUN_LABELS[i] || 'An agent') + ' working'];
+  // older runs have no Researcher: their states are in the old order
+  const labels = st.length < RUN_LABELS.length ? RUN_LABELS.filter(l => l !== 'Researcher') : RUN_LABELS;
+  if (i >= 0) return ['run', (labels[i] || 'An agent') + ' working'];
   if (st.includes('error')) return ['err', 'Stopped'];
   if (st.length && st.every(x => x === 'done' || x === 'skipped')) return ['done', 'Finished'];
   if (st.some(x => x === 'done')) return ['', 'Paused'];
@@ -457,6 +502,7 @@ function greeting(s) {
 const KID = {
   analyst: { done: 'read the brief and made a checklist', running: 'is reading the brief', waiting: 'reads the brief first' },
   finder: { done: 'looked things up', running: 'is looking things up', waiting: 'looks things up next' },
+  researcher: { done: 'read the sources closely and planned the work', running: 'is reading the sources closely', waiting: 'checks the facts before the work starts' },
   builder: { done: 'did the work and checked it', running: 'is doing the work', waiting: 'does the work after that' },
   evaluator: { done: 'marked the work', running: 'is marking the work', waiting: 'marks the work at the end' },
 };
@@ -490,6 +536,7 @@ const PLAIN = [
   [/\bassignment-source\.md\b/g, 'the homework text (assignment-source.md)'],
   [/\bbrief\.md\b/g, 'the to-do list (brief.md)'],
   [/\bsources\.md\b/g, 'the list of helpful websites (sources.md)'],
+  [/\bresearch\.md\b/g, 'the checked facts and plan (research.md)'],
   [/\breport\.md\b/g, 'the final report (report.md)'],
   [/\bevaluation\.md\b/g, 'the marking sheet (evaluation.md)'],
   [/\banswers\.md\b/g, 'the answers (answers.md)'],
@@ -596,7 +643,7 @@ const fileList = files => files.length ? `<ul class="files">${files.map(f =>
 function agentFiles(s, a) {
   const mine = new Set([a.output, a.log]);
   return s.files.filter(f => mine.has(f.path) ||
-    (a.id === 'builder' && (f.path.startsWith('deliverables/') || (f.path.startsWith('process/') && !/(analyst|finder|evaluator)-log\.md$/.test(f.path)))));
+    (a.id === 'builder' && (f.path.startsWith('deliverables/') || (f.path.startsWith('process/') && !/(analyst|finder|researcher|evaluator)-log\.md$/.test(f.path)))));
 }
 function statusLine(a) {
   const T = TEAM[a.id] || { verb: 'Working' };
@@ -681,6 +728,8 @@ function mountOffice3d(s) {
   const host = s && $('#office3d');
   if (!host) { if (office3d) { office3d.dispose(); office3d = null; } return; }
   const list = s.agents.map(a => ({ id: a.id, state: a.state }));
+  // a run with the Researcher has five rooms, an older one four: build the office again when that changes
+  if (office3d && office3d.five !== list.some(a => a.id === 'researcher')) { office3d.dispose(); office3d = null; }
   if (office3d) { office3d.attach(host); office3d.setAgents(list); return; }
   try { office3d = Office3D.mountOffice(host, list, team => { location.hash = '#/' + team; }); } catch (e) { console.error(e); office3d = null; }
 }
@@ -694,6 +743,7 @@ function markRail(s) {
     if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
     const ag = s && s.agents.find(x => x.id === el.dataset.nav);
     el.classList.toggle('busy', !!(ag && ag.state === 'running'));
+    if (el.dataset.nav === 'researcher') el.hidden = !!s && !ag;   // older runs have no Researcher
   });
 }
 const sigNow = () => JSON.stringify(current) + JSON.stringify(runsList) + runId + meName + route();

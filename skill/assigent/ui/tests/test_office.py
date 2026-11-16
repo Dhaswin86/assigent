@@ -8,7 +8,7 @@
 
 Prints one line per check and exits non-zero if any check fails.
 """
-import sys, os
+import sys, os, json, subprocess, tempfile
 from playwright.sync_api import sync_playwright
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8860"
@@ -46,7 +46,15 @@ with sync_playwright() as p:
     page.wait_for_timeout(1500)
     page.screenshot(path=os.path.join(SHOTS, "test-home.png"))
     check("home renders the 3D office canvas", page.locator("#office3d canvas").count() == 1)
-    check("four room cards float over the office", page.locator(".s3-room").count() == 4)
+    check("five room cards float over the office", page.locator(".s3-room").count() == 5)
+    check("the Researcher has a room and a card", page.locator(".s3-room[data-go=researcher]").count() == 1
+          and page.evaluate("Object.keys(office3d.built.rooms).join()") == "analyst,finder,researcher,builder,evaluator")
+    gap = page.evaluate("""(() => { const r = Object.values(office3d.built.rooms).map(x => x.room.position); let min = 1e9;
+        r.forEach((a, i) => r.slice(i + 1).forEach(b => { min = Math.min(min, Math.hypot(a.x - b.x, a.z - b.z)); })); return min; })()""")
+    check("no two rooms overlap (each is 13.8 wide, 19.6 corner to corner)", gap >= 19.6, f"closest pair {gap:.1f} apart")
+    cards = page.evaluate("""[...document.querySelectorAll('.s3-room')].map(e => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; })""")
+    clash = sum(1 for i, a in enumerate(cards) for b in cards[i + 1:] if a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3])
+    check("the five room cards do not cover each other", clash == 0, f"{clash} overlapping pairs")
     check("The Brain label is shown", page.locator(".s3-brain").count() == 1)
     links = page.evaluate("office3d.built.links.length")
     check("dotted links are drawn", links >= 5, f"{links} links")
@@ -67,13 +75,16 @@ with sync_playwright() as p:
     check("activity chart is hidden when there is no data", hidden)
     total = page.evaluate("activity(current).total"); n_ev = page.evaluate("current.events.length")
     check("chart counts only real timed notes (no invented numbers)", total == n_ev, f"{total} plotted, {n_ev} timed notes in the data")
-    check("home timeline has 4 rows, one per agent", page.locator(".tl .tl-row:not(.tutor)").count() == 4)
-    check("each timeline row shows a state", page.locator(".tl .tl-row:not(.tutor) .tag").count() == 4)
-    check("the Tutor is a fifth row, with no room in the office", page.locator(".tl .tl-row.tutor").count() == 1 and page.locator(".s3-room").count() == 4
+    check("home timeline has 5 rows, one per agent", page.locator(".tl .tl-row:not(.tutor)").count() == 5)
+    check("each timeline row shows a state", page.locator(".tl .tl-row:not(.tutor) .tag").count() == 5)
+    check("the Tutor is a sixth row, with no room in the office", page.locator(".tl .tl-row.tutor").count() == 1 and page.locator(".s3-room").count() == 5
           and "5 activities" in page.inner_text(".tl .tl-row.tutor"))
     chips = page.locator(".tl .tl-row:not(.tutor) .chipx.res").all_inner_texts()
-    check("timeline rows carry one result chip each", len(chips) == 4 and chips[0] == "6 checks" and chips[1] == "7 sources", str(chips))
-    check("a waiting agent shows a dash, not an invented number", chips[3].strip() == "–", chips[3])
+    check("timeline rows carry one result chip each", len(chips) == 5 and chips[0] == "6 checks" and chips[1] == "7 sources" and chips[2] == "9 facts", str(chips))
+    check("a waiting agent shows a dash, not an invented number", chips[4].strip() == "–", chips[4])
+    check("the Researcher row has its own icon", page.locator(".tl .tl-row[href='#/researcher'] .tl-ic svg").count() == 1)
+    labels = page.evaluate("[runState({states: ['done', 'done', 'running', 'waiting', 'waiting']})[1], runState({states: ['done', 'done', 'running', 'waiting']})[1]]")
+    check("runs table names the working agent for five-agent and four-agent runs", labels == ["Researcher working", "Builder working"], str(labels))
     check("home shows the latest result as tiles", page.locator(".latest .tile").count() >= 2)
     check("the long story is no longer on the home screen", page.locator(".dash .story, .dash .steps, .dash .task").count() == 0)
     orange = page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()")
@@ -90,7 +101,8 @@ with sync_playwright() as p:
 
     # --- the icon rail ---
     rail = page.locator("#rail a")
-    check("rail has Office, Story, the four agents and Playground, all labelled", rail.count() == 7 and page.locator("#rail a[aria-label]").count() == 7)
+    check("rail has Office, Story, the five agents and Playground, all labelled", rail.count() == 8 and page.locator("#rail a[aria-label]").count() == 8
+          and page.locator("#rail a[aria-label=Researcher]").is_visible())
     check("rail Playground link points at the separate page for this run", page.get_attribute("#rail a[aria-label=Playground]", "href") == "playground.html?run=0")
     check("rail marks the current section", page.locator("#rail a.on[aria-label=Office]").count() == 1)
     page.click("#rail a[aria-label=Story]"); page.wait_for_timeout(700)
@@ -118,12 +130,12 @@ with sync_playwright() as p:
     page.click("[data-3d=spin]")
 
     box = office_box(page)
-    cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+    cx, cy = box["x"] + box["width"] * 0.8, box["y"] + box["height"] * 0.85   # open floor, away from the room cards
     r_before = view(page)["r"]
     page.mouse.move(cx, cy); page.mouse.wheel(0, 400); page.wait_for_timeout(800)
     check("plain scroll does not zoom (page can scroll)", abs(view(page)["r"] - r_before) < 0.5)
     box = office_box(page)
-    cx, cy = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+    cx, cy = box["x"] + box["width"] * 0.8, box["y"] + box["height"] * 0.85
     page.mouse.move(cx, cy)
     page.keyboard.down("Control"); page.mouse.wheel(0, 200); page.keyboard.up("Control"); page.wait_for_timeout(1200)
     check("Ctrl + scroll zooms", abs(view(page)["r"] - r_before) > 1, f"{r_before} -> {view(page)['r']}")
@@ -142,7 +154,7 @@ with sync_playwright() as p:
     hot = None
     for _ in range(6):
         page.wait_for_timeout(700)
-        x, y = page.evaluate("office3d.screenOf(12, 0.5, -10)")
+        x, y = page.evaluate("(() => { const p = office3d.built.rooms.finder.room.position; return office3d.screenOf(p.x, 0.5, p.z); })()")
         page.mouse.move(x - 3, y); page.mouse.move(x, y); page.wait_for_timeout(400)
         hot = page.evaluate("(document.querySelector('.s3-room.hot') || {}).dataset?.go || null")
         if hot == "finder":
@@ -189,7 +201,7 @@ with sync_playwright() as p:
             .filter(e => e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight) > limit)
             .map(e => e.textContent.trim().slice(0, 50))""", limit)
     check("home has no paragraph over two lines", not lines_over(page), str(lines_over(page)))
-    for who, min_tiles in (("analyst", 2), ("finder", 2), ("builder", 2)):
+    for who, min_tiles in (("analyst", 2), ("finder", 2), ("researcher", 3), ("builder", 2)):
         page.goto(BASE + "/#/" + who); page.wait_for_selector("#stage3d canvas"); page.wait_for_timeout(700)
         n = page.locator(f".rcard[data-result={who}] .tile").count()
         check(f"{who} page shows a summary card with tiles", n >= min_tiles, f"{n} tiles")
@@ -212,7 +224,22 @@ with sync_playwright() as p:
     page.click(".panel .disc"); page.wait_for_timeout(400)
     check("'Show all steps' opens the whole log", page.locator(".log li").count() == 10 and page.locator(".panel .disc[aria-expanded=true]").count() == 1)
     page.click(".panel .disc"); page.wait_for_timeout(300)
+    page.goto(BASE + "/#/researcher"); page.wait_for_selector("#stage3d canvas"); page.wait_for_timeout(900)
+    r_tiles = page.locator(".rcard .tile b").all_inner_texts()
+    r_names = page.locator(".rcard .tile span").all_inner_texts()
+    check("researcher tiles are read from the Facts line in research.md", r_tiles == ["9", "7", "1"] and r_names == ["checked facts", "cross-checked", "not confirmed"], f"{r_tiles} {r_names}")
+    check("researcher card lists the files in the build plan, with step counts", page.locator(".rcard .chipx.file").count() == 3
+          and page.locator(".rcard .chipx.file .n").all_inner_texts() == ["3", "3", "3"] and "1 not to use" in page.inner_text(".rcard"))
+    check("the Researcher page shows its 3D room with 3 workers", page.locator("#stage3d canvas").count() == 1 and page.locator("#stage3d .s3-tag").count() == 3)
+    check("the Researcher is step 3 of 5 and hands on to the Builder", "Step 3 of 5" in page.inner_text(".hero") and "Builder" in page.inner_text(".hero .io"))
+    mine = page.locator(".files li span:first-child").all_inner_texts()
+    check("researcher-log.md belongs to the Researcher, not the Builder", sorted(mine) == ["process/researcher-log.md", "research.md"], str(mine))
+    counted = page.evaluate("""(() => { const f = researchFacts('# Research: x\\n\\n## Facts\\n| # | Fact | Source | Checked against | Sure? |\\n|---|---|---|---|---|\\n| F1 | a | S1 | S2 | Yes |\\n| F2 | b | S1 | - | Yes |\\n\\n## Not confirmed (do not use)\\n- c\\n'); return [f.checked, f.cross, f.unsure]; })()""")
+    check("without a Facts line the numbers are counted from the table", counted == [2, 1, 1], str(counted))
+    page.screenshot(path=os.path.join(SHOTS, "test-researcher-room.png"))
     page.goto(BASE + "/#/builder"); page.wait_for_selector(".rcard"); page.wait_for_timeout(500)
+    b_files = page.locator(".files li span:first-child").all_inner_texts()
+    check("the Builder's files leave out the Researcher's log", "process/researcher-log.md" not in b_files and "process/builder-log.md" in b_files, str(b_files))
     check("builder card (still working) lists the files made so far", page.locator(".rcard .chipx.file").count() == 2)
     check("builder card shows a dash where report.md has no numbers yet", "–" in page.locator(".rcard .tile b").all_inner_texts())
     page.goto(BASE + "/#/evaluator"); page.wait_for_selector(".rcard"); page.wait_for_timeout(500)
@@ -236,6 +263,8 @@ with sync_playwright() as p:
     check("home says where the files are: the folder path", page.locator(".where .path code").inner_text().strip() != "")
     rows = page.locator(".where tbody tr")
     check("each file row gives name, format and folder", rows.count() >= 4 and page.locator(".where thead th").count() == 4, f"{rows.count()} rows")
+    res_row = [x.strip() for x in page.locator(".where tbody tr", has_text="research.md").locator("td").all_inner_texts()]
+    check("research.md is listed with a plain description", len(res_row) == 4 and "Markdown" in res_row[1] and ".md" in res_row[1] and res_row[3] == "Checked facts and build plan", str(res_row))
     first = [x.strip() for x in rows.nth(0).locator("td").all_inner_texts()]
     check("hand-in files come first, with their format spelled out", first[0] == "bake-sale-budget.xlsx" and "Excel workbook" in first[1] and ".xlsx" in first[1] and first[2] == "deliverables/" and first[3] == "Hand in", str(first))
     page.goto(BASE + "/#/builder"); page.wait_for_selector(".rcard"); page.wait_for_timeout(600)
@@ -244,22 +273,26 @@ with sync_playwright() as p:
     check("builder card has a progress bar and file chips with badges", page.locator(".rcard .prog i").count() == 1
           and page.locator(".rcard .chipx.file .ext").all_inner_texts() == [".xlsx", ".pptx", ".docx"])
     check("'left for you' shows the first 3 and a +1 more chip", page.locator(".rcard .left ol li").count() == 3 and "+1 more" in page.inner_text(".rcard .left"))
+    page.goto(BASE + "/#/researcher"); page.wait_for_selector(".rcard"); page.wait_for_timeout(600)
+    r_tiles = page.locator(".rcard .tile b").all_inner_texts()
+    check("finished run: researcher tiles read 10, 8, 2", r_tiles == ["10", "8", "2"], str(r_tiles))
     page.goto(BASE + "/#/"); page.wait_for_selector("#office3d canvas"); page.wait_for_timeout(900)
     chips = page.locator(".tl .tl-row:not(.tutor) .chipx.res").all_inner_texts()
     check("a run without a playground says so on the Tutor row", "Not made" in page.inner_text(".tl .tl-row.tutor"))
-    check("finished run: timeline chips read 8 checks, 6 sources, 3 files, 88/100 pass", chips == ["8 checks", "6 sources", "3 files", "88/100 pass"], str(chips))
+    check("finished run: timeline chips read 8 checks, 6 sources, 10 facts, 3 files, 88/100 pass", chips == ["8 checks", "6 sources", "10 facts", "3 files", "88/100 pass"], str(chips))
     check("runs table lists both demo runs with the score", page.locator(".runs tbody tr").count() == 2 and "88" in page.inner_text(".runs tbody"))
 
     # --- the full story page ---
     page.click("text=Open the full story"); page.wait_for_timeout(800)
-    check("each story chapter leads with result tiles", page.locator(".story.full .ch .tiles").count() == 4)
+    check("each story chapter leads with result tiles", page.locator(".story.full .ch .tiles").count() == 5)
     steps = page.locator(".story.full .steps li").count()
-    check("story steps are collapsed to the last 4 per chapter", steps == 16, f"{steps} steps")
+    check("story steps are collapsed to the last 4 per chapter", steps == 20, f"{steps} steps")
     for _ in range(page.locator(".story .disc[aria-expanded=false]").count()):
         page.click(".story .disc[aria-expanded=false] >> nth=0"); page.wait_for_timeout(250)
     steps = page.locator(".story.full .steps li").count()
     sites = page.locator(".story.full .chipx.site").count()
-    check("opening the toggles lists every step", steps == 28, f"{steps} steps")
+    check("opening the toggles lists every step", steps == 36, f"{steps} steps")
+    check("the story has a Researcher chapter in plain words", "Researcher read the sources closely" in page.inner_text(".story.full"))
     check("story shows the websites used as chips", sites >= 3, f"{sites} sites")
     vague = page.locator(".steps .word", has_text="did").count()
     check("steps get specific labels", vague <= 2, f"{vague} vague 'did' labels")
@@ -274,7 +307,12 @@ with sync_playwright() as p:
     overflow = m.evaluate("document.documentElement.scrollWidth - window.innerWidth")
     check("no sideways scrolling on a phone", overflow <= 1, f"overflow {overflow}px")
     m.screenshot(path=os.path.join(SHOTS, "test-phone.png"))
-    check("runs table and rail are there on a phone", m.locator(".runs tbody tr").count() >= 1 and m.locator("#rail a").count() == 7)
+    check("runs table and rail are there on a phone", m.locator(".runs tbody tr").count() >= 1 and m.locator("#rail a").count() == 8)
+    m.evaluate("document.querySelector('#office3d').scrollIntoView({block: 'center'})"); m.wait_for_timeout(600)
+    m.screenshot(path=os.path.join(SHOTS, "test-phone-office.png"))
+    m_cards = m.evaluate("""[...document.querySelectorAll('.s3-room')].map(e => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; })""")
+    m_clash = sum(1 for i, a in enumerate(m_cards) for b in m_cards[i + 1:] if a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3])
+    check("five room cards on a phone, none covering another", len(m_cards) == 5 and m_clash == 0, f"{len(m_cards)} cards, {m_clash} overlapping pairs")
     m.goto(BASE + "/#/analyst"); m.wait_for_timeout(1500)
     check("team page works on a phone", m.locator("#stage3d canvas").count() == 1)
     check("team page has no sideways scrolling on a phone", m.evaluate("document.documentElement.scrollWidth - window.innerWidth") <= 1)
@@ -286,7 +324,61 @@ with sync_playwright() as p:
     m.click(".rcard .disc"); m.wait_for_timeout(400)
     check("the opened full file does not cause sideways scrolling on a phone", m.evaluate("document.documentElement.scrollWidth - window.innerWidth") <= 1)
     m.goto(BASE + "/#/"); m.wait_for_selector(".tl .tl-row"); m.wait_for_timeout(600)
-    check("home timeline fits a phone", m.locator(".tl .tl-row").count() == 5 and m.evaluate("document.documentElement.scrollWidth - window.innerWidth") <= 1)
+    check("home timeline fits a phone", m.locator(".tl .tl-row").count() == 6 and m.evaluate("document.documentElement.scrollWidth - window.innerWidth") <= 1)
+
+    # --- an older run, made before the Researcher: the finished demo run is served here with that agent taken out ---
+    def no_researcher(route):
+        try:
+            d = route.fetch().json()
+            if isinstance(d, list):   # runs.json: the second run's states, in the old four-agent order
+                d[1]["states"] = d[1]["states"][:2] + d[1]["states"][3:]
+            else:
+                d["agents"] = [a for a in d["agents"] if a["id"] != "researcher"]
+                d["events"] = [e for e in d["events"] if e["agent"] != "researcher"]
+                d["files"] = [f for f in d["files"] if "research" not in f["path"]]
+            route.fulfill(json=d)
+        except Exception:
+            pass   # the page polls every 2 s: a request can still be in flight when the page closes
+    o = browser.new_page(viewport={"width": 1440, "height": 900})
+    o.on("console", lambda msg: errors.append("four-agent run: " + msg.text) if msg.type == "error" else None)
+    o.on("pageerror", lambda e: errors.append("four-agent run: " + str(e)))
+    o.route("**/data/run-1.json", no_researcher); o.route("**/data/runs.json", no_researcher)
+    o.goto(BASE + "/#/"); o.wait_for_selector("#office3d canvas", timeout=15000); o.wait_for_timeout(1200)
+    check("a five-agent run is drawn first", o.evaluate("office3d.five") is True and o.locator(".s3-room").count() == 5)
+    o.select_option("#runSel", "1"); o.wait_for_timeout(1800)
+    rooms = o.evaluate("Object.keys(office3d.built.rooms).join()")
+    check("four-agent run: the office is rebuilt with four rooms, no empty fifth one", rooms == "analyst,finder,builder,evaluator" and o.locator(".s3-room").count() == 4
+          and o.locator("#office3d canvas").count() == 1, rooms)
+    check("four-agent run: four timeline rows and no Researcher link in the rail", o.locator(".tl .tl-row:not(.tutor)").count() == 4
+          and o.locator("#rail a[aria-label=Researcher]").is_hidden() and o.locator("#rail a[aria-label=Builder]").is_visible())
+    chips = o.locator(".tl .tl-row:not(.tutor) .chipx.res").all_inner_texts()
+    check("four-agent run: the chips are the same as before", chips == ["8 checks", "6 sources", "3 files", "88/100 pass"], str(chips))
+    check("four-agent run: the runs table still says Finished", "Finished" in o.inner_text(".runs tbody tr.cur"))
+    o.evaluate("document.querySelector('#office3d').scrollIntoView({block: 'center'})"); o.wait_for_timeout(500)
+    o.screenshot(path=os.path.join(SHOTS, "test-four-agent-office.png"))
+    o.goto(BASE + "/#/builder"); o.wait_for_selector("#stage3d canvas"); o.wait_for_timeout(700)
+    check("four-agent run: the Builder is step 3 of 4, after the Source finder", "Step 3 of 4" in o.inner_text(".hero") and "Source finder" in o.inner_text(".stepnav"))
+    o.goto(BASE + "/#/story"); o.wait_for_selector(".story.full"); o.wait_for_timeout(500)
+    check("four-agent run: the story has four chapters", o.locator(".story.full .ch .tiles").count() == 4 and "Researcher" not in o.inner_text(".story.full"))
+    o.goto(BASE + "/#/"); o.wait_for_selector("#office3d canvas"); o.wait_for_timeout(800)
+    o.select_option("#runSel", "0"); o.wait_for_timeout(1800)
+    check("back on a five-agent run the fifth room returns", o.evaluate("office3d.five") is True and o.locator(".s3-room").count() == 5
+          and o.locator("#rail a[aria-label=Researcher]").is_visible())
+    o.goto("about:blank"); o.wait_for_timeout(300); o.close()   # stop the polling first, so no request is cut off mid-way
+
+    # --- status.py: new runs get five agents, and an older status.json gains the Researcher when it is first used ---
+    tool = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "status.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        ids = lambda: [(a["id"], a["state"]) for a in json.load(open(os.path.join(tmp, "status.json")))["agents"]]
+        subprocess.run([sys.executable, tool, "init", tmp, "Test run", "preferred"], check=True)
+        check("status.py init creates five agents, Researcher third", [i for i, _ in ids()] == ["analyst", "finder", "researcher", "builder", "evaluator"], str(ids()))
+        old = json.load(open(os.path.join(tmp, "status.json")))
+        old["agents"] = [a for a in old["agents"] if a["id"] != "researcher"]
+        json.dump(old, open(os.path.join(tmp, "status.json"), "w"))
+        done = subprocess.run([sys.executable, tool, "start", tmp, "researcher", "Reading the sources"], capture_output=True, text=True)
+        check("status.py adds the Researcher to an older four-agent status.json", done.returncode == 0 and ids()[2] == ("researcher", "running") and len(ids()) == 5, done.stderr.strip() or str(ids()))
+        bad = subprocess.run([sys.executable, tool, "start", tmp, "nobody", "x"], capture_output=True, text=True)
+        check("status.py still refuses an unknown agent", bad.returncode != 0 and len(ids()) == 5)
 
     # --- the playground: a separate page, reached from the rail ---
     g = browser.new_page(viewport={"width": 1440, "height": 900})

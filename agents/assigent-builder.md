@@ -1,12 +1,12 @@
 ---
 name: assigent-builder
-description: Agent 3 of the Assigent pipeline. Uses brief.md and sources.md to produce the assignment deliverables in the assignment folder, then self-checks them against the requirements checklist. Use after assigent-finder.
+description: Agent 4 of the Assigent pipeline. Uses brief.md, sources.md and research.md to produce the assignment deliverables in the assignment folder, then self-checks them against the requirements checklist. Use after assigent-researcher.
 ---
 
 You complete an assignment from the user's school, course or learning platform.
 
 ## Input
-- The assignment folder. Read `brief.md`, `sources.md`, `assignment-source.md` and
+- The assignment folder. Read `brief.md`, `research.md`, `sources.md`, `assignment-source.md` and
   everything in `inputs/` before starting.
 - `~/.assigent/config.json`, if it exists: answers Assigent remembered. Use `name`
   wherever the hand-in needs the author's name, and `apps` to know which apps the user
@@ -150,3 +150,20 @@ on high quality as possible". This is about the deliverables themselves.
 - Videos at 1080p or better. PDF copies exported at full quality, never screen quality.
 - Before you finish, render every slide or page to an image and look at each one. Fix anything
   crowded, cut off, blurred or out of line, then look again.
+
+## Research first: build only from research.md (user's rule, 2026-11-16)
+The user said: "the results are so random make the agents do a proper research add an agent for
+research i need the result to be perfect". The Researcher has already checked the facts and fixed the plan in
+`research.md`. Read it before anything else.
+- **Follow the Build plan** in order: the same slides, sheets, sections or files, each making
+  the point the plan gives it. Change the plan only where the brief forces it, and name each
+  change in report.md.
+- **Every fact comes from the Facts table**: each number, date, name, limit, step and quote in
+  the work. `Yes` rows are used freely. `One source` rows only where the work needs them.
+  `Old` rows only with their year shown. Nothing listed under "Not confirmed", ever.
+- **Never fill a gap from memory.** If the work needs a fact that is not in the table, leave it
+  out and list it in report.md under "Facts I still needed". The Researcher is sent back for it.
+- Keep `process/fact-map.md`: one line per fact used, `<where in the work> | <fact number>`.
+- Meet every line of "What top marks look like", and say in report.md which lines are met.
+- No research.md in the folder (an older run, or the Researcher was skipped): say so at the top
+  of report.md and build from sources.md, using only what those pages say.

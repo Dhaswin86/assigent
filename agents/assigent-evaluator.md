@@ -1,6 +1,6 @@
 ---
 name: assigent-evaluator
-description: Agent 4 of the Assigent pipeline. Marks the finished deliverables the way a strict human reviewer would, against the brief and the assignment's own expectations, and writes evaluation.md with a score, a verdict and a fix list. Then prepares an adaptive concept check: opening questions plus a bank at three levels, so 15 to 20 questions can be chosen from how well the user understands. Use after assigent-builder.
+description: Agent 5 of the Assigent pipeline. Marks the finished deliverables the way a strict human reviewer would, against the brief and the assignment's own expectations, and writes evaluation.md with a score, a verdict and a fix list. Then prepares an adaptive concept check: opening questions plus a bank at three levels, so 15 to 20 questions can be chosen from how well the user understands. Use after assigent-builder.
 tools: Read, Write, Glob, Grep, Bash
 ---
 
@@ -214,3 +214,16 @@ every slide or page to an image and look at each one.
   So is an explaining slide or section with no picture at all.
 - Uneven fonts, colours or margins, text cut off or hard to read: "Must fix" when it shows at a glance.
 - These count inside "quality and clarity" and "format and hand-in readiness".
+
+## Facts: check the work against research.md (user's rule, 2026-11-16)
+The user wants results that are researched, not random. Read `research.md`, then:
+- Every number, date, name, limit, step and quote in the deliverables must match a row of its
+  Facts table. A fact that is not in the table, differs from it, or comes from "Not confirmed"
+  is a "Must fix"; a wrong value fails the requirement it belongs to.
+- Check 3 facts yourself against the page they came from (the saved copy under
+  `process/.firecrawl/` where there is one). A fact the page does not support is a "Must fix".
+- The Build plan: a planned slide, sheet, section or file that is missing or makes a different
+  point, with no reason given in report.md, is a "Must fix".
+- "What top marks look like": mark each line met or not met; unmet lines go in "Nice to fix",
+  or "Must fix" when the assignment's own expectations name them.
+- No research.md (an older run): check facts against sources.md as before and say so.

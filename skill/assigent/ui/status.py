@@ -3,14 +3,14 @@
 
   status.py init  <folder> "<title>" <aiPolicy>
   status.py policy <folder> <aiPolicy>            (when the AI policy is settled later)
-  status.py playground start|done|skip|error <folder> "<text>"   (the Tutor's playground, kept beside the four agents)
+  status.py playground start|done|skip|error <folder> "<text>"   (the Tutor's playground, kept beside the five agents)
   status.py start <folder> <agent> "<what it is doing>"
   status.py event <folder> <agent> "<message>"
   status.py done  <folder> <agent> "<summary>"
   status.py skip  <folder> <agent> "<reason>"
   status.py error <folder> <agent> "<message>"
 
-<agent> is analyst, finder, builder or evaluator.
+<agent> is analyst, finder, researcher, builder or evaluator.
 """
 import json, sys, os
 from datetime import datetime
@@ -24,6 +24,10 @@ AGENTS = [
      "role": "Finds docs, tutorials and past work for each requirement",
      "reads": ["brief.md"], "output": "sources.md",
      "log": "process/finder-log.md"},
+    {"id": "researcher", "name": "assigent-researcher", "label": "Researcher",
+     "role": "Reads the sources in depth and writes the checked facts and the build plan",
+     "reads": ["brief.md", "sources.md"], "output": "research.md",
+     "log": "process/researcher-log.md"},
     {"id": "builder", "name": "assigent-builder", "label": "Builder",
      "role": "Does the assignment and checks it against the brief",
      "reads": ["brief.md", "sources.md", "inputs/"], "output": "report.md",
@@ -50,6 +54,18 @@ def save(folder, s):
     with open(tmp, "w") as f:
         json.dump(s, f, indent=1)
     os.replace(tmp, os.path.join(folder, "status.json"))
+
+
+def add_missing(s, agent):
+    """Older status.json files have no Researcher: put the missing agent in, in pipeline order, still waiting."""
+    order = [a["id"] for a in AGENTS]
+    if agent not in order:
+        return None
+    new = {**AGENTS[order.index(agent)], "state": "waiting", "started": None, "finished": None, "summary": ""}
+    before = set(order[:order.index(agent)])
+    at = max([i + 1 for i, x in enumerate(s["agents"]) if x["id"] in before], default=0)
+    s["agents"].insert(at, new)
+    return new
 
 
 def playground(argv):
@@ -102,6 +118,8 @@ def main(argv):
     agent, msg = argv[3], argv[4] if len(argv) > 4 else ""
     s = load(folder)
     a = next((x for x in s["agents"] if x["id"] == agent), None)
+    if a is None and agent != "pipeline":
+        a = add_missing(s, agent)
     if a is None and agent != "pipeline":
         sys.exit(f"unknown agent {agent}")
     if cmd == "start":
