@@ -52,15 +52,16 @@ svg.i { width: 20px; height: 20px; flex: none; }
 .muted { color: var(--muted); }
 
 /* Header */
-.top { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); }
-.top .wrap { display: flex; align-items: center; gap: 28px; height: 60px; }
+.top { position: sticky; top: 0; z-index: 10; padding: 10px 12px 0; pointer-events: none; }
+.top .wrap { pointer-events: auto; position: relative; overflow: hidden; display: flex; align-items: center; gap: 28px; height: 56px; padding: 0 8px 0 18px; border-radius: 999px; border: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 82%, transparent); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); }
+.top .btn { border-radius: 999px; min-height: 40px; }
 .logo { display: flex; align-items: center; gap: 9px; color: var(--text); text-decoration: none; font-weight: 750; font-size: 1.1rem; letter-spacing: -.01em; }
 .logo:hover { color: var(--text); }
 .logo svg { width: 26px; height: 26px; }
 .nav { display: flex; gap: 22px; list-style: none; margin: 0; padding: 0; }
 .nav a { color: var(--muted); text-decoration: none; font-size: .95rem; font-weight: 500; }
 .nav a:hover { color: var(--text); }
-.btn.theme { width: 42px; padding: 0; margin-left: auto; }
+.btn.theme { width: 40px; flex: none; padding: 0; margin-left: auto; }
 .theme svg { width: 18px; height: 18px; }
 .theme .sun, [data-theme="dark"] .theme .moon { display: none; }
 [data-theme="dark"] .theme .sun { display: block; }
@@ -120,14 +121,6 @@ section.soft { background: var(--bg-soft); }
 .head { max-width: 640px; margin-bottom: 40px; }
 .head p { margin-top: 12px; color: var(--muted); font-size: 1.1rem; }
 
-/* How it works */
-.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-.steps li { padding-right: 20px; }
-.steps .num { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.steps .num span { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: var(--accent-soft); color: var(--accent); flex: none; }
-.steps .num::after { content: ""; flex: 1; height: 1px; background: var(--line-strong); }
-.steps li:last-child .num::after { display: none; }
-.steps p { margin-top: 6px; color: var(--muted); font-size: .97rem; }
 
 /* What it asks: table */
 .asks { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
@@ -190,15 +183,11 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 @media (max-width: 960px) {
   .hero, .split { grid-template-columns: 1fr; gap: 40px; }
   .hero { padding-top: 48px; padding-bottom: 56px; }
-  .steps { grid-template-columns: 1fr; gap: 22px; }
-  .steps li { display: grid; grid-template-columns: 34px 1fr; gap: 0 14px; padding: 0; }
-  .steps .num { margin: 0; }
-  .steps .num::after { display: none; }
-  .steps p { margin-top: 2px; }
   .trio { grid-template-columns: 1fr; gap: 20px; }
 }
 @media (max-width: 720px) {
-  .nav { display: none; }
+  .top nav { display: none; }
+  .top .wrap { gap: 12px; }
   .rules, .ways { grid-template-columns: 1fr; }
   section.block { padding: 56px 0; }
   .asks thead { display: none; }
@@ -213,11 +202,114 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   .run-head { flex-wrap: wrap; }
 }
 
+
+/* Statement: words fill in as you scroll */
+.say { border-top: 1px solid var(--line); }
+.say-pin { min-height: 70vh; display: grid; place-items: center; padding: 96px 20px; }
+.say-text, .end-say { margin: 0; text-align: center; font-weight: 800; letter-spacing: -.045em; line-height: 1.02; text-wrap: balance; }
+.say-text { font-size: clamp(2.6rem, 8vw, 6rem); max-width: 12ch; }
+.say-text em, .end-say em { font-style: normal; color: var(--accent); }
+.motion .say { height: 230vh; }
+.motion .say-pin { position: sticky; top: 0; height: 100vh; min-height: 0; padding: 0 20px; }
+.motion .say .w { color: var(--line-strong); transition: color .3s; }
+.motion .say .w.lit { color: var(--text); }
+.motion .say em .w.lit { color: var(--accent); }
+
+/* Crew: five agents on an orbit */
+.crew { border-top: 1px solid var(--line); background: var(--bg-soft); }
+.crew-pin { padding: 80px 0; }
+.crew-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+.crew-copy > .muted { margin-top: 12px; font-size: 1.1rem; max-width: 30em; }
+.crew-list { list-style: none; margin: 32px 0 0; padding: 0; display: grid; gap: 22px; }
+.agent { display: flex; gap: 16px; align-items: flex-start; }
+.agent .role { font: 600 .78rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--c); }
+.agent h3 { margin-top: 6px; font-size: 1.35rem; }
+.agent .line { margin-top: 6px; color: var(--muted); }
+.av { --size: 64px; width: var(--size); height: var(--size); border-radius: 50%; display: grid; place-items: center; color: #fff; flex: none;
+  background: radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--c) 55%, #fff), var(--c) 62%, color-mix(in srgb, var(--c) 70%, #000));
+  box-shadow: inset 0 -4px 10px rgba(0,0,0,.18), 0 10px 22px -10px var(--c); }
+.av svg { width: 44%; height: 44%; }
+.av-sm { --size: 48px; }
+.crew-dots { display: none; }
+.orbit { position: relative; width: min(100%, 440px); aspect-ratio: 1; margin: 0 auto; }
+.ring { position: absolute; inset: 9%; border-radius: 50%; border: 2px dashed var(--line-strong); }
+.spin { position: absolute; inset: 0; transform: rotate(var(--spin, 0deg)); }
+.spin .av { position: absolute; left: 50%; top: 50%; --size: 72px;
+  transform: translate(-50%, -50%) rotate(calc(var(--k) * 72deg)) translateY(calc(var(--r) * -1)) rotate(calc(var(--k) * -72deg - var(--spin, 0deg))) scale(var(--s, 1));
+  transition: transform .5s var(--ease-out), opacity .4s; }
+.spin { --r: 41cqw; } .orbit { container-type: inline-size; }
+.hub { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; }
+.hub-av { --size: 120px; width: var(--size); height: var(--size); border-radius: 50%; display: grid; place-items: center; color: #fff; --c: var(--hub, #c2410c);
+  background: radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--c) 55%, #fff), var(--c) 62%, color-mix(in srgb, var(--c) 70%, #000));
+  box-shadow: inset 0 -6px 14px rgba(0,0,0,.2), 0 18px 40px -16px var(--c); transition: background .5s, box-shadow .5s; }
+.hub-av svg { width: 46%; height: 46%; }
+.hub-name { font-size: 1.1rem; }
+.motion .hub-av { animation: bob 3.2s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-8px); } }
+/* pinned mode: one agent at a time */
+.motion .crew { height: 520vh; }
+.motion .crew-pin { position: sticky; top: 0; height: 100vh; display: grid; align-items: center; padding: 80px 0 24px; overflow: hidden; }
+.motion .crew-list { display: grid; }
+.motion .crew-list > li { grid-area: 1 / 1; opacity: 0; transform: translateY(18px); filter: blur(4px); transition: opacity .45s var(--ease-out), transform .45s var(--ease-out), filter .45s; pointer-events: none; }
+.motion .crew-list > li.on { opacity: 1; transform: none; filter: none; pointer-events: auto; }
+.motion .crew-dots { display: flex; gap: 8px; margin-top: 28px; }
+.crew-dots i { width: 28px; height: 4px; border-radius: 99px; background: var(--line-strong); transition: background .3s, width .3s; }
+.crew-dots i.on { background: var(--accent); width: 44px; }
+.motion .spin .av { opacity: .55; }
+.motion .spin .av.on { opacity: 1; --s: 1.2; }
+
+/* FAQ */
+.faq-split { align-items: start; }
+.faq { margin-top: 28px; border-top: 1px solid var(--line); }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 2px; font-weight: 650; font-size: 1.08rem; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary:hover { color: var(--accent); }
+.faq summary svg { width: 20px; height: 20px; flex: none; color: var(--muted); transition: transform .35s var(--ease-out); }
+.faq details[open] summary svg { transform: rotate(45deg); color: var(--accent); }
+.faq .ans { padding: 0 2px 20px; color: var(--muted); }
+.motion .faq details[open] .ans { animation: drop .45s var(--ease-out); }
+@keyframes drop { from { opacity: 0; transform: translateY(-8px); } }
+
+/* End card: letters fly in and settle */
+.end { padding: 0; text-align: center; }
+.end-pin { padding: 96px 0; }
+.end .end-say { font-size: clamp(2.4rem, 7vw, 5.2rem); max-width: 13ch; margin: 0 auto; color: var(--text); }
+.end-act { margin-top: 48px; }
+.end-act h2 { font-size: clamp(1.5rem, 3vw, 2rem); }
+.end-say .wd { display: inline-block; white-space: nowrap; }
+.end-say .ch { display: inline-block; }
+.motion .end { height: 200vh; }
+.motion .end-pin { position: sticky; top: 0; height: 100vh; display: grid; align-items: center; padding: 72px 0 24px; overflow: hidden; }
+.motion .end-say .ch { transform: translate(calc(var(--x) * var(--k, 1) * 1px), calc(var(--y) * var(--k, 1) * 1px)) rotate(calc(var(--r) * var(--k, 1) * 1deg)); opacity: calc(1 - var(--k, 1) * .75); }
+.motion .end-act { opacity: 0; transform: translateY(24px); transition: opacity .6s var(--ease-out), transform .6s var(--ease-out); }
+.motion .end.ready .end-act { opacity: 1; transform: none; }
+
+/* Hero headline rises in on load */
+.motion .hero h1 .w { display: inline-block; animation: rise .9s var(--ease-out) both; animation-delay: calc(var(--i) * 55ms); }
+@keyframes rise { from { opacity: 0; transform: translateY(.5em); filter: blur(6px); } }
+
+@media (max-width: 960px) {
+  .crew-grid { grid-template-columns: 1fr; gap: 24px; }
+  .orbit { order: -1; width: min(100%, 300px); }
+  .hub-av { --size: 84px; }
+  .spin .av { --size: 52px; }
+  .motion .crew-pin { padding-top: 76px; }
+  .motion .crew-copy > .muted { display: none; }
+  .motion .crew-list { margin-top: 18px; }
+  .crew-copy h2 { font-size: 1.6rem; }
+}
+@media (max-width: 720px) {
+  .top { padding: 8px 8px 0; }
+  .orbit { width: min(100%, 250px); }
+  .agent h3 { font-size: 1.2rem; }
+}
+
 /* Motion. Everything is visible without JS; .motion is added only when motion is allowed. */
 :root { --ease-out: cubic-bezier(.16, 1, .3, 1); }
 .progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--accent); transform-origin: 0 50%; transform: scaleX(0); pointer-events: none; }
-.top { transition: box-shadow .3s; }
-.top.scrolled { box-shadow: 0 6px 20px -12px rgba(0,0,0,.35); }
+.top .wrap { transition: box-shadow .3s; }
+.top.scrolled .wrap { box-shadow: 0 10px 30px -14px rgba(0,0,0,.35); }
 .nav a { position: relative; transition: color .2s; }
 .nav a::after { content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 2px; border-radius: 2px; background: var(--accent); transform: scaleX(0); transition: transform .35s var(--ease-out); }
 .nav a[aria-current="true"] { color: var(--text); }
@@ -250,10 +342,6 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 .motion [data-reveal="wipe"]:not(.in) { clip-path: inset(0 100% 0 0); }
 .motion [data-reveal="pop"]:not(.in) { opacity: 0; transform: scale(.6); }
 .motion [data-reveal="pop"] { transition-timing-function: cubic-bezier(.34, 1.56, .64, 1); }
-.motion .steps .num::after { transform-origin: 0 50%; transition: transform .7s var(--ease-out); transition-delay: calc(var(--i, 0) * 140ms + 150ms); }
-.motion .steps:not(.in) .num::after { transform: scaleX(0); }
-.motion .steps li { transition: opacity .6s var(--ease-out), transform .6s var(--ease-out); transition-delay: calc(var(--i, 0) * 140ms); }
-.motion .steps:not(.in) li { opacity: 0; transform: translateY(16px); }
 .motion .rules svg { transition: transform .5s cubic-bezier(.34, 1.56, .64, 1); transition-delay: calc(var(--i, 0) * 70ms + 200ms); }
 .motion .rules li:not(.in) svg { transform: scale(0) rotate(-30deg); }
 .motion .mock .meter i { transition: width 1.4s var(--ease-out) .3s; }
@@ -275,13 +363,19 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v5M12 7.6v.1" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="a-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M3.5 6l1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="a-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="a-build" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L21 13l-2 2-1.3-1.3-8.4 8.4a2.1 2.1 0 0 1-3-3l8.4-8.4L13.4 9.4l2-2zM3 3l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="a-mark" viewBox="0 0 24 24"><path d="M4 16a8 8 0 1 1 16 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 16l4-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="16" r="1.6" fill="currentColor"/></symbol>
+  <symbol id="a-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
   <symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="currentColor"/></symbol>
 </svg>
 <a class="skip" href="#install">Skip to the install line</a>
 
 <header class="top">
-  <div class="progress" aria-hidden="true"></div>
   <div class="wrap">
+    <div class="progress" aria-hidden="true"></div>
     <a class="logo" href="#top" aria-label="Assigent home">
       <svg viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="7" fill="#c2410c"/><path d="M8 19l5-12 5 12M9.8 15h6.4" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Assigent
@@ -333,19 +427,31 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     </figure>
   </div>
 
-  <section class="block soft" id="how" aria-labelledby="h-how">
-    <div class="wrap">
-      <div class="head" data-reveal="up">
-        <h2 id="h-how">How it works</h2>
-        <p>Five helpers, one after another. Each does one job and hands over to the next.</p>
+  <section class="say" aria-label="Behind that one line, five helpers.">
+    <div class="say-pin"><h2 class="say-text" data-words>Behind that one line, <em>five helpers.</em></h2></div>
+  </section>
+
+  <section class="crew" id="how" aria-labelledby="h-how">
+    <div class="crew-pin">
+      <div class="wrap crew-grid">
+        <div class="crew-copy">
+          <h2 id="h-how">How it works</h2>
+          <p class="muted">Five helpers, one after another. Each does one job and hands over to the next.</p>
+          <ol class="crew-list">
+          <li class="agent" style="--c:#c2410c"><span class="av av-sm"><svg aria-hidden="true"><use href="#a-list"/></svg></span><div><p class="role">1 of 5 · Reads the brief</p><h3>Analyst</h3><p class="line">I read the brief and write a checklist of what is asked. If it leaves a choice open, I ask you once.</p></div></li>
+          <li class="agent" style="--c:#2563eb"><span class="av av-sm"><svg aria-hidden="true"><use href="#a-book"/></svg></span><div><p class="role">2 of 5 · Finds sources</p><h3>Source finder</h3><p class="line">I gather the docs and tutorials each part of the checklist needs.</p></div></li>
+          <li class="agent" style="--c:#7c3aed"><span class="av av-sm"><svg aria-hidden="true"><use href="#a-build"/></svg></span><div><p class="role">3 of 5 · Does the work</p><h3>Builder</h3><p class="line">I do the work in the right file type, only as far as the assignment's AI rule allows.</p></div></li>
+          <li class="agent" style="--c:#15803d"><span class="av av-sm"><svg aria-hidden="true"><use href="#a-mark"/></svg></span><div><p class="role">4 of 5 · Marks it</p><h3>Evaluator</h3><p class="line">I mark it out of 100, then ask you 15 to 20 questions at your level.</p></div></li>
+          <li class="agent" style="--c:#d97706"><span class="av av-sm"><svg aria-hidden="true"><use href="#a-bulb"/></svg></span><div><p class="role">5 of 5 · Teaches the idea</p><h3>Tutor</h3><p class="line">I build a small playground that teaches the idea. Never the answer.</p></div></li>
+          </ol>
+          <div class="crew-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="orbit" aria-hidden="true">
+          <div class="ring"></div>
+          <div class="spin"><span class="av" style="--k:0;--c:#c2410c"><svg><use href="#a-list"/></svg></span><span class="av" style="--k:1;--c:#2563eb"><svg><use href="#a-book"/></svg></span><span class="av" style="--k:2;--c:#7c3aed"><svg><use href="#a-build"/></svg></span><span class="av" style="--k:3;--c:#15803d"><svg><use href="#a-mark"/></svg></span><span class="av" style="--k:4;--c:#d97706"><svg><use href="#a-bulb"/></svg></span></div>
+          <div class="hub"><span class="hub-av"><svg><use href="#a-list"/></svg></span><b class="hub-name">Analyst</b></div>
+        </div>
       </div>
-      <ol class="steps" data-group>
-        <li><div class="num"><span>1</span></div><div><h3>Analyst</h3><p>Reads the brief and writes a checklist of what is asked.</p></div></li>
-        <li><div class="num"><span>2</span></div><div><h3>Source finder</h3><p>Gathers the docs and tutorials each part needs.</p></div></li>
-        <li><div class="num"><span>3</span></div><div><h3>Builder</h3><p>Does the work in the right file type, within the AI rule.</p></div></li>
-        <li><div class="num"><span>4</span></div><div><h3>Evaluator</h3><p>Marks it out of 100, then asks you 15 to 20 questions at your level.</p></div></li>
-        <li><div class="num"><span>5</span></div><div><h3>Tutor</h3><p>Builds a small playground that teaches the idea. Never the answer.</p></div></li>
-      </ol>
     </div>
   </section>
 
@@ -439,15 +545,17 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   </section>
 
   <section class="block" id="demo" aria-labelledby="h-need">
-    <div class="wrap split" style="align-items:start">
+    <div class="wrap split faq-split">
       <div>
-        <h2 id="h-need" data-reveal="up">What you need</h2>
-        <ul class="req" data-stagger>
-          <li data-reveal="up"><svg class="i" aria-hidden="true"><use href="#i-dot"/></svg><span>A Claude plan that includes Claude Code, with Claude Code installed. New to it? Claude Code is Anthropic's assistant that works in your terminal, and Assigent runs inside it.</span></li>
-          <li data-reveal="up"><svg class="i" aria-hidden="true"><use href="#i-dot"/></svg><span>Python 3. Most Macs and Linux computers already have it.</span></li>
-          <li data-reveal="up"><svg class="i" aria-hidden="true"><use href="#i-dot"/></svg><span>Optional: the Claude browser extension, if you want Assigent to read the assignment from your portal tab.</span></li>
-        </ul>
-        <p class="muted" style="margin-top:18px">The installer copies files into your home folder only. It never uses sudo.</p>
+        <h2 id="h-need" data-reveal="up">Before you install</h2>
+        <div class="faq" data-stagger>
+          <details data-reveal="up" open><summary>What do I need?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="ans"><p>A Claude plan that includes Claude Code, with Claude Code installed. New to it? Claude Code is Anthropic's assistant that works in your terminal, and Assigent runs inside it. You also need Python 3, which most Macs and Linux computers already have. The Claude browser extension is optional, if you want Assigent to read the assignment from your portal tab.</p></div></details>
+          <details data-reveal="up"><summary>Does it cost anything?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="ans"><p>Assigent is free and open source under the MIT license. It runs inside Claude Code on your own computer and your own Claude plan.</p></div></details>
+          <details data-reveal="up"><summary>Will it hand in my work?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="ans"><p>No. It never submits, uploads or hands in anything, never signs in for you and never posts. That last step is yours.</p></div></details>
+          <details data-reveal="up"><summary>What if my assignment does not allow AI?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="ans"><p>Then you get the brief and a reading list, nothing more. The Tutor's playground still teaches the idea, because it never holds the answer.</p></div></details>
+          <details data-reveal="up"><summary>What does the installer change?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="ans"><p>It copies files into your home folder only. It never uses sudo.</p></div></details>
+          <details data-reveal="up"><summary>Where are my answers kept?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="ans"><p>Answers it can reuse, like your name and the apps you have, are remembered on your computer, so it never asks twice.</p></div></details>
+        </div>
       </div>
       <div class="demo" data-reveal="blur">
         <h3>Watch one made-up run</h3>
@@ -457,11 +565,16 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     </div>
   </section>
 
-  <section class="cta" aria-labelledby="h-cta">
-    <div class="wrap">
-      <h2 id="h-cta" data-reveal="up">Install Assigent</h2>
-      <p>One line in your terminal, then type <code>assigent run</code>. There is nothing to set up first.</p>
-      <div class="cmd" data-reveal="wipe"><span class="p" aria-hidden="true">$</span><pre id="line-install-2">curl -fsSL https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh | bash</pre><button class="copy" type="button" data-copy="line-install-2" aria-label="Copy the install line"><svg aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+  <section class="cta end" aria-labelledby="h-cta">
+    <div class="end-pin">
+      <div class="wrap">
+        <p class="end-say" data-chars>That's how it works. <em>Your turn.</em></p>
+        <div class="end-act">
+          <h2 id="h-cta">Install Assigent</h2>
+          <p>One line in your terminal, then type <code>assigent run</code>. There is nothing to set up first.</p>
+          <div class="cmd"><span class="p" aria-hidden="true">$</span><pre id="line-install-2">curl -fsSL https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh | bash</pre><button class="copy" type="button" data-copy="line-install-2" aria-label="Copy the install line"><svg aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
@@ -537,7 +650,65 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   // Scroll reveals, only when the visitor allows motion
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   document.documentElement.classList.add('motion');
-  Array.prototype.forEach.call(document.querySelectorAll('[data-stagger], .asks tbody, .steps'), function (g) {
+  // Split headlines into words or letters for the scroll scenes
+  function splitWords(el) {
+    Array.prototype.slice.call(el.childNodes).forEach(function (n) {
+      if (n.nodeType === 1) { splitWords(n); return; }
+      if (n.nodeType !== 3 || !n.textContent.trim()) return;
+      var frag = document.createDocumentFragment();
+      n.textContent.split(/(\s+)/).forEach(function (t) {
+        if (!t) return;
+        if (/^\s+$/.test(t)) { frag.appendChild(document.createTextNode(t)); return; }
+        var w = document.createElement('span'); w.className = 'w'; w.textContent = t; frag.appendChild(w);
+      });
+      n.parentNode.replaceChild(frag, n);
+    });
+    return el.querySelectorAll('.w');
+  }
+  Array.prototype.forEach.call(splitWords(document.querySelector('.hero h1')), function (w, i) { w.style.setProperty('--i', i); });
+  var sayWords = splitWords(document.querySelector('[data-words]'));
+  var endSay = document.querySelector('[data-chars]');
+  endSay.setAttribute('aria-label', endSay.textContent);
+  Array.prototype.forEach.call(splitWords(endSay), function (w, wi) {
+    var t = w.textContent; w.textContent = ''; w.className = 'wd'; w.setAttribute('aria-hidden', 'true');
+    Array.prototype.forEach.call(t, function (c, ci) {
+      var s = document.createElement('span'); s.className = 'ch'; s.textContent = c;
+      var seed = Math.sin((wi + 1) * 12.9898 + (ci + 1) * 78.233) * 43758.5453; seed -= Math.floor(seed);
+      var seed2 = Math.sin((wi + 1) * 39.346 + (ci + 1) * 11.135) * 24634.6345; seed2 -= Math.floor(seed2);
+      s.style.setProperty('--x', Math.round((seed - .5) * 520));
+      s.style.setProperty('--y', Math.round((seed2 - .3) * 420));
+      s.style.setProperty('--r', Math.round((seed - seed2) * 220));
+      w.appendChild(s);
+    });
+  });
+
+  var say = document.querySelector('.say'), crew = document.querySelector('.crew'), end = document.querySelector('.end');
+  var agents = crew.querySelectorAll('.agent'), avs = crew.querySelectorAll('.spin .av'), dots = crew.querySelectorAll('.crew-dots i');
+  var spin = crew.querySelector('.spin'), hubAv = crew.querySelector('.hub-av'), hubUse = hubAv.querySelector('use'), hubName = crew.querySelector('.hub-name');
+  var icons = ['#a-list', '#a-book', '#a-build', '#a-mark', '#a-bulb'], current = -1;
+  function progress(el) { var r = el.getBoundingClientRect(), span = r.height - innerHeight; return span > 0 ? Math.min(Math.max(-r.top / span, 0), 1) : 0; }
+  function scenes() {
+    var p = progress(say), lit = Math.ceil(p * 1.35 * sayWords.length);
+    Array.prototype.forEach.call(sayWords, function (w, i) { w.classList.toggle('lit', i < lit); });
+    var c = progress(crew), idx = Math.min(4, Math.floor(c * 5));
+    spin.style.setProperty('--spin', (-Math.min(Math.max(c * 5 - .5, 0), 4) * 72) + 'deg');
+    if (idx !== current) {
+      current = idx;
+      [agents, avs, dots].forEach(function (list) { Array.prototype.forEach.call(list, function (el, i) { el.classList.toggle('on', i === idx); }); });
+      hubAv.style.setProperty('--hub', agents[idx].style.getPropertyValue('--c'));
+      hubUse.setAttribute('href', icons[idx]);
+      hubName.textContent = agents[idx].querySelector('h3').textContent;
+    }
+    var e = progress(end), k = Math.max(0, 1 - e * 1.8);
+    end.style.setProperty('--k', k.toFixed(3));
+    end.classList.toggle('ready', k < .12);
+  }
+  var sTick = false;
+  addEventListener('scroll', function () { if (!sTick) { sTick = true; requestAnimationFrame(function () { scenes(); sTick = false; }); } }, { passive: true });
+  addEventListener('resize', scenes);
+  scenes();
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-stagger], .asks tbody'), function (g) {
     Array.prototype.forEach.call(g.children, function (c, i) { c.style.setProperty('--i', i); });
   });
   function countUp(el) {
@@ -559,7 +730,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       seen.unobserve(e.target);
     });
   }, { rootMargin: '0px 0px -8% 0px', threshold: .12 });
-  Array.prototype.forEach.call(document.querySelectorAll('[data-reveal]:not([data-reveal="wipe"]), .steps, .mock'), function (el) { seen.observe(el); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-reveal]:not([data-reveal="wipe"]), .mock'), function (el) { seen.observe(el); });
   Array.prototype.forEach.call(document.querySelectorAll('[data-reveal="wipe"]'), function (w) { seen.observe(w.parentNode); });
 })();
 </script>

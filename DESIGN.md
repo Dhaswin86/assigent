@@ -34,3 +34,14 @@ h1 800 weight, clamp(2.3rem, 4.6vw, 3.5rem); h2 750, clamp(1.6rem, 3vw, 2.1rem);
 - `.asks`: two-column table; becomes stacked labelled rows under 720px.
 - `.rules`: two-column checklist with shield icons; `.note` for the school-rules reminder.
 - Icons are inline SVG symbols in one 2px stroke style.
+
+## Motion (scroll scenes, modelled on the RasanAI site's storytelling)
+
+Only when the visitor allows motion (`.motion` on `<html>`); without JS or with reduced motion every scene is a plain, static section.
+
+- Header: floating pill with blur, reading-progress line along its bottom edge.
+- Hero: headline words rise in on load.
+- `.say`: pinned statement ("Behind that one line, five helpers."), words fill with colour as you scroll.
+- `.crew` (#how): pinned scene, the five agents on a dashed orbit that turns with scroll; the active agent sits on top, fills the hub and shows its first-person line. Agent colours: Analyst #c2410c, Source finder #2563eb, Builder #7c3aed, Evaluator #15803d, Tutor #d97706.
+- FAQ: `<details>` with a rotating plus and a drop-in answer.
+- `.end`: "That's how it works. Your turn." letters fly in and settle, then the install box rises in.
