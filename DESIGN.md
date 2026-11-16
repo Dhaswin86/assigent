@@ -6,17 +6,17 @@ decoration. No web fonts, no build step.
 
 ## Colour
 
-| Token | Light | Dark | Use |
-|---|---|---|---|
-| `--bg` / `--bg-soft` | #ffffff / #f7f6f3 | #141312 / #1c1b19 | page; alternate sections |
-| `--text` / `--muted` | #1c1b19 / #5c5852 | #f2f0ec / #b5b0a8 | text |
-| `--line` / `--line-strong` | #e7e4de / #d6d2ca | #2e2c29 / #3d3a36 | borders |
-| `--accent` / `--accent-hover` | #c2410c / #9a3412 | #fb923c / #fdba74 | links, primary button, step numbers |
-| `--accent-soft` | #fff1e8 | #2a1d14 | step circles, note box |
-| `--ok` | #15803d | #4ade80 | checks, "Done" |
-| `--code-bg` | #1c1b19 | #0c0b0a | command boxes |
+| Token | Value | Use |
+|---|---|---|
+| `--bg` / `--bg-soft` | #ffffff / #f7f6f3 | page; alternate sections |
+| `--text` / `--muted` | #1c1b19 / #5c5852 | text |
+| `--line` / `--line-strong` | #e7e4de / #d6d2ca | borders |
+| `--accent` / `--accent-hover` | #c2410c / #9a3412 | links, primary button, step numbers |
+| `--accent-soft` | #fff1e8 | step circles, note box |
+| `--ok` | #15803d | checks, "Done" |
+| `--code-bg` | #1c1b19 | command boxes |
 
-Light and dark follow the system setting; `data-theme` on `<html>` can force either.
+Light only, whatever the system setting (the owner chose this on 2026-11-16). Command boxes stay dark, like a terminal.
 
 ## Type
 

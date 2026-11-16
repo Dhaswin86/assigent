@@ -53,4 +53,4 @@ Plain, short sentences, sentence case, second person. No hype.
 
 ## Accessibility
 
-Readable for non-native English speakers; keyboard and screen-reader friendly; light and dark.
+Readable for non-native English speakers; keyboard and screen-reader friendly; light theme only.
