@@ -16,7 +16,9 @@ decoration. No web fonts, no build step.
 | `--ok` | #15803d | checks, "Done" |
 | `--code-bg` | #1c1b19 | command boxes |
 
-Light only, whatever the system setting (the owner chose this on 2026-11-16). Command boxes stay dark, like a terminal.
+Light by default, whatever the system setting (the owner chose this on 2026-11-16). A moon/sun button in the header
+switches to dark (`data-theme="dark"` on `<html>`: bg #141312, text #f2f0ec, accent #fb923c, ok #4ade80); the choice is
+remembered in localStorage (`assigent-theme`). Command boxes stay dark in both, like a terminal.
 
 ## Type
 
