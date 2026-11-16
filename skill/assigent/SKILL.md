@@ -338,6 +338,12 @@ python3 ~/.claude/skills/assigent/ui/status.py playground error "<folder>" "<wha
   record `playground error`.
 - The user opens it on its own page: `assigent play`, or the Playground icon in the
   viewer.
+- **Every assignment gets a playground, earlier ones too.** The user said (2026-11-16): "i need
+  playground for all the assignments which one the user use". At the start of every run, and whenever
+  the user opens or asks about an earlier assignment, look for assignment folders that have a
+  `status.json` but no `playground/index.html`. Run the Tutor for each one, in the background and
+  without asking, with that folder's own AI policy. A folder with no sources.md is built from its
+  brief and assignment-source.md. When all are done, say which playgrounds were added.
 
 ## Deliverable file types
 Every deliverable is handed in as the file type the assignment requires: the stated
