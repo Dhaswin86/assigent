@@ -19,7 +19,8 @@ import argparse, json, os, re, shutil, signal, socket, subprocess, sys, time
 import urllib.request
 from datetime import datetime
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
+INSTALL_URL = "https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh"
 
 # Exit codes
 OK, FAILED, USAGE, NO_CLAUDE = 0, 1, 2, 3
@@ -667,6 +668,11 @@ def cmd_doctor(a):
     check("Skill", skill_ok, "~/.claude/skills/assigent is complete" if skill_ok else "files are missing from ~/.claude/skills/assigent",
           "Run the installer again (./install.sh)")
 
+    play_ok = (os.path.isfile(os.path.join(AGENTS_DIR, "assigent-tutor.md"))
+               and all(os.path.isfile(os.path.join(SKILL_DIR, "ui", f)) for f in ("playground.html", "playground.js")))
+    check("Playground", play_ok, "the Tutor and the playground page are installed" if play_ok
+          else "this install is older than the playground", "Run: assigent update")
+
     root = save_folder(cfg)
     parent = root
     while not os.path.exists(parent) and os.path.dirname(parent) != parent:
@@ -683,6 +689,19 @@ def cmd_doctor(a):
 
 
 # ---------------------------------------------------------------- uninstall
+
+def cmd_update(a):
+    """Get the newest Assigent: download the installer and run it again. Saved answers and assignment folders stay."""
+    if not shutil.which("curl") or not shutil.which("bash"):
+        fail("Updating needs curl and bash. Or download the newest copy from github.com/Dhaswin86/assigent and run ./install.sh", FAILED)
+    say(f"Assigent {VERSION} is installed. Getting the newest one...")
+    rc = subprocess.call(["bash", "-c", f"set -o pipefail; curl -fsSL {INSTALL_URL} | bash"])
+    if rc != 0:
+        fail("The update did not finish. Check your internet connection and try again.", FAILED)
+    say("Updated. Close Claude Code and open it again so it sees the new agents.")
+    say("Then, for assignments that have no playground yet, say: /assigent make the playgrounds")
+    return OK
+
 
 def cmd_uninstall(a):
     targets = [os.path.join(AGENTS_DIR, f) for f in AGENT_FILES] + [SKILL_DIR, CLI_PATH]
@@ -774,6 +793,9 @@ def main(argv=None):
 
     s = sub.add_parser("doctor", help="check that everything is installed")
     s.set_defaults(fn=cmd_doctor)
+
+    s = sub.add_parser("update", help="get the newest Assigent (your answers and folders stay)")
+    s.set_defaults(fn=cmd_update)
 
     s = sub.add_parser("config", help="print the answers Assigent remembers")
     s.add_argument("--json", action="store_true", help="print the raw file")

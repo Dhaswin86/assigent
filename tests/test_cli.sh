@@ -223,7 +223,8 @@ cp "$TMP/good.json" "$HOME/.assigent/config.json"; rm -f "$HOME/.assigent/config
 echo "--- assigent doctor"
 assigent doctor > "$OUT" 2>&1; rc=$?
 check "doctor exits 0 when all is well" code_is $rc 0
-check "doctor prints six ok lines" sh -c "[ \$(grep -c '^ok   ' '$OUT') = 6 ]"
+check "doctor prints seven ok lines" sh -c "[ \$(grep -c '^ok   ' '$OUT') = 7 ]"
+check "doctor says the playground is installed" grep -q '^ok   Playground' "$OUT"
 PATH="$HOME/.local/bin:$BASE_PATH" assigent doctor > "$OUT" 2>&1; rc=$?
 check "doctor exits 1 when Claude Code is missing" code_is $rc 1
 check "doctor gives a fix for Claude Code" sh -c "grep -A1 '^FIX  Claude Code' '$OUT' | grep -q 'Fix:'"

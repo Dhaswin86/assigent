@@ -92,6 +92,7 @@ assigent view                    open the viewer that shows the agents at work
 assigent play                    open the playground for your newest run
 assigent status                  list your runs, each agent's state and the score
 assigent doctor                  check that everything is installed
+assigent update                  get the newest Assigent
 ```
 
 ### In Claude Code, with the browser extension
@@ -174,6 +175,7 @@ Details are in [skill/assigent/preferences.md](skill/assigent/preferences.md).
 | `assigent play` | Open a run's playground. `assigent play 2` or `assigent play "essay"` picks a run |
 | `assigent status` | List runs with each agent's state, the score and the playground |
 | `assigent doctor` | Check the install, one line per check with a fix |
+| `assigent update` | Get the newest Assigent. Your answers and assignment folders stay |
 | `assigent preferences` | Optional: see or change what Assigent remembers |
 | `assigent config` | Print what Assigent remembers |
 | `assigent uninstall` | Remove Assigent |
