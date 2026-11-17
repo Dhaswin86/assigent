@@ -1,0 +1,42 @@
+{
+  "name": "assigent",
+  "version": "1.3.1",
+  "description": "An assignment helper for Claude Code: agents that read the brief, find sources, do the work within the assignment's AI rule, and mark it before you hand it in.",
+  "bin": {
+    "assigent": "npm/assigent.js"
+  },
+  "files": [
+    "agents/",
+    "bin/",
+    "skill/",
+    "npm/",
+    "install.sh",
+    "README.md",
+    "LICENSE",
+    "!**/__pycache__/**",
+    "!**/*.pyc"
+  ],
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "agents",
+    "assignments",
+    "cli"
+  ],
+  "homepage": "https://github.com/Dhaswin86/assigent#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dhaswin86/assigent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Dhaswin86/assigent/issues"
+  },
+  "license": "MIT"
+}
