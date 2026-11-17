@@ -11,14 +11,21 @@ It runs on your own computer, on your own Claude plan. You hand in the work your
 
 - A Claude plan that includes Claude Code, with Claude Code installed
 - Python 3 (already on most Macs and Linux computers)
+- Node.js for the short install line (`npx`); without it, use the curl line below
 - Optional: the Claude browser extension in Chrome, Brave or Edge, if you want
   Assigent to read the assignment from your portal tab
 
 ## Install and run
 
 ```
-curl -fsSL https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh | bash
+npx Dhaswin86/assigent install
 assigent run
+```
+
+`npx` comes with Node.js. Without Node.js, this line does the same thing:
+
+```
+curl -fsSL https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh | bash
 ```
 
 Or from a copy of this folder: `./install.sh`, then `assigent run`.

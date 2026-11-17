@@ -407,7 +407,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       </ul>
       <div class="install" id="install">
         <p class="step-label">1. Install</p>
-        <div class="cmd"><span class="p" aria-hidden="true">$</span><pre id="line-install">curl -fsSL https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh | bash</pre><button class="copy" type="button" data-copy="line-install" aria-label="Copy the install line"><svg aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+        <div class="cmd"><span class="p" aria-hidden="true">$</span><pre id="line-install">npx Dhaswin86/assigent install</pre><button class="copy" type="button" data-copy="line-install" aria-label="Copy the install line"><svg aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span></button></div>
         <p class="step-label">2. Run</p>
         <div class="cmd"><span class="p" aria-hidden="true">$</span><pre id="line-run">assigent run</pre><button class="copy" type="button" data-copy="line-run" aria-label="Copy the run command"><svg aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span></button></div>
       </div>
@@ -551,7 +551,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       <div>
         <h2 id="h-need" data-reveal="up">Before you install</h2>
         <div class="faq" data-stagger>
-          <details data-reveal="up" open><summary>What do I need?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="ans"><p>A Claude plan that includes Claude Code, with Claude Code installed. New to it? Claude Code is Anthropic's assistant that works in your terminal, and Assigent runs inside it. You also need Python 3, which most Macs and Linux computers already have. The Claude browser extension is optional, if you want Assigent to read the assignment from your portal tab.</p></div></details>
+          <details data-reveal="up" open><summary>What do I need?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="ans"><p>A Claude plan that includes Claude Code, with Claude Code installed. New to it? Claude Code is Anthropic's assistant that works in your terminal, and Assigent runs inside it. You also need Python 3, which most Macs and Linux computers already have. The install line uses npx, which comes with Node.js; without Node.js, the README on GitHub has a curl line that does the same thing. The Claude browser extension is optional, if you want Assigent to read the assignment from your portal tab.</p></div></details>
           <details data-reveal="up"><summary>Does it cost anything?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="ans"><p>Assigent is free and open source under the MIT license. It runs inside Claude Code on your own computer and your own Claude plan.</p></div></details>
           <details data-reveal="up"><summary>Will it hand in my work?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="ans"><p>No. It never submits, uploads or hands in anything, never signs in for you and never posts. That last step is yours.</p></div></details>
           <details data-reveal="up"><summary>What if my assignment does not allow AI?<svg aria-hidden="true"><use href="#i-plus"/></svg></summary><div class="ans"><p>Then you get the brief and a reading list, nothing more. The Tutor's playground still teaches the idea, because it never holds the answer.</p></div></details>
@@ -574,7 +574,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         <div class="end-act">
           <h2 id="h-cta">Install Assigent</h2>
           <p>One line in your terminal, then type <code>assigent run</code>. There is nothing to set up first.</p>
-          <div class="cmd"><span class="p" aria-hidden="true">$</span><pre id="line-install-2">curl -fsSL https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh | bash</pre><button class="copy" type="button" data-copy="line-install-2" aria-label="Copy the install line"><svg aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+          <div class="cmd"><span class="p" aria-hidden="true">$</span><pre id="line-install-2">npx Dhaswin86/assigent install</pre><button class="copy" type="button" data-copy="line-install-2" aria-label="Copy the install line"><svg aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span></button></div>
         </div>
       </div>
     </div>

@@ -2,7 +2,8 @@
 # Assigent installer.
 #
 #   From a clone:   ./install.sh
-#   In one line:    curl -fsSL https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh | bash
+#   In one line:    npx Dhaswin86/assigent install
+#   Without Node.js: curl -fsSL https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh | bash
 #
 # It copies the six agents to ~/.claude/agents/, the skill to ~/.claude/skills/assigent/
 # and the command to ~/.local/bin/assigent. Files of the same name are backed up first.
