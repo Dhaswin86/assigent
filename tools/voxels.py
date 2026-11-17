@@ -145,6 +145,25 @@ def source_finder():
     return m
 
 
+def researcher():
+    c = '#0d9488'
+    m = buddy(c)
+    m.box(-1, -1, 14, 11, 10, 15, shade(c, .8))      # explorer hat with a wide brim
+    m.box(0, 0, 15, 10, 8, 17, c)
+    m.box(0, 0, 15, 10, 8, 16, shade(c, .7))         # band
+    m.box(0, 0, 16, 10, 8, 17, c)
+    rim = '#4b5563'                                   # magnifying glass held up in the right hand
+    ring = [(7, 7), (8, 7), (9, 7), (6, 8), (10, 8), (6, 9), (10, 9), (6, 10), (10, 10), (7, 11), (8, 11), (9, 11)]
+    for x, z in ring:
+        m.dot(x, 10, z, rim)
+    m.box(7, 10, 8, 10, 11, 11, '#bae6fd')
+    m.box(9, 10, 4, 10, 11, 7, '#8a5a3c')             # handle
+    m.box(4, 7, 2, 8, 8, 6, WHITE)                    # notes in the other hand
+    for z in (3, 5):
+        m.box(5, 8, z, 7, 9, z + 1, '#7b8794')
+    return m
+
+
 def builder():
     c = '#7c3aed'
     m = buddy(c)
@@ -190,7 +209,7 @@ def tutor():
 
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
-    for name, fn in [('analyst', analyst), ('source-finder', source_finder), ('builder', builder), ('evaluator', evaluator), ('tutor', tutor)]:
+    for name, fn in [('analyst', analyst), ('source-finder', source_finder), ('researcher', researcher), ('builder', builder), ('evaluator', evaluator), ('tutor', tutor)]:
         path = os.path.join(OUT, name + '.svg')
         with open(path, 'w') as f:
             f.write(fn().svg())

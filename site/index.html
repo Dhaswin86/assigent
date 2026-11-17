@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light dark">
 <script>try { if (localStorage.getItem('assigent-theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (e) {}</script>
 <title>Assigent: an assignment helper for Claude Code</title>
-<meta name="description" content="Assigent runs inside Claude Code on your own computer. Four agents read your assignment, find sources, do the work within its AI rule and mark it, and a Tutor teaches the idea. You hand it in yourself.">
+<meta name="description" content="Assigent runs inside Claude Code on your own computer. Five agents read your assignment, find sources, check the facts, do the work within its AI rule and mark it, and a Tutor teaches the idea. You hand it in yourself.">
 <style>
 :root {
   --bg: #ffffff; --bg-soft: #f7f6f3; --panel: #ffffff;
@@ -225,7 +225,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 .motion .say .w.lit { color: var(--text); }
 .motion .say em .w.lit { color: var(--accent); }
 
-/* Crew: five agents on an orbit */
+/* Crew: six helpers on an orbit */
 .crew { border-top: 1px solid var(--line); background: var(--bg-soft); }
 .crew-pin { padding: 80px 0; }
 .crew-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: center; }
@@ -243,7 +243,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 .ring { position: absolute; inset: 9%; border-radius: 50%; border: 2px dashed var(--line-strong); }
 .spin { position: absolute; inset: 0; transform: rotate(var(--spin, 0deg)); }
 .spin .av { position: absolute; left: 50%; top: 50%; --size: 84px;
-  transform: translate(-50%, -50%) rotate(calc(var(--k) * 72deg)) translateY(calc(var(--r) * -1)) rotate(calc(var(--k) * -72deg - var(--spin, 0deg))) scale(var(--s, 1));
+  transform: translate(-50%, -50%) rotate(calc(var(--k) * 60deg)) translateY(calc(var(--r) * -1)) rotate(calc(var(--k) * -60deg - var(--spin, 0deg))) scale(var(--s, 1));
   transition: transform .5s var(--ease-out), opacity .4s; }
 .spin { --r: 41cqw; } .orbit { container-type: inline-size; }
 .hub { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; }
@@ -254,7 +254,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 .motion .hub-av { animation: bob 3.2s ease-in-out infinite; }
 @keyframes bob { 50% { transform: translateY(-8px); } }
 /* pinned mode: one agent at a time */
-.motion .crew { height: 520vh; }
+.motion .crew { height: 620vh; }
 .motion .crew-pin { position: sticky; top: 0; height: 100vh; display: grid; align-items: center; padding: 80px 0 24px; overflow: hidden; }
 .motion .crew-list { display: grid; }
 .motion .crew-list > li { grid-area: 1 / 1; opacity: 0; transform: translateY(18px); filter: blur(4px); transition: opacity .45s var(--ease-out), transform .45s var(--ease-out), filter .45s; pointer-events: none; }
@@ -399,7 +399,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   <div class="wrap hero">
     <div>
       <h1>A helper for your assignments, inside Claude Code</h1>
-      <p class="lede">Four agents read the brief, find sources, do the work as far as the assignment's AI rule allows, and mark it. A Tutor teaches you the idea behind it. You hand it in yourself.</p>
+      <p class="lede">Five agents read the brief, find sources, check the facts, do the work as far as the assignment's AI rule allows, and mark it. A Tutor teaches you the idea behind it. You hand it in yourself.</p>
       <ul class="badges">
         <li><svg aria-hidden="true"><use href="#i-check"/></svg>Free and open source</li>
         <li><svg aria-hidden="true"><use href="#i-check"/></svg>Runs on your own computer</li>
@@ -421,16 +421,17 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       <ol>
         <li class="done"><span class="dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span><div><b>Analyst</b><small>Checklist of what the brief asks</small></div><span class="st">Done</span></li>
         <li class="done"><span class="dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span><div><b>Source finder</b><small>Guides and docs for each part</small></div><span class="st">Done</span></li>
-        <li class="now"><span class="dot">3</span><div><b>Builder</b><small>Making the calendar as an .xlsx file</small></div><span class="st">Working</span><span class="bar" aria-hidden="true"><i></i></span></li>
-        <li><span class="dot">4</span><div><b>Evaluator</b><small>Will mark it out of 100</small></div><span class="st">Next</span></li>
-        <li><span class="dot">5</span><div><b>Tutor</b><small>A playground to learn the idea</small></div><span class="st">Next</span></li>
+        <li class="done"><span class="dot"><svg aria-hidden="true"><use href="#i-check"/></svg></span><div><b>Researcher</b><small>Facts checked, plan written</small></div><span class="st">Done</span></li>
+        <li class="now"><span class="dot">4</span><div><b>Builder</b><small>Making the calendar as an .xlsx file</small></div><span class="st">Working</span><span class="bar" aria-hidden="true"><i></i></span></li>
+        <li><span class="dot">5</span><div><b>Evaluator</b><small>Will mark it out of 100</small></div><span class="st">Next</span></li>
+        <li><span class="dot">6</span><div><b>Tutor</b><small>A playground to learn the idea</small></div><span class="st">Next</span></li>
       </ol>
       <figcaption class="run-foot">A made-up example. Before starting, Assigent asked one question: which platforms?</figcaption>
     </figure>
   </div>
 
-  <section class="say" aria-label="Behind that one line, five helpers.">
-    <div class="say-pin"><h2 class="say-text" data-words>Behind that one line, <em>five helpers.</em></h2></div>
+  <section class="say" aria-label="Behind that one line, six helpers.">
+    <div class="say-pin"><h2 class="say-text" data-words>Behind that one line, <em>six helpers.</em></h2></div>
   </section>
 
   <section class="crew" id="how" aria-labelledby="h-how">
@@ -438,19 +439,20 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       <div class="wrap crew-grid">
         <div class="crew-copy">
           <h2 id="h-how">How it works</h2>
-          <p class="muted">Five helpers, one after another. Each does one job and hands over to the next.</p>
+          <p class="muted">Six helpers, one after another. Each does one job and hands over to the next.</p>
           <ol class="crew-list">
-          <li class="agent" style="--c:#c2410c"><span class="av av-sm"><img src="img/agents/analyst.svg" alt="" width="48" height="48"></span><div><p class="role">1 of 5 · Reads the brief</p><h3>Analyst</h3><p class="line">I read the brief and write a checklist of what is asked. If it leaves a choice open, I ask you once.</p></div></li>
-          <li class="agent" style="--c:#2563eb"><span class="av av-sm"><img src="img/agents/source-finder.svg" alt="" width="48" height="48"></span><div><p class="role">2 of 5 · Finds sources</p><h3>Source finder</h3><p class="line">I gather the docs and tutorials each part of the checklist needs.</p></div></li>
-          <li class="agent" style="--c:#7c3aed"><span class="av av-sm"><img src="img/agents/builder.svg" alt="" width="48" height="48"></span><div><p class="role">3 of 5 · Does the work</p><h3>Builder</h3><p class="line">I do the work in the right file type, only as far as the assignment's AI rule allows.</p></div></li>
-          <li class="agent" style="--c:#15803d"><span class="av av-sm"><img src="img/agents/evaluator.svg" alt="" width="48" height="48"></span><div><p class="role">4 of 5 · Marks it</p><h3>Evaluator</h3><p class="line">I mark it out of 100, then ask you 15 to 20 questions at your level.</p></div></li>
-          <li class="agent" style="--c:#d97706"><span class="av av-sm"><img src="img/agents/tutor.svg" alt="" width="48" height="48"></span><div><p class="role">5 of 5 · Teaches the idea</p><h3>Tutor</h3><p class="line">I build a small playground that teaches the idea. Never the answer.</p></div></li>
+          <li class="agent" style="--c:#c2410c"><span class="av av-sm"><img src="img/agents/analyst.svg" alt="" width="48" height="48"></span><div><p class="role">1 of 6 · Reads the brief</p><h3>Analyst</h3><p class="line">I read the brief and write a checklist of what is asked. If it leaves a choice open, I ask you once.</p></div></li>
+          <li class="agent" style="--c:#2563eb"><span class="av av-sm"><img src="img/agents/source-finder.svg" alt="" width="48" height="48"></span><div><p class="role">2 of 6 · Finds sources</p><h3>Source finder</h3><p class="line">I gather the docs and tutorials each part of the checklist needs.</p></div></li>
+          <li class="agent" style="--c:#0d9488"><span class="av av-sm"><img src="img/agents/researcher.svg" alt="" width="48" height="48"></span><div><p class="role">3 of 6 · Checks the facts</p><h3>Researcher</h3><p class="line">I read the sources in full and check every fact against a second one. Then I write the plan the Builder follows.</p></div></li>
+          <li class="agent" style="--c:#7c3aed"><span class="av av-sm"><img src="img/agents/builder.svg" alt="" width="48" height="48"></span><div><p class="role">4 of 6 · Does the work</p><h3>Builder</h3><p class="line">I do the work in the right file type, only as far as the assignment's AI rule allows.</p></div></li>
+          <li class="agent" style="--c:#15803d"><span class="av av-sm"><img src="img/agents/evaluator.svg" alt="" width="48" height="48"></span><div><p class="role">5 of 6 · Marks it</p><h3>Evaluator</h3><p class="line">I mark it out of 100, then ask you 15 to 20 questions at your level.</p></div></li>
+          <li class="agent" style="--c:#d97706"><span class="av av-sm"><img src="img/agents/tutor.svg" alt="" width="48" height="48"></span><div><p class="role">6 of 6 · Teaches the idea</p><h3>Tutor</h3><p class="line">I build a small playground that teaches the idea. Never the answer.</p></div></li>
           </ol>
-          <div class="crew-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="crew-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
         </div>
         <div class="orbit" aria-hidden="true">
           <div class="ring"></div>
-          <div class="spin"><span class="av" style="--k:0;--c:#c2410c"><img src="img/agents/analyst.svg" alt="" width="84" height="84"></span><span class="av" style="--k:1;--c:#2563eb"><img src="img/agents/source-finder.svg" alt="" width="84" height="84"></span><span class="av" style="--k:2;--c:#7c3aed"><img src="img/agents/builder.svg" alt="" width="84" height="84"></span><span class="av" style="--k:3;--c:#15803d"><img src="img/agents/evaluator.svg" alt="" width="84" height="84"></span><span class="av" style="--k:4;--c:#d97706"><img src="img/agents/tutor.svg" alt="" width="84" height="84"></span></div>
+          <div class="spin"><span class="av" style="--k:0;--c:#c2410c"><img src="img/agents/analyst.svg" alt="" width="84" height="84"></span><span class="av" style="--k:1;--c:#2563eb"><img src="img/agents/source-finder.svg" alt="" width="84" height="84"></span><span class="av" style="--k:2;--c:#0d9488"><img src="img/agents/researcher.svg" alt="" width="84" height="84"></span><span class="av" style="--k:3;--c:#7c3aed"><img src="img/agents/builder.svg" alt="" width="84" height="84"></span><span class="av" style="--k:4;--c:#15803d"><img src="img/agents/evaluator.svg" alt="" width="84" height="84"></span><span class="av" style="--k:5;--c:#d97706"><img src="img/agents/tutor.svg" alt="" width="84" height="84"></span></div>
           <div class="hub"><span class="hub-av"><img src="img/agents/analyst.svg" alt="" width="132" height="132"></span><b class="hub-name">Analyst</b></div>
         </div>
       </div>
@@ -687,13 +689,13 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   var say = document.querySelector('.say'), crew = document.querySelector('.crew'), end = document.querySelector('.end');
   var agents = crew.querySelectorAll('.agent'), avs = crew.querySelectorAll('.spin .av'), dots = crew.querySelectorAll('.crew-dots i');
   var spin = crew.querySelector('.spin'), hubAv = crew.querySelector('.hub-av'), hubImg = hubAv.querySelector('img'), hubName = crew.querySelector('.hub-name');
-  var icons = ['analyst', 'source-finder', 'builder', 'evaluator', 'tutor'], current = -1;
+  var icons = ['analyst', 'source-finder', 'researcher', 'builder', 'evaluator', 'tutor'], current = -1;
   function progress(el) { var r = el.getBoundingClientRect(), span = r.height - innerHeight; return span > 0 ? Math.min(Math.max(-r.top / span, 0), 1) : 0; }
   function scenes() {
     var p = progress(say), lit = Math.ceil(p * 1.35 * sayWords.length);
     Array.prototype.forEach.call(sayWords, function (w, i) { w.classList.toggle('lit', i < lit); });
-    var c = progress(crew), idx = Math.min(4, Math.floor(c * 5));
-    spin.style.setProperty('--spin', (-Math.min(Math.max(c * 5 - .5, 0), 4) * 72) + 'deg');
+    var c = progress(crew), idx = Math.min(5, Math.floor(c * 6));
+    spin.style.setProperty('--spin', (-Math.min(Math.max(c * 6 - .5, 0), 5) * 60) + 'deg');
     if (idx !== current) {
       current = idx;
       [agents, avs, dots].forEach(function (list) { Array.prototype.forEach.call(list, function (el, i) { el.classList.toggle('on', i === idx); }); });

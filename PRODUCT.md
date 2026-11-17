@@ -21,8 +21,9 @@ who already have it.
 ## Purpose
 
 Assigent is a free, open-source helper for school and course assignments that runs inside Claude
-Code on the student's own computer and plan. Five agents: Analyst (reads the brief, writes a
-checklist), Source finder (gathers docs and tutorials), Builder (does the work in the right file
+Code on the student's own computer and plan. Six helpers: Analyst (reads the brief, writes a
+checklist), Source finder (gathers docs and tutorials), Researcher (checks every fact against a
+second source and writes the build plan), Builder (does the work in the right file
 type, as far as the assignment's AI rule allows), Evaluator (marks it out of 100, then asks 15 to 20
 concept questions), and the Tutor (builds a hands-on playground that teaches the idea, never the answer).
 
@@ -36,7 +37,7 @@ Copy the one-line install command:
 
 ## Must keep
 
-- The four agents plus the Tutor, explained as a pipeline.
+- The five agents plus the Tutor (six helpers), explained as a pipeline.
 - The rules it keeps: never signs in, never submits, never posts, never gets around the AI rule,
   runs only when started.
 - Links: `demo/index.html` (made-up demo run), `demo/playground.html`, GitHub repo.
