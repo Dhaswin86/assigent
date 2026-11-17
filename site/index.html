@@ -225,24 +225,21 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 .agent .role { font: 600 .78rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--c); }
 .agent h3 { margin-top: 6px; font-size: 1.35rem; }
 .agent .line { margin-top: 6px; color: var(--muted); }
-.av { --size: 64px; width: var(--size); height: var(--size); border-radius: 50%; display: grid; place-items: center; color: #fff; flex: none;
-  background: radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--c) 55%, #fff), var(--c) 62%, color-mix(in srgb, var(--c) 70%, #000));
-  box-shadow: inset 0 -4px 10px rgba(0,0,0,.18), 0 10px 22px -10px var(--c); }
-.av svg { width: 44%; height: 44%; }
+.av { --size: 64px; width: var(--size); height: var(--size); display: grid; place-items: center; flex: none; }
+.av img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .av-sm { --size: 48px; }
 .crew-dots { display: none; }
 .orbit { position: relative; width: min(100%, 440px); aspect-ratio: 1; margin: 0 auto; }
 .ring { position: absolute; inset: 9%; border-radius: 50%; border: 2px dashed var(--line-strong); }
 .spin { position: absolute; inset: 0; transform: rotate(var(--spin, 0deg)); }
-.spin .av { position: absolute; left: 50%; top: 50%; --size: 72px;
+.spin .av { position: absolute; left: 50%; top: 50%; --size: 84px;
   transform: translate(-50%, -50%) rotate(calc(var(--k) * 72deg)) translateY(calc(var(--r) * -1)) rotate(calc(var(--k) * -72deg - var(--spin, 0deg))) scale(var(--s, 1));
   transition: transform .5s var(--ease-out), opacity .4s; }
 .spin { --r: 41cqw; } .orbit { container-type: inline-size; }
 .hub { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; }
-.hub-av { --size: 120px; width: var(--size); height: var(--size); border-radius: 50%; display: grid; place-items: center; color: #fff; --c: var(--hub, #c2410c);
-  background: radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--c) 55%, #fff), var(--c) 62%, color-mix(in srgb, var(--c) 70%, #000));
-  box-shadow: inset 0 -6px 14px rgba(0,0,0,.2), 0 18px 40px -16px var(--c); transition: background .5s, box-shadow .5s; }
-.hub-av svg { width: 46%; height: 46%; }
+.hub-av { --size: 150px; width: var(--size); height: var(--size); display: grid; place-items: center; --c: var(--hub, #c2410c); border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 22%, transparent), color-mix(in srgb, var(--c) 8%, transparent) 70%, transparent); transition: background .5s; }
+.hub-av img { width: 88%; height: 88%; object-fit: contain; }
 .hub-name { font-size: 1.1rem; }
 .motion .hub-av { animation: bob 3.2s ease-in-out infinite; }
 @keyframes bob { 50% { transform: translateY(-8px); } }
@@ -292,8 +289,8 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 @media (max-width: 960px) {
   .crew-grid { grid-template-columns: 1fr; gap: 24px; }
   .orbit { order: -1; width: min(100%, 300px); }
-  .hub-av { --size: 84px; }
-  .spin .av { --size: 52px; }
+  .hub-av { --size: 104px; }
+  .spin .av { --size: 60px; }
   .motion .crew-pin { padding-top: 76px; }
   .motion .crew-copy > .muted { display: none; }
   .motion .crew-list { margin-top: 18px; }
@@ -363,11 +360,6 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v5M12 7.6v.1" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-  <symbol id="a-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M3.5 6l1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="a-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
-  <symbol id="a-build" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L21 13l-2 2-1.3-1.3-8.4 8.4a2.1 2.1 0 0 1-3-3l8.4-8.4L13.4 9.4l2-2zM3 3l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="a-mark" viewBox="0 0 24 24"><path d="M4 16a8 8 0 1 1 16 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 16l4-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="16" r="1.6" fill="currentColor"/></symbol>
-  <symbol id="a-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
   <symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="currentColor"/></symbol>
 </svg>
@@ -438,18 +430,18 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           <h2 id="h-how">How it works</h2>
           <p class="muted">Five helpers, one after another. Each does one job and hands over to the next.</p>
           <ol class="crew-list">
-          <li class="agent" style="--c:#c2410c"><span class="av av-sm"><svg aria-hidden="true"><use href="#a-list"/></svg></span><div><p class="role">1 of 5 · Reads the brief</p><h3>Analyst</h3><p class="line">I read the brief and write a checklist of what is asked. If it leaves a choice open, I ask you once.</p></div></li>
-          <li class="agent" style="--c:#2563eb"><span class="av av-sm"><svg aria-hidden="true"><use href="#a-book"/></svg></span><div><p class="role">2 of 5 · Finds sources</p><h3>Source finder</h3><p class="line">I gather the docs and tutorials each part of the checklist needs.</p></div></li>
-          <li class="agent" style="--c:#7c3aed"><span class="av av-sm"><svg aria-hidden="true"><use href="#a-build"/></svg></span><div><p class="role">3 of 5 · Does the work</p><h3>Builder</h3><p class="line">I do the work in the right file type, only as far as the assignment's AI rule allows.</p></div></li>
-          <li class="agent" style="--c:#15803d"><span class="av av-sm"><svg aria-hidden="true"><use href="#a-mark"/></svg></span><div><p class="role">4 of 5 · Marks it</p><h3>Evaluator</h3><p class="line">I mark it out of 100, then ask you 15 to 20 questions at your level.</p></div></li>
-          <li class="agent" style="--c:#d97706"><span class="av av-sm"><svg aria-hidden="true"><use href="#a-bulb"/></svg></span><div><p class="role">5 of 5 · Teaches the idea</p><h3>Tutor</h3><p class="line">I build a small playground that teaches the idea. Never the answer.</p></div></li>
+          <li class="agent" style="--c:#c2410c"><span class="av av-sm"><img src="img/agents/analyst.svg" alt="" width="48" height="48"></span><div><p class="role">1 of 5 · Reads the brief</p><h3>Analyst</h3><p class="line">I read the brief and write a checklist of what is asked. If it leaves a choice open, I ask you once.</p></div></li>
+          <li class="agent" style="--c:#2563eb"><span class="av av-sm"><img src="img/agents/source-finder.svg" alt="" width="48" height="48"></span><div><p class="role">2 of 5 · Finds sources</p><h3>Source finder</h3><p class="line">I gather the docs and tutorials each part of the checklist needs.</p></div></li>
+          <li class="agent" style="--c:#7c3aed"><span class="av av-sm"><img src="img/agents/builder.svg" alt="" width="48" height="48"></span><div><p class="role">3 of 5 · Does the work</p><h3>Builder</h3><p class="line">I do the work in the right file type, only as far as the assignment's AI rule allows.</p></div></li>
+          <li class="agent" style="--c:#15803d"><span class="av av-sm"><img src="img/agents/evaluator.svg" alt="" width="48" height="48"></span><div><p class="role">4 of 5 · Marks it</p><h3>Evaluator</h3><p class="line">I mark it out of 100, then ask you 15 to 20 questions at your level.</p></div></li>
+          <li class="agent" style="--c:#d97706"><span class="av av-sm"><img src="img/agents/tutor.svg" alt="" width="48" height="48"></span><div><p class="role">5 of 5 · Teaches the idea</p><h3>Tutor</h3><p class="line">I build a small playground that teaches the idea. Never the answer.</p></div></li>
           </ol>
           <div class="crew-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
         </div>
         <div class="orbit" aria-hidden="true">
           <div class="ring"></div>
-          <div class="spin"><span class="av" style="--k:0;--c:#c2410c"><svg><use href="#a-list"/></svg></span><span class="av" style="--k:1;--c:#2563eb"><svg><use href="#a-book"/></svg></span><span class="av" style="--k:2;--c:#7c3aed"><svg><use href="#a-build"/></svg></span><span class="av" style="--k:3;--c:#15803d"><svg><use href="#a-mark"/></svg></span><span class="av" style="--k:4;--c:#d97706"><svg><use href="#a-bulb"/></svg></span></div>
-          <div class="hub"><span class="hub-av"><svg><use href="#a-list"/></svg></span><b class="hub-name">Analyst</b></div>
+          <div class="spin"><span class="av" style="--k:0;--c:#c2410c"><img src="img/agents/analyst.svg" alt="" width="84" height="84"></span><span class="av" style="--k:1;--c:#2563eb"><img src="img/agents/source-finder.svg" alt="" width="84" height="84"></span><span class="av" style="--k:2;--c:#7c3aed"><img src="img/agents/builder.svg" alt="" width="84" height="84"></span><span class="av" style="--k:3;--c:#15803d"><img src="img/agents/evaluator.svg" alt="" width="84" height="84"></span><span class="av" style="--k:4;--c:#d97706"><img src="img/agents/tutor.svg" alt="" width="84" height="84"></span></div>
+          <div class="hub"><span class="hub-av"><img src="img/agents/analyst.svg" alt="" width="132" height="132"></span><b class="hub-name">Analyst</b></div>
         </div>
       </div>
     </div>
@@ -684,8 +676,8 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 
   var say = document.querySelector('.say'), crew = document.querySelector('.crew'), end = document.querySelector('.end');
   var agents = crew.querySelectorAll('.agent'), avs = crew.querySelectorAll('.spin .av'), dots = crew.querySelectorAll('.crew-dots i');
-  var spin = crew.querySelector('.spin'), hubAv = crew.querySelector('.hub-av'), hubUse = hubAv.querySelector('use'), hubName = crew.querySelector('.hub-name');
-  var icons = ['#a-list', '#a-book', '#a-build', '#a-mark', '#a-bulb'], current = -1;
+  var spin = crew.querySelector('.spin'), hubAv = crew.querySelector('.hub-av'), hubImg = hubAv.querySelector('img'), hubName = crew.querySelector('.hub-name');
+  var icons = ['analyst', 'source-finder', 'builder', 'evaluator', 'tutor'], current = -1;
   function progress(el) { var r = el.getBoundingClientRect(), span = r.height - innerHeight; return span > 0 ? Math.min(Math.max(-r.top / span, 0), 1) : 0; }
   function scenes() {
     var p = progress(say), lit = Math.ceil(p * 1.35 * sayWords.length);
@@ -696,7 +688,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       current = idx;
       [agents, avs, dots].forEach(function (list) { Array.prototype.forEach.call(list, function (el, i) { el.classList.toggle('on', i === idx); }); });
       hubAv.style.setProperty('--hub', agents[idx].style.getPropertyValue('--c'));
-      hubUse.setAttribute('href', icons[idx]);
+      hubImg.src = 'img/agents/' + icons[idx] + '.svg';
       hubName.textContent = agents[idx].querySelector('h3').textContent;
     }
     var e = progress(end), k = Math.max(0, 1 - e * 1.8);
