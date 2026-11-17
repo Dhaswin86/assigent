@@ -19,7 +19,7 @@ import argparse, json, os, re, shutil, signal, socket, subprocess, sys, time
 import urllib.request
 from datetime import datetime
 
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 INSTALL_URL = "https://raw.githubusercontent.com/Dhaswin86/assigent/main/install.sh"
 
 # Exit codes
@@ -795,6 +795,9 @@ def main(argv=None):
     s.set_defaults(fn=cmd_doctor)
 
     s = sub.add_parser("update", help="get the newest Assigent (your answers and folders stay)")
+    s.set_defaults(fn=cmd_update)
+    # "assigent install" is the same thing: it matches the first-time command, "npx assigent install"
+    s = sub.add_parser("install", description="Same as \"assigent update\": get the newest Assigent and install it.")
     s.set_defaults(fn=cmd_update)
 
     s = sub.add_parser("config", help="print the answers Assigent remembers")

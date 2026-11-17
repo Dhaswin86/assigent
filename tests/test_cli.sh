@@ -9,6 +9,7 @@ set -u
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REAL_PY="$(command -v python3)"
+REAL_NODE="$(command -v node || true)"
 TMPBASE="${TMPDIR:-/tmp}"
 TMP="$(mktemp -d "${TMPBASE%/}/assigent-test.XXXXXX")"
 trap 'HOME="$TMP/home" "$REAL_PY" "$REPO/bin/assigent" view --stop >/dev/null 2>&1; rm -rf "$TMP"' EXIT
@@ -359,6 +360,21 @@ check "uninstall says the saved answers were kept" has "$OUT" "Kept your saved a
 python3 "$REPO/bin/assigent" uninstall --yes --delete-config < /dev/null > "$OUT" 2>&1; rc=$?
 check "uninstall --delete-config removes ~/.assigent" sh -c "[ $rc = 0 ] && [ ! -e '$HOME/.assigent' ]"
 check "assignment folders still there" test -d "$RUN/deliverables"
+
+# ---- the npm entry: "npx assigent install" (no network: run the launcher straight from the repo)
+if [ -n "$REAL_NODE" ]; then
+  "$REAL_NODE" "$REPO/npm/assigent.js" status > "$OUT" 2>&1; rc=$?
+  check "npm launcher says how to install when nothing is installed" sh -c "[ $rc = 1 ] && grep -qF 'npx assigent install' '$OUT'"
+  "$REAL_NODE" "$REPO/npm/assigent.js" install > "$OUT" 2>&1; rc=$?
+  check "npm launcher: install runs the installer" sh -c "[ $rc = 0 ] && [ -x '$HOME/.local/bin/assigent' ] && [ -f '$HOME/.claude/skills/assigent/SKILL.md' ]"
+  "$REAL_NODE" "$REPO/npm/assigent.js" --version > "$OUT" 2>&1
+  check "npm launcher passes other commands to the installed command" has "$OUT" "assigent $(python3 "$REPO/bin/assigent" --version | cut -d' ' -f2)"
+  check "package.json version matches the command" sh -c "grep -qF '\"version\": \"'\"$(python3 "$REPO/bin/assigent" --version | cut -d' ' -f2)\"'\"' '$REPO/package.json'"
+else
+  echo "SKIP npm launcher checks (node not found)"
+fi
+python3 "$REPO/bin/assigent" install --help > "$OUT" 2>&1
+check "\"assigent install\" exists as another name for update" has "$OUT" "assigent update"
 
 echo
 echo "$pass passed, $failed failed"
